@@ -18,13 +18,38 @@ function getStat(){
 	$all = 0;
 	$stat = '';
 	$data = [];
-	$query = $db->query("SELECT * FROM `room`");
+
+    $query = $db->query("SELECT SUM(amount) as income, room FROM `stat` where time >= UNIX_TIMESTAMP(date_sub(now(), interval 30 day)) group by room");
+    $query->execute();
+
+    $top100 = [];
+    while($row = $query->fetch()){
+        $top100[$row['room']] = $row;
+    }
+
+    uasort($top100, function($a, $b){
+		return ($b['income'] - $a['income']);
+	});
+
+    $top100 = array_slice($top100, 0, 100, true);
+
+    $ids = implode(',', array_keys($top100));
+
+    $query = $db->query("SELECT AVG(online) as online, room FROM `online` where time >= UNIX_TIMESTAMP(date_sub(now(), interval 30 day))  and room in ({$ids}) group by room");
+    $query->execute();
+
+    while($row = $query->fetch()){
+        $top100[$row['room']]['online'] = round($row['online']);
+    }
+
+	$query = $db->query("SELECT * FROM `room` where id in ({$ids})");
 	$query->execute();
+
 	while($row = $query->fetch()){
-		@$data[$row['name']]['income'] = getRoomStat($row['id'], 'stat', 'SUM(amount)');
+		@$data[$row['name']]['income'] = $top100[$row['id']]['income'];
 		@$data[$row['name']]['pid'] = $row['pid'];
 		@$data[$row['name']]['id'] = $row['id'];
-		@$data[$row['name']]['online'] = getRoomStat($row['id'], 'online', 'AVG(online)');
+		@$data[$row['name']]['online'] = $top100[$row['id']]['online'];
 	}
 	uasort($data, function($a, $b){
 		return ($b['income'] - $a['income']);
@@ -65,16 +90,20 @@ function getDons($id){
 	$data = array_slice($data, 0, 100, TRUE);
 	foreach($data as $key => $val){
 		$i++;
-		$val = round($val*0.05);
+		$val = $val*0.05;
+		if($val > 10){
+			$val = round($val);
+		}
 		$stat .= "<tr><td>$i</td><td>".htmlspecialchars(getDonName($key))."</td><td>$val</td></tr>";
 	}
 	return $stat;
 }
 
 function getCharts($id){
-	global $db; $data = ''; $arr = [];
+	global $db; $data = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; $arr = [];
 	$year = date('Y', time());
-	for($i=1; $i<=12; $i++){
+	$month = date('n', time());
+	for($i=1; $i<=$month; $i++){
 		$arr[] = strtotime("$year-$i");
 	}
 	$arr[] = strtotime(($year+1).'-1');
@@ -85,10 +114,8 @@ function getCharts($id){
 		$query->execute();
 		$row = $query->fetch();
 		if(!empty($row[0])){
-			$data .= round($row[0]*0.05).", ";
-		}else{
-			$data .= "0, ";
+			$data[$k] = round($row[0]*0.05);
 		}
 	}
-	return $data;
+	return implode(",",$data);
 }
