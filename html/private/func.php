@@ -2,8 +2,7 @@
 
 function getRoomStat($id, $table, $x){
 	global $db;
-	$time = time()-60*60*24*30;
-	$query = $db->prepare("SELECT $x FROM `$table` WHERE `room` = :room AND `time` > $time");
+	$query = $db->prepare("SELECT $x FROM `$table` WHERE `room` = :room AND `time` >= UNIX_TIMESTAMP(date_sub(now(), interval 30 day))");
 	$query->bindParam(':room', $id, PDO::PARAM_STR);
 	$query->execute();
 	$row = $query->fetch();
@@ -18,43 +17,29 @@ function getStat(){
 	$all = 0;
 	$stat = '';
 	$data = [];
-
-    $query = $db->query("SELECT SUM(amount) as income, room FROM `stat` where time >= UNIX_TIMESTAMP(date_sub(now(), interval 30 day)) group by room");
-    $query->execute();
-
-    $top100 = [];
-    while($row = $query->fetch()){
-        $top100[$row['room']] = $row;
-    }
-
-    uasort($top100, function($a, $b){
-		return ($b['income'] - $a['income']);
-	});
-
-    $top100 = array_slice($top100, 0, 100, true);
-
-    $ids = implode(',', array_keys($top100));
-
-    $query = $db->query("SELECT AVG(online) as online, room FROM `online` where time >= UNIX_TIMESTAMP(date_sub(now(), interval 30 day))  and room in ({$ids}) group by room");
-    $query->execute();
-
-    while($row = $query->fetch()){
-        $top100[$row['room']]['online'] = round($row['online']);
-    }
-
-	$query = $db->query("SELECT * FROM `room` where id in ({$ids})");
+	if($_SERVER['REMOTE_ADDR'] == '178.32.144.122'){
+	$query = $db->query("SELECT * FROM `room`");
 	$query->execute();
-
 	while($row = $query->fetch()){
-		@$data[$row['name']]['income'] = $top100[$row['id']]['income'];
+		@$data[$row['name']]['income'] = getRoomStat($row['id'], 'stat', 'SUM(amount)');
 		@$data[$row['name']]['pid'] = $row['pid'];
 		@$data[$row['name']]['id'] = $row['id'];
-		@$data[$row['name']]['online'] = $top100[$row['id']]['online'];
+		@$data[$row['name']]['online'] = getRoomStat($row['id'], 'online', 'AVG(online)');
 	}
 	uasort($data, function($a, $b){
 		return ($b['income'] - $a['income']);
 	});
 	$data = array_slice($data, 0, 100);
+	$cache = json_encode($data);
+	$update = $db->prepare("UPDATE `cache` SET `data` = :data WHERE `name` = 'stat'");
+	$update->bindParam(':data', $cache, PDO::PARAM_STR);
+	$update->execute();
+	}else{
+		$query = $db->query("SELECT * FROM `cache` WHERE `name` = 'stat'");
+		$query->execute();
+		$row = $query->fetch();
+		$data = json_decode($row['data'], true);
+	}
 	foreach($data as $key => $val){
 		$i++;
 		$st = (!empty($val['pid'])) ? '<font color=green>Online</font>' : 'Offline';
@@ -80,7 +65,7 @@ function getDons($id){
 	$stat = '';
 	$data = [];
 	$time = time()-60*60*24*30;
-	$query = $db->prepare("SELECT * FROM `stat` WHERE `room` = :id AND `time` > $time");
+	$query = $db->prepare("SELECT * FROM `stat` WHERE `room` = :id AND `time` >= UNIX_TIMESTAMP(date_sub(now(), interval 30 day))");
 	$query->bindParam(':id', $id, PDO::PARAM_STR);
 	$query->execute();
 	while($row = $query->fetch()){
