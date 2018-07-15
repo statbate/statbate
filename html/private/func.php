@@ -1,14 +1,24 @@
 <?php
+function query($sql, $params = null){
+	global $db;
+	$query = $db->prepare($sql);
+	if(is_array($params)){
+		foreach($params as $key => &$val){
+			$query->bindParam($key, $val);
+		}
+	}
+	$query->execute();
+	if(mb_strtolower(substr($sql, 0, 6 )) === "select"){
+		return ['row' => $query->fetch(), 'count' => $query->rowCount(), 'all' => $query->fetchAll()];
+	}
+	return 1;
+}
 
 function getRoomStat($id, $table, $x){
-	global $db;
-	$query = $db->prepare("SELECT $x FROM `$table` WHERE `room` = :room AND `time` >= UNIX_TIMESTAMP(date_sub(now(), interval 30 day))");
-	$query->bindParam(':room', $id, PDO::PARAM_STR);
-	$query->execute();
-	$row = $query->fetch();
-	if(empty($row[$x]))
-		$row[$x] = 0;
-	return round($row[$x]);
+	$result = query("SELECT $x FROM `$table` WHERE `room` = :room AND `time` >= UNIX_TIMESTAMP(date_sub(now(), interval 30 day))", ['room' => $id]);
+	if(empty($result['row']["$x"]))
+		$result['row']["$x"] = 0;
+	return round($result['row']["$x"]);
 }
 
 function getStat(){
@@ -18,9 +28,8 @@ function getStat(){
 	$stat = '';
 	$data = [];
 	if($_SERVER['REMOTE_ADDR'] == '178.32.144.122'){
-	$query = $db->query("SELECT * FROM `room`");
-	$query->execute();
-	while($row = $query->fetch()){
+	$result = query("SELECT * FROM `room`");
+	foreach($result['all'] as $row){
 		@$data[$row['name']]['income'] = getRoomStat($row['id'], 'stat', 'SUM(amount)');
 		@$data[$row['name']]['pid'] = $row['pid'];
 		@$data[$row['name']]['id'] = $row['id'];
@@ -30,45 +39,33 @@ function getStat(){
 		return ($b['income'] - $a['income']);
 	});
 	$data = array_slice($data, 0, 100);
-	$cache = json_encode($data);
-	$update = $db->prepare("UPDATE `cache` SET `data` = :data WHERE `name` = 'stat'");
-	$update->bindParam(':data', $cache, PDO::PARAM_STR);
-	$update->execute();
+	query("UPDATE `cache` SET `data` = :data WHERE `name` = 'stat'", ['data' => json_encode($data)]);
 	}else{
-		$query = $db->query("SELECT * FROM `cache` WHERE `name` = 'stat'");
-		$query->execute();
-		$row = $query->fetch();
-		$data = json_decode($row['data'], true);
+		$result = query("SELECT * FROM `cache` WHERE `name` = 'stat'");
+		$data = json_decode($result['row']['data'], true);
 	}
 	foreach($data as $key => $val){
 		$i++;
 		$st = (!empty($val['pid'])) ? '<font color=green>Online</font>' : 'Offline';
 		$val['income'] = round($val['income']*0.05); // One TK = 0.05 USD
 		$all += $val['income'];
-		$stat .= "<tr><td>$i</td><td><a href=\"https://chaturbate.com/in/?track=default&tour=dT8X&campaign=C0Jsr&room=".htmlspecialchars($key)."\">".htmlspecialchars($key)."</a></td><td>$st</td><td>{$val['online']}</td><td><a href=\"/stat.php?id={$val['id']}\">{$val['income']}</a></td></tr>";
+		$stat .= "<tr><td>$i</td><td><a href=\"https://chaturbate.com/".htmlspecialchars($key)."\" target=\"_blank\">".htmlspecialchars($key)."</a></td><td>$st</td><td>{$val['online']}</td><td><a href=\"/stat.php?id={$val['id']}\">{$val['income']}</a></td></tr>";
 	}
 	return ['stat' => $stat, 'sum' => $all];
 }
 
 function getDonName($id){
-	global $db;
-	$query = $db->prepare("SELECT name FROM `donators` WHERE `id` = :id");
-	$query->bindParam(':id', $id, PDO::PARAM_STR);
-	$query->execute();
-	$row = $query->fetch();
-	return $row['name'];
+	$result = query("SELECT name FROM `donators` WHERE `id` = :id", ['id' => $id]);
+	return $result['row']['name'];
 }
 
 function getDons($id){
-	global $db;
 	$i = 0;
 	$stat = '';
 	$data = [];
 	$time = time()-60*60*24*30;
-	$query = $db->prepare("SELECT * FROM `stat` WHERE `room` = :id AND `time` >= UNIX_TIMESTAMP(date_sub(now(), interval 30 day))");
-	$query->bindParam(':id', $id, PDO::PARAM_STR);
-	$query->execute();
-	while($row = $query->fetch()){
+	$result = query("SELECT * FROM `stat` WHERE `room` = :id AND `time` >= UNIX_TIMESTAMP(date_sub(now(), interval 30 day))", ['id' => $id]);
+	foreach($result['all'] as $row ){
 		@$data[$row['user']] += $row['amount'];	
 	}
 	arsort($data);
@@ -84,23 +81,47 @@ function getDons($id){
 	return $stat;
 }
 
-function getCharts($id){
-	global $db; $data = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; $arr = [];
+function getCharts($id = null){
+	$arr = [];
 	$year = date('Y', time());
 	$month = date('n', time());
+	$data = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 	for($i=1; $i<=$month; $i++){
 		$arr[] = strtotime("$year-$i");
 	}
 	$arr[] = strtotime(($year+1).'-1');
-	foreach($arr as $k => $v){
-		if(empty($arr[$k+1])) continue;
-		$query = $db->prepare("SELECT sum(amount) from `stat` WHERE `room` = :id AND `time` > $v AND `time` <  ".$arr[$k+1]);
-		$query->bindParam(':id', $id, PDO::PARAM_STR);
-		$query->execute();
-		$row = $query->fetch();
-		if(!empty($row[0])){
-			$data[$k] = round($row[0]*0.05);
-		}
+	if(!empty($id)){
+		$data = modelCharts($id, $arr, $data);
+	}else{
+		$data = allCharts($arr, $data);
 	}
 	return implode(",",$data);
+}
+
+function modelCharts($id, $arr, $data){
+	foreach($arr as $k => $v){
+		if(empty($arr[$k+1])) continue;
+		$result = query("SELECT sum(amount) from `stat` WHERE `room` = :id AND `time` > $v AND `time` < ".$arr[$k+1], ['id' => $id]);
+		if(!empty($result['row'][0])){
+			$data[$k] = round($result['row'][0]*0.05);
+		}
+	}
+	return $data;
+}
+
+function allCharts($arr, $data){
+	if($_SERVER['REMOTE_ADDR'] == '178.32.144.122'){
+		foreach($arr as $k => $v){
+			if(empty($arr[$k+1])) continue;
+			$result = query("SELECT sum(amount) from `stat` WHERE  `time` > $v AND `time` < ".$arr[$k+1]);
+			if(!empty($result['row'][0])){
+				$data[$k] = round($result['row'][0]*0.05);
+			}
+		}
+		query("UPDATE `cache` SET `data` = :data WHERE `name` = 'all'", ['data' => json_encode($data)]);
+	}else{
+		$result = query("SELECT * FROM `cache` WHERE `name` = 'all'");
+		$data = json_decode($result['row']['data'], true);
+	}
+	return $data;
 }
