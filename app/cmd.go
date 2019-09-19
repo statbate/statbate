@@ -35,7 +35,12 @@ func checkRoom(room string) bool{
 
 func cmdHandler(w http.ResponseWriter, r *http.Request){
 	msg := ""
-	for room, server := range rooms {
+	
+	mutex.Lock()
+	tmp := rooms 
+	mutex.Unlock()
+	
+	for room, server := range tmp {
 		msg += server + " " + room + " \n"
 	}
 	fmt.Fprint(w, msg)

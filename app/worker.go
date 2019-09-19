@@ -26,15 +26,6 @@ func getMethod(msg string) (string, string) {
 	return data[0].Method, arg
 }
 
-func wsConnect(u url.URL) (*websocket.Conn, bool) {
-	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	if err != nil {
-		fmt.Println("dial:", err)
-		return c, false
-	}
-	return c, true
-}
-
 func statRoom(room, server string, u url.URL) {
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
@@ -54,7 +45,13 @@ func statRoom(room, server string, u url.URL) {
 		timeout: time.Now().Unix() + 60*10,
 	}
 	
+	Loop:
 	for {
+		msgType, message, err := c.ReadMessage()
+		if err != nil {
+			fmt.Println("Read error room:", room)
+			break
+		}
 		
 		if !checkRoom(room) {
 			fmt.Println("Exit room:", room)
@@ -63,12 +60,6 @@ func statRoom(room, server string, u url.URL) {
 		
 		if time.Now().Unix() > worker.timeout {
 			fmt.Println("Timeout room:", room)
-			break
-		}
-		
-		_, message, err := c.ReadMessage()
-		if err != nil {
-			fmt.Println("Read error room:", room)
 			break
 		}
 		
@@ -102,7 +93,11 @@ func statRoom(room, server string, u url.URL) {
 		default:
 			if worker.delay < time.Now().Unix() {
 				worker.delay = time.Now().Unix() + 120
-				c.WriteMessage(websocket.TextMessage, worker.count)
+				err := c.WriteMessage(msgType, worker.count)
+				if err != nil {
+					fmt.Println("Write error room:", room)
+					break Loop
+				}
 			}
 		}
 	}

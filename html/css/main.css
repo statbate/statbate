@@ -9,13 +9,26 @@ body {
 }
 
 .wslog {
-    height: 127px;
+    //height: 127px;
+    height: 161px;
     width: 60%;
     margin-left: 10px;
     background-color: #efefef;
     border-radius: 4px;
     overflow: hidden;
     float: left;
+}
+
+.DonTable>tbody>tr>td, 
+.DonTable>tbody>tr>th, 
+.DonTable>tfoot>tr>td, 
+.DonTable>tfoot>tr>th, 
+.DonTable>thead>tr>td, 
+.DonTable>thead>tr>th {
+    padding: 0px;
+    line-height: 1.42857143;
+    vertical-align: top;
+    border-top: 0px;
 }
 
 .wstext {
@@ -32,7 +45,7 @@ body {
 
 .rinfo {
     margin-left: 20px;
-    height: 127px;
+    //height: 127px;
     width: 35%;
     border-radius: 4px;
     float: left;

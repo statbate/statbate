@@ -149,12 +149,39 @@ function format_interval(DateInterval $interval) {
     if ($interval->s) { return $interval->format("%s seconds "); }
 }
 
+function getTopDons(){
+	global $db, $sphinx, $redis;
+	$result = '';
+	$stat = $redis->get('topDons');
+	if($stat !== false){
+		return $stat;
+	}
+	$date = strtotime(date('d-m-Y', time()).' -1 months');
+	$query = $sphinx->prepare("SELECT did, SUM(token) as total, AVG(token) as avg FROM stat WHERE time > $date GROUP BY did ORDER BY total DESC LIMIT 20");
+	$query->execute();
+	$row =  $query->fetchAll();
+	foreach($row as $val) {
+		$select = $db->prepare('SELECT `name` FROM `donator` WHERE `id` = :id');
+		$select->bindParam(':id', $val['did']);
+		$select->execute();
+		$info = $select->fetch();
+		$arr[$info['name']] = toUSD($val['total']);
+		$result .= "<tr>
+			<td><a href='https://chaturbate.com/{$info['name']}/' target='_blank'>{$info['name']}</a></td>
+			<td>".toUSD($val['total'])."</td>
+			<td>".toUSD($val['avg'])."</td>
+		</tr>";
+	}
+	$redis->setex('topDons', 360, $result);
+	return $result;
+}
+
 function getStat(){
 	global $db, $sphinx, $redis;
 	
 	$stat = $redis->get('topStat');
 	if($stat !== false){
-		//return $stat;
+		return $stat;
 	}
 	
 	$data = [];
@@ -190,7 +217,7 @@ function getStat(){
 		$val['token'] = toUSD($val['token']);
 		$all += $val['token'];
 
-		if($val['last']+60*5 > time()){
+		if($val['last']+60*10 > time()){
 			$val['last'] = '<font color=green>online</font>';
 		}else{
 			$first_date = new DateTime(date('Y-m-d H:m:s', $val['last']));

@@ -70,7 +70,7 @@ $(document).ready(function() {
             zoomType: 'x'
         },
         title: {
-            text: 'Chaturbate month income'
+            text: 'Chaturbate income'
         },
         subtitle: {
             text: document.ontouchstart === undefined ?
@@ -121,4 +121,6 @@ $(document).ready(function() {
             data: hcData
         }]
     });
+    
+    $( "#donTopLink" ).show();
 });
