@@ -28,7 +28,7 @@ $(document).ready(function() {
 });
 
 function bStat() {
-    var sock = new WebSocket('wss://stat.poiuty.com/ws/');
+    var sock = new WebSocket('wss://chaturbate100.com/ws/');
     sock.onopen = function() {
         console.log('open');
         setTimeout(function wsPing() {
@@ -55,7 +55,15 @@ $(document).ready(function() {
     Highcharts.setOptions({
         global: {
             useUTC: false
+        },
+         time: {
+        timezone: 'Europe/Moscow'
+    },
+        plotOptions: {
+        series: {
+            animation: false
         }
+    }
     });
     Highcharts.chart('container', {
         navigation: {
@@ -70,7 +78,7 @@ $(document).ready(function() {
             zoomType: 'x'
         },
         title: {
-            text: 'Chaturbate income'
+            text: 'Chaturbate daily income'
         },
         subtitle: {
             text: document.ontouchstart === undefined ?

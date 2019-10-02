@@ -41,13 +41,13 @@ $fin = getFinStat();
 						<hr/>
 						<?php echo "Total income {$fin['total']} USD<br/> Average tip {$fin['avg']} USD"; ?>
 						<hr/>
-						<a href="" data-toggle="modal" data-target="#donModal"><img src="/img/trends.png"></a>
+						<a href="" data-toggle="modal" data-target="#trendsModal"><img src="/img/trends.png"></a>
 						</center>
 					</div>
 					<div class="clear"></div>
 					<hr/>					
 					<div id="donTopLink" style="display: none; height:20px; width: 200px; position: absolute; margin-left: 245px; margin-top: 7px; z-index: 99;">
-						<font color="#006400">>></font> <a href="" data-toggle="modal" data-target="#trendsModal">TOP 20 DONATORS</a> <font color="#006400"><<</font>
+						<font color="#006400">>></font> <a href="" data-toggle="modal" data-target="#donModal">TOP 20 DONATORS</a> <font color="#006400"><<</font>
 					</div>
 					<table id="main" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" width="100%" role="grid" aria-describedby="supportList_info" style="width: 100%;">
 						<thead>

@@ -4,7 +4,7 @@ if(php_sapi_name() != "cli"){
 }
 
 header('Content-Type: text/plain; charset=utf-8');
-require_once('/var/www/stat.poiuty.com/func.php');
+require_once('/var/www/chaturbate100.com/func.php');
 
 function startBot($name, $server){
 	$server = 'chatws'.$server;
@@ -13,7 +13,7 @@ function startBot($name, $server){
 		return;
 	}
 	echo "start $name $server\n";
-	file_get_contents("https://stat.poiuty.com/cmd/?room=$name&server=$server");
+	file_get_contents("https://chaturbate100.com/cmd/?room=$name&server=$server");
 }
 
 $html = file_get_contents("https://chaturbate.com/");

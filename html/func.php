@@ -91,11 +91,18 @@ function getChartData($start){
 	return [$row['ndate'], $row['total']];
 }
 
+function updateCache(){
+	if($_SERVER['REMOTE_ADDR'] == '159.69.67.28'){
+		return true;
+	}
+	return false;
+}
+
 function getCharts(){
 	global $db, $sphinx, $redis;
 
 	$stat = $redis->get('mainGraph');
-	if($stat !== false){
+	if($stat !== false || updateCache()){
 		return $stat;
 	}
 
@@ -153,7 +160,7 @@ function getTopDons(){
 	global $db, $sphinx, $redis;
 	$result = '';
 	$stat = $redis->get('topDons');
-	if($stat !== false){
+	if($stat !== false || updateCache()){
 		return $stat;
 	}
 	$date = strtotime(date('d-m-Y', time()).' -1 months');
@@ -180,7 +187,7 @@ function getStat(){
 	global $db, $sphinx, $redis;
 	
 	$stat = $redis->get('topStat');
-	if($stat !== false){
+	if($stat !== false || updateCache()){
 		return $stat;
 	}
 	
@@ -250,7 +257,7 @@ function toUSD($v, $k = 0){
 function getFinStat(){
 	global $sphinx, $redis;
 	$stat = $redis->get('topIncome');
-	if($stat !== false){
+	if($stat !== false || updateCache()){
 		$stat = json_decode($stat, true);
 		return ['total' => toUSD($stat['0']), 'avg' => toUSD($stat['1'], 2)];	
 	}

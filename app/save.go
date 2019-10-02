@@ -15,7 +15,7 @@ type tableRoom struct {
 }
 
 type tableDonator struct {
-	Id    int64     `db:"id"`
+	Id    int64    `db:"id"`
 	Name  string  `db:"name"`
 }
 
