@@ -35,15 +35,18 @@ function bStat() {
             sock.send('o')
             setTimeout(wsPing, 10000);
         }, 10000);
-        $(".wstext").prepend('<center>------------------------------------ last big tips ------------------------------------</center>');
+        $(".wstext").prepend('<div class="message"><center>------------------------------------ last big tips ------------------------------------</center></div>');
     };
-    sock.onmessage = function(evt) {
-        //console.log(evt.data);			
-        var date = new Date();
+    sock.onmessage = function(evt) {		
+        date = new Date();
         xMin = (date.getMinutes() < 10 ? '0' : '') + date.getMinutes()
         xSec = (date.getSeconds() < 10 ? '0' : '') + date.getSeconds()
-        var time = date.getHours() + ":" + xMin + ":" + xSec;
-        $(".wstext").prepend('[' + time + '] ' + evt.data + '<br/>');
+        time = date.getHours() + ":" + xMin + ":" + xSec;
+        $(".wstext").prepend('<div class="message">[' + time + '] ' + evt.data + '</div>');
+        msg = $('.wstext .message');
+        if (msg.length == 10) {
+            msg.last().remove();
+        }
     };
     sock.onclose = function() {
         console.log('close');
