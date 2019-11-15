@@ -45,25 +45,16 @@ function createRoom($name){
 	}
 }
 
-function getRoomServer($room, $id){
-	global $db;
-    $html = file_get_contents("https://chaturbate.com/$room/");
-    preg_match('/chatws(.*)\.highwebmedia/', $html, $server);
-    if(empty($server['1'])){
-		return false;
+function trackCount(){
+	global $redis;
+	$stat = getCache('trackCount');
+	if($stat !== false){
+		return $stat;
 	}
-	$gender = ['male', 'female', 'trans', 'couple'];
-	preg_match('/broadcaster_gender: \'(.*)\',/', $html, $sex);
-	if(!empty($sex['1']) && in_array($sex['1'], $gender)){
-		$gender = array_search($sex['1'], $gender);
-		$query = $db->prepare("UPDATE `room` SET `gender` = :gender WHERE `id` = :id");
-		$query->bindParam(':id', $id);
-		$query->bindParam(':gender', $gender);
-		$query->execute();
-	}
-	return $server['1'];
+	$stat = count(json_decode(file_get_contents("https://chaturbate100.com/list/"), true));
+	$redis->setex('trackCount', 360, $stat);
+	return $stat;
 }
-
 
 function saveCharts($date, $amount){
 	global $db;
@@ -92,20 +83,30 @@ function getChartData($start){
 }
 
 function updateCache(){
-	if($_SERVER['REMOTE_ADDR'] == '159.69.67.28'){
+	if($_SERVER['REMOTE_ADDR'] == '127.0.0.1'){
 		return true;
 	}
 	return false;
 }
 
+function getCache($key){
+	global $redis;
+	if(updateCache()){
+		$stat = false;
+	}else{
+		$stat = $redis->get($key);
+	}
+	return $stat;
+}
+
 function getCharts(){
 	global $db, $sphinx, $redis;
-
-	$stat = $redis->get('mainGraph');
-	if($stat !== false || updateCache()){
+	
+	$stat = getCache('mainGraph');
+	if($stat !== false){
 		return $stat;
 	}
-
+	
 	$k = [];
 	$arr = [];
 	$cur = strtotime(date('Y-m-d', time()));
@@ -135,7 +136,7 @@ function getCharts(){
 	}
 
 	foreach($arr as $key => $val){
-		$k[] = [strtotime($key).'000', round($val*0.05)];
+		$k[] = [ 'date' => date('Y-m-d', strtotime($key)),  'value' => round($val*0.05)];
 	}
 		
 	usort($arr, function ($a, $b) {
@@ -156,38 +157,47 @@ function format_interval(DateInterval $interval) {
     if ($interval->s) { return $interval->format("%s seconds "); }
 }
 
-function getTopDons(){
+function getDonName($id){
+	global $db;
+	$select = $db->prepare('SELECT `name` FROM `donator` WHERE `id` = :id');
+	$select->bindParam(':id', $id);
+	$select->execute();
+	return $select->fetch()['name'];
+}
+
+function getTopDons($room = ''){
 	global $db, $sphinx, $redis;
 	$result = '';
-	$stat = $redis->get('topDons');
-	if($stat !== false || updateCache()){
+	$cacheName = 'topDons'.$room;
+	$stat = getCache($cacheName);
+	if($stat !== false){
 		return $stat;
 	}
 	$date = strtotime(date('d-m-Y', time()).' -1 months');
-	$query = $sphinx->prepare("SELECT did, SUM(token) as total, AVG(token) as avg FROM stat WHERE time > $date GROUP BY did ORDER BY total DESC LIMIT 20");
-	$query->execute();
+	if(!empty($room)){
+		$query = $db->query("SELECT did, SUM(token) as total, AVG(token) as avg FROM stat WHERE rid = $room AND time > $date GROUP BY did ORDER BY total DESC LIMIT 20");
+	}else{
+		$query = $sphinx->query("SELECT did, SUM(token) as total, AVG(token) as avg FROM stat WHERE time > $date GROUP BY did ORDER BY total DESC LIMIT 20");
+	}
 	$row =  $query->fetchAll();
 	foreach($row as $val) {
-		$select = $db->prepare('SELECT `name` FROM `donator` WHERE `id` = :id');
-		$select->bindParam(':id', $val['did']);
-		$select->execute();
-		$info = $select->fetch();
-		$arr[$info['name']] = toUSD($val['total']);
+		$name = getDonName($val['did']);
+		$arr[$name] = toUSD($val['total']);
 		$result .= "<tr>
-			<td><a href='https://chaturbate.com/{$info['name']}/' target='_blank'>{$info['name']}</a></td>
+			<td><a href='https://chaturbate.com/{$name}/' target='_blank' rel='nofollow'>{$name}</a></td>
 			<td>".toUSD($val['total'])."</td>
-			<td>".toUSD($val['avg'])."</td>
+			<td>".toUSD($val['avg'], 2)."</td>
 		</tr>";
 	}
-	$redis->setex('topDons', 360, $result);
+	$redis->setex($cacheName, 43200, $result);
 	return $result;
 }
 
 function getStat(){
 	global $db, $sphinx, $redis;
 	
-	$stat = $redis->get('topStat');
-	if($stat !== false || updateCache()){
+	$stat = getCache('topStat');
+	if($stat !== false){
 		return $stat;
 	}
 	
@@ -205,6 +215,7 @@ function getStat(){
 		
 		$room = $select->fetch();
 		
+		$data[$room['name']]['id'] = $val['rid'];
 		$data[$room['name']]['last'] = $room['last'];
 		$data[$room['name']]['gender'] = $room['gender'];
 		$data[$room['name']]['token'] = $val['total'];
@@ -236,11 +247,11 @@ function getStat(){
 		$stat .= "
 			<tr>
 				<td>$i</td>
-				<td><a href=\"https://chaturbate.com/".htmlspecialchars($key)."\" target=\"_blank\">".htmlspecialchars($key)."</a> $st</td>
+				<td><a href=\"https://chaturbate.com/".htmlspecialchars($key)."\" target=\"_blank\" rel=\"nofollow\">".htmlspecialchars($key)."</a></td>
 				<td>{$gender[$val['gender']]}</td>
 				<td>{$val['last']}</td>
 				<td>{$val['online']}</td>
-				<td>{$val['token']}</td>
+				<td><a href=\"#\" data-show-room-stat={$val['id']} data-room-name=".htmlspecialchars($key).">{$val['token']}</a></td>
 			</tr>
 		";
 	}
@@ -250,22 +261,26 @@ function getStat(){
 	return $stat;
 }
 
-function toUSD($v, $k = 0){
-	return round($v*0.05, $k); // One TK = 0.05 USD
+function toUSD($v){
+	$x = $v*0.05; // One TK = 0.05 USD
+	if($x < 10){
+		return round($x, 2);
+	}
+	return round($x); 
 }
 
 function getFinStat(){
 	global $sphinx, $redis;
-	$stat = $redis->get('topIncome');
-	if($stat !== false || updateCache()){
+	$stat = getCache('topIncome');
+	if($stat !== false){
 		$stat = json_decode($stat, true);
-		return ['total' => toUSD($stat['0']), 'avg' => toUSD($stat['1'], 2)];	
+		return ['total' => toUSD($stat['0']), 'avg' => toUSD($stat['1']), 'count' => $stat['2']];	
 	}
 	$date = strtotime(date('d-m-Y', time()).' -1 months');
-	$query = $sphinx->prepare("SELECT SUM(token), AVG(token) FROM stat WHERE time > $date");
+	$query = $sphinx->prepare("SELECT SUM(token), AVG(token), count(DISTINCT rid) FROM stat WHERE time > $date");
 	$query->execute();
 	$row =  $query->fetch();
 	
 	$redis->setex('topIncome', 360, json_encode($row));	
-	return ['total' => toUSD($row['0']), 'avg' => toUSD($row['1'], 2)];
+	return ['total' => toUSD($row['0']), 'avg' => toUSD($row['1'], 2), 'count' => $row['2']];
 }

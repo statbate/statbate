@@ -10,7 +10,9 @@ body {
 
 .wslog {
     //height: 127px;
-    height: 161px;
+    //height: 161px;
+    //height: 178.8px;
+    height: 145px;
     width: 60%;
     margin-left: 10px;
     background-color: #efefef;
@@ -36,11 +38,18 @@ body {
     margin-top: 5px;
     margin-right: 5px;
     margin-bottom: 5px;
+
+
+   // width: 452px;
+   // color: #333;
+}
+
+.message {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    width: 452px;
     color: #333;
+   // width: 452px;
 }
 
 .rinfo {
