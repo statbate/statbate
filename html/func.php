@@ -175,9 +175,9 @@ function getTopDons($room = ''){
 	}
 	$date = strtotime(date('d-m-Y', time()).' -1 months');
 	if(!empty($room)){
-		$query = $db->query("SELECT did, SUM(token) as total, AVG(token) as avg FROM stat WHERE rid = $room AND time > $date GROUP BY did ORDER BY total DESC LIMIT 20");
+		$query = $sphinx->query("SELECT did, SUM(token) as total, AVG(token) as avg FROM stat WHERE rid = $room AND time > $date GROUP BY did ORDER BY total DESC LIMIT 20");
 	}else{
-		$query = $sphinx->query("SELECT did, SUM(token) as total, AVG(token) as avg FROM stat WHERE time > $date GROUP BY did ORDER BY total DESC LIMIT 20");
+		$query = $sphinx->query("SELECT did, SUM(token) as total, AVG(token) as avg FROM stat WHERE time > $date GROUP BY did HAVING avg < 2000 ORDER BY total DESC LIMIT 20");
 	}
 	$row =  $query->fetchAll();
 	foreach($row as $val) {
@@ -204,7 +204,7 @@ function getStat(){
 	$data = [];
 	
 	$date = strtotime(date('d-m-Y', time()).' -1 months');
-	$query = $sphinx->prepare("SELECT rid, SUM(token) as total FROM stat WHERE time > $date GROUP BY rid ORDER BY total DESC LIMIT 100");
+	$query = $sphinx->prepare("SELECT rid, SUM(token) as total, MAX(token) as max FROM stat WHERE time > $date GROUP BY rid HAVING max < 20000 ORDER BY total DESC LIMIT 100");
 	$query->execute();
 	$row =  $query->fetchAll();
 		
