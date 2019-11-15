@@ -22,6 +22,7 @@ func main() {
 	
 	http.HandleFunc("/ws/", hub.wsHandler)
 	http.HandleFunc("/cmd/", cmdHandler)
+	http.HandleFunc("/list/", listHandler)
 
 	http.ListenAndServe("localhost:8080", nil)
 }

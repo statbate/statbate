@@ -45,7 +45,7 @@ func statRoom(room, server string, u url.URL) {
 		join: []byte(`["{\"method\":\"joinRoom\",\"data\":{\"room\":\"` + room + `\"}}"]`),
 		count: []byte(`["{\"method\":\"updateRoomCount\",\"data\":{\"model_name\":\"` + room + `\",\"private_room\":\"false\"}}"]`),
 		delay: time.Now().Unix() + 10,
-		timeout: time.Now().Unix() + 60*10,
+		timeout: time.Now().Unix() + 60*30,
 	}
 	
 	Loop:

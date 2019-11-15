@@ -3,8 +3,10 @@ package main
 import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-	
+
+	"time"
 	"strconv"
+	"encoding/json"
 )
 
 type tableRoom struct {
@@ -33,8 +35,14 @@ func saveOnline(conn *sqlx.DB, rid, online int64){
 	conn.Exec("INSERT INTO `online` (`rid`, `online`, `time`) VALUES (?, ?, unix_timestamp(now()))", rid, online)
 }
 
-func saveDonate(conn *sqlx.DB, did, rid, token int64) {
-	conn.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, unix_timestamp(now()))", did, rid, token)
+func saveDonate(conn *sqlx.DB, did, rid, token int64) int64 {
+	res, _ := conn.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, unix_timestamp(now()))", did, rid, token)
+	id, _ := res.LastInsertId()
+	return id
+}
+
+func saveSphinx(conn *sqlx.DB, id, did, rid, token int64) {
+	conn.Exec("INSERT INTO stat VALUES (?, ?, ?, ?, ?, ?)", id, "", did, rid, token, time.Now().Unix())
 }
 
 func getDonatorID(conn *sqlx.DB, name string) int64 {
@@ -66,22 +74,44 @@ func getRoomInfo(conn *sqlx.DB, name string) (tableRoom, bool) {
 	return room, result
 }
 
+func countRooms() string {
+	rooms.Lock()
+    defer rooms.Unlock()
+    return strconv.Itoa(len(rooms.name))
+}
+
 func saveBase(s *Save, h *Hub){
-	conn, err := sqlx.Connect("mysql", "user:passwd@unix(/var/run/mysqld/mysqld.sock)/db")
+	conn, err := sqlx.Connect("mysql", "user:passwd@unix(/var/run/mysqld/mysqld.sock)/stat?interpolateParams=true")
 	if err != nil {
 		panic(err)
 	}
 	defer conn.Close()
+	
+	sphinx, err := sqlx.Connect("mysql", "@tcp(127.0.0.1:9306)/?interpolateParams=true")
+	if err != nil {
+		panic(err)
+	}
+	defer sphinx.Close()
+	
 	for {
 		select {
 			case info := <-s.donate:
 			room, ok := getRoomInfo(conn, info.room)
 			if ok {
 				updateWorker(conn, room.Id)
-				saveDonate(conn, getDonatorID(conn, info.donator), room.Id, info.token);
+				
+				d := getDonatorID(conn, info.donator)
+				
+				lastID := saveDonate(conn, d, room.Id, info.token)
+				saveSphinx(sphinx, lastID, d, room.Id, info.token)
 				if info.token >= 100 {
-					token := strconv.FormatInt(info.token, 10)
-					h.broadcast <- []byte(info.donator+" send "+token+" tokens to "+info.room)
+					//token := strconv.FormatInt(info.token, 10)
+					msg, err := json.Marshal(map[string]string{"room": info.room, "donator": info.donator, "amount": strconv.FormatInt(info.token, 10), "trackCount": countRooms()})
+					if err == nil {
+						h.broadcast <- msg
+						
+					}
+					//h.broadcast <- []byte(info.donator+" send "+token+" tokens to "+info.room)
 				}
 			}
 			case info := <-s.online:

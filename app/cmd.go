@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"encoding/json"
 )
 
 type Rooms struct {
@@ -39,19 +40,20 @@ func checkRoom(room string) bool{
 func listRooms() string {
 	rooms.Lock()
     defer rooms.Unlock()
-    msg := ""
-    for room, server := range rooms.name {
-		msg += server + " " + room + " \n"
+    j, err := json.Marshal(rooms.name)
+    if err != nil {
+		return ""
 	}
-    return msg
+    return string(j)
+}
+
+func listHandler(w http.ResponseWriter, r *http.Request){
+	fmt.Fprint(w, listRooms())
 }
 
 func cmdHandler(w http.ResponseWriter, r *http.Request){
-
-	fmt.Fprint(w, listRooms())
-	
 	params := r.URL.Query()	
-	if len(params["room"]) > 0 && len(params["server"]) > 0 {		
+	if len(params["room"]) > 0 && len(params["server"]) > 0 {	
 		room := params["room"][0]
 		server := params["server"][0]
 		if !checkRoom(room) {
@@ -60,7 +62,6 @@ func cmdHandler(w http.ResponseWriter, r *http.Request){
 			go statRoom(room, server, u)
 		}
 	}
-	
 	if len(params["exit"]) > 0 {
 		room := strings.Join(params["exit"], "")
 		removeRoom(room)
