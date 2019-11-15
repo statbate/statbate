@@ -1,1 +1,1 @@
-<img src="https://chaturbate100.com/img/git.jpg">
+<img src="https://raw.githubusercontent.com/poiuty/chaturbate100.com/master/html/img/github.jpg">
