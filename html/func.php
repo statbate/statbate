@@ -1,4 +1,7 @@
 <?php
+if(basename(__FILE__) == basename($_SERVER["SCRIPT_FILENAME"])){
+	die;
+}
 
 try {
 	$db = new PDO("mysql:host=localhost;dbname=db", "user", "passwd");
@@ -69,6 +72,27 @@ function saveCharts($date, $amount){
 	}
 }
 
+function getModelChartData($id){
+	global $sphinx, $redis;
+	$stat = getCache('modelChart'.$id);
+	if($stat !== false){
+		return $stat;
+	}
+	$arr = [];
+	$start = time()-60*60*24*30;
+	$query = $sphinx->query("SELECT YEARMONTHDAY(time) as ndate, SUM(token) as total FROM stat WHERE `rid` = $id AND `time` > $start GROUP BY ndate ORDER BY ndate DESC;");
+	if($query->rowCount() == 0){
+		return false;
+	}
+	while($row = $query->fetch()){
+		$arr[] = ['date' => date('Y-m-d', strtotime($row['ndate'])), 'value' => toUSD($row['total'])];
+		$last = $row['total'];
+	}
+	$stat = json_encode($arr, JSON_NUMERIC_CHECK);
+	$redis->setex('modelChart'.$id, 360, $stat);
+	return $stat;
+}
+
 function getChartData($start){
 	global $sphinx;
 	$end = date('Ymd', strtotime("+1 day", strtotime($start)));	
@@ -135,8 +159,13 @@ function getCharts(){
 		$begin = date('Ymd', strtotime("+1 day", strtotime($begin)));
 	}
 
+	$last = 0;
 	foreach($arr as $key => $val){
+		if($last/2 > $val && $end != $key){
+			continue;
+		}
 		$k[] = [ 'date' => date('Y-m-d', strtotime($key)),  'value' => round($val*0.05)];
+		$last = $val;
 	}
 		
 	usort($arr, function ($a, $b) {
@@ -193,6 +222,23 @@ function getTopDons($room = ''){
 	return $result;
 }
 
+function getAllIncome($id){
+	global $sphinx, $redis;
+	$stat = getCache('allIncome'.$id);
+	
+	if($stat !== false){
+		return $stat;
+	}
+	
+	$query = $sphinx->prepare("SELECT SUM(token) as total FROM stat WHERE rid = $id");
+	$query->execute();
+	$row =  $query->fetch();
+
+	$stat = toUSD($row['0']);
+	$redis->setex('allIncome'.$id, 360, $stat);
+	return $stat;
+}
+
 function getStat(){
 	global $db, $sphinx, $redis;
 	
@@ -229,6 +275,9 @@ function getStat(){
 	
 	$i = 0; $all = 0; $stat = '';
 	$gender = ['boy', 'girl', 'trans', 'couple'];
+	
+	// $online = json_decode(file_get_contents("https://chaturbate100.com/list/"), true);
+	// && array_key_exists($key, $online)
 	foreach($data as $key => $val){
 		$i++;
 
@@ -236,7 +285,7 @@ function getStat(){
 		$all += $val['token'];
 
 		if($val['last']+60*10 > time()){
-			$val['last'] = '<font color=green>online</font>';
+			$val['last'] = '<font color="green">online</font>';
 		}else{
 			$first_date = new DateTime(date('Y-m-d H:m:s', $val['last']));
 			$second_date = new DateTime(date('Y-m-d H:m:s', time()));

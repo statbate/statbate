@@ -5,4 +5,4 @@ if(empty($_POST['room']) || !ctype_digit($_POST['room'])){
 	die;
 }
 
-echo getTopDons($_POST['room']);
+echo getAllIncome($_POST['room']);

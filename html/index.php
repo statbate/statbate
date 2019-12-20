@@ -24,7 +24,7 @@ $track = trackCount();
 		<link rel="stylesheet" href="/css/bootstrap.min.css">
 		<link rel="stylesheet" href="/css/dataTables.bootstrap4.min.css">
 		<link rel="stylesheet" href="/css/metricsgraphics.min.css">
-		<link rel="stylesheet" href="/css/main.css?800">
+		<link rel="stylesheet" href="/css/main.css?900">
 		<script src="/js/jquery.js"></script>
 		<script src="/js/d3.v4.min.js"></script>
 		<script src="/js/metricsgraphics.min.js"></script>
@@ -32,7 +32,20 @@ $track = trackCount();
 		<script src="/js/bootstrap.min.js"></script>
 		<script src="/js/jquery.dataTables.min.js"></script>
 		<script src="/js/dataTables.bootstrap4.min.js"></script>		
-		<script src="/js/main.js?800"></script>
+		<script src="/js/main.js?900"></script>
+		
+		<style>
+			
+			.x11 {
+				opacity: 0.5;
+			}
+
+			.x11:hover {
+				opacity: 1.0;
+			}
+			
+		</style>
+		
 	</head>
 	<body>
 		<div class="content-box">
@@ -43,8 +56,11 @@ $track = trackCount();
 						<div style="position: absolute;z-index: 100;left: 330px; top: 30px;">
 							<a href="" data-toggle="modal" data-target="#trendsModal"><img style="height:18px;" src="/img/trends.png"></a>
 						</div>
-						<div style="position: absolute;z-index: 100;left: 5px; top: -10px;">
-							<a href="https://www.youtube.com/watch?v=Gc2en3nHxA4" target="_blank"><img src="/img/bitcoin.png"></a>
+						<div style="position: absolute;z-index: 100;left: 5px; top: -15px;">
+							<a href="https://www.youtube.com/watch?v=Gc2en3nHxA4" target="_blank"><img class="x11" src="/img/bitcoin.png"></a>
+						</div>
+						<div style="position: absolute;z-index: 100; top: 25px;">
+							<a href="https://web.getmonero.org/" target="_blank"><img class="x11" src="/img/monero.png"></a>
 						</div>
 						<div style="position: absolute;z-index: 100;right: 7px; top: 5px;">
 							<h6><span id="trackCount" class="badge badge-secondary" style="font-weight:normal; padding: 5px 10px; border: 1px solid #25639a; background: transparent; box-shadow: 0px 0px 1px 0px #000; color: #333;" ><a href="/?list">track <?php echo $track; ?> rooms</a></span></h6>
@@ -128,7 +144,7 @@ $track = trackCount();
 								<th style="width:1px;">gender</th>
 								<th data-toggle="tooltip" data-placement="top" title="Use search online">last</th>
 								<th data-toggle="tooltip" data-placement="top" title="Avarage online">online</th>
-								<th data-toggle="tooltip" data-placement="top" title="Income per month">USD</th>
+								<th data-toggle="tooltip" data-placement="top" title="Income per 30 days">USD</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -173,9 +189,9 @@ $track = trackCount();
 		</div>
 		
 		<div class="modal fade" id="donRoomModal" tabindex="-1" role="dialog" aria-hidden="true">
-			<div class="modal-dialog" style="max-width: 400px;">
+			<div class="modal-dialog" style="max-width: 400px; min-height: 680px;">
 				<div class="modal-content">
-					<div class="modal-body">
+					<div class="modal-body">		
 						<table id="donRoomTable" class="table table-striped DonTable">
 							<thead>
 								<tr>
@@ -185,9 +201,11 @@ $track = trackCount();
 								</tr>
 							</thead>
 							<tbody>
-								
 							</tbody>
 						</table>
+						<hr/>
+						<div id="modelChart" style="margin-top: -25px;"></div>
+						<div id="allIncome"></div>
 					</div>
 				</div>
 			</div>
