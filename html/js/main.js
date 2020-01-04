@@ -87,7 +87,7 @@ function bStat() {
         xMin = (date.getMinutes() < 10 ? '0' : '') + date.getMinutes()
         xSec = (date.getSeconds() < 10 ? '0' : '') + date.getSeconds()
         time = date.getHours() + ":" + xMin + ":" + xSec;
-        text = "<a href='https://chaturbate.com/"+j.donator+"' target='_blank'>"+j.donator+"</a> send "+j.amount+" tokens to <a href='https://chaturbate.com/"+j.room+"' target='_blank'>"+j.room+"</a>";
+        text = "<a href='/public/move.php?room="+j.donator+"' target='_blank'>"+j.donator+"</a> send "+j.amount+" tokens to <a href='/public/move.php?room="+j.room+"' target='_blank'>"+j.room+"</a>";
         $(".wstext").prepend('<div class="message">[' + time + '] ' + text + '</div>');
         msg = $('.wstext .message');
         if (msg.length > 8) {

@@ -6,7 +6,7 @@ if(basename(__FILE__) == basename($_SERVER["SCRIPT_FILENAME"])){
 try {
 	$db = new PDO("mysql:host=localhost;dbname=db", "user", "passwd");
 	$db->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
-	$db->exec("set names utf8");
+	$db->exec("set names utf8mb4");
 }
 catch(PDOException $e) {
 	die('MySQL ERROR'.PHP_EOL);
@@ -23,6 +23,50 @@ catch(PDOException $e) {
 
 $redis = new Redis();
 $redis->connect('/var/run/redis/redis-server.sock');
+
+function getChacheName($val){
+	return md5($val);
+}
+
+function createUrl($name){
+	$name = strip_tags($name);
+	return "<a href='/public/move.php?room={$name}' target='_blank' rel='nofollow'>{$name}</a>";
+}
+
+function toUSD($v){
+	$x = $v*0.05; // One TK = 0.05 USD
+	if($x < 10){
+		return round($x, 2);
+	}
+	return round($x); 
+}
+
+function cleanData(){
+	global $db;
+	if($_SERVER['REMOTE_ADDR'] == '127.0.0.1' && random_int(1, 100) == 10){
+		$db->query('DELETE FROM `online` WHERE `time` < UNIX_TIMESTAMP(DATE(NOW() - INTERVAL 1 MONTH))');
+	}
+}
+
+function updateCache($key){
+	global $redis;
+	if($_SERVER['REMOTE_ADDR'] == '127.0.0.1' && $redis->ttl($key) < 90){
+		return true;
+	}
+	return false;
+}
+
+function getCache($key){
+	global $redis;
+	$stat = $redis->get($key);
+	if($stat === false){
+		return false;
+	}
+	if(updateCache($key)){
+		return false;
+	}
+	return $stat;
+}
 
 function getRoomInfo($name){
 	global $db;
@@ -48,15 +92,38 @@ function createRoom($name){
 	}
 }
 
-function trackCount(){
+function getList(){
 	global $redis;
-	$stat = getCache('trackCount');
+	$cname = getChacheName('onlineList');
+	$stat = getCache($cname);
 	if($stat !== false){
 		return $stat;
 	}
-	$stat = count(json_decode(file_get_contents("https://chaturbate100.com/list/"), true));
-	$redis->setex('trackCount', 360, $stat);
+	if(!$stat = file_get_contents('https://chaturbate100.com/list/')){
+		return false;
+	}
+	$redis->setex($cname, 600, $stat);
 	return $stat;
+}
+
+function trackCount(){
+	if(!$list = getList()){
+		return 0;
+	}
+	return count(json_decode($list, true));
+}
+
+function showRoomList(){
+	if(isset($_GET['list'])){
+		echo "<pre><a href='/'>main page</a>\n\n";
+		$arr = json_decode(getList(), true);
+		ksort($arr);
+		echo "track ".count($arr)." rooms<br/><br/>";
+		foreach($arr as $key => $val){
+			echo $key."<br/>";
+		}
+		die;
+	}
 }
 
 function saveCharts($date, $amount){
@@ -72,25 +139,43 @@ function saveCharts($date, $amount){
 	}
 }
 
+function format_interval(DateInterval $interval) {
+    if ($interval->y) { return $interval->format("%y years "); }
+    if ($interval->m) { return $interval->format("%m months "); }
+    if ($interval->d) { return $interval->format("%d days "); }
+    if ($interval->h) { return $interval->format("%h hours "); }
+    if ($interval->i) { return $interval->format("%i minutes "); }
+    if ($interval->s) { return $interval->format("%s seconds "); }
+}
+
+function telegram_send($msg){
+	$arr = [
+		'chat_id' => '@chaturbate100',
+		'text' => $msg
+	];
+	file_get_contents("https://api.telegram.org/botX/sendMessage?".http_build_query($arr));
+}
+
+function getDonName($id){
+	global $db;
+	$select = $db->prepare('SELECT `name` FROM `donator` WHERE `id` = :id');
+	$select->bindParam(':id', $id);
+	$select->execute();
+	return $select->fetch()['name'];
+}
+
 function getModelChartData($id){
-	global $sphinx, $redis;
-	$stat = getCache('modelChart'.$id);
-	if($stat !== false){
-		return $stat;
-	}
-	$arr = [];
-	$start = time()-60*60*24*30;
-	$query = $sphinx->query("SELECT YEARMONTHDAY(time) as ndate, SUM(token) as total FROM stat WHERE `rid` = $id AND `time` > $start GROUP BY ndate ORDER BY ndate DESC;");
+	global $db; $arr = [];
+	$start = strtotime(date('d-m-Y', time()).' -1 months');
+	$query = $db->query("SELECT FROM_UNIXTIME(time, '%Y-%m-%d') as ndate, SUM(token) as total FROM stat WHERE `rid` = $id AND `time` > $start GROUP BY ndate ORDER BY ndate DESC");
 	if($query->rowCount() == 0){
 		return false;
 	}
 	while($row = $query->fetch()){
-		$arr[] = ['date' => date('Y-m-d', strtotime($row['ndate'])), 'value' => toUSD($row['total'])];
+		$arr[] = ['date' => $row['ndate'], 'value' => toUSD($row['total'])];
 		$last = $row['total'];
 	}
-	$stat = json_encode($arr, JSON_NUMERIC_CHECK);
-	$redis->setex('modelChart'.$id, 360, $stat);
-	return $stat;
+	return json_encode($arr, JSON_NUMERIC_CHECK);
 }
 
 function getChartData($start){
@@ -106,27 +191,12 @@ function getChartData($start){
 	return [$row['ndate'], $row['total']];
 }
 
-function updateCache(){
-	if($_SERVER['REMOTE_ADDR'] == '127.0.0.1'){
-		return true;
-	}
-	return false;
-}
-
-function getCache($key){
-	global $redis;
-	if(updateCache()){
-		$stat = false;
-	}else{
-		$stat = $redis->get($key);
-	}
-	return $stat;
-}
 
 function getCharts(){
 	global $db, $sphinx, $redis;
 	
-	$stat = getCache('mainGraph');
+	$cname = getChacheName('mainGraph');
+	$stat = getCache($cname);
 	if($stat !== false){
 		return $stat;
 	}
@@ -164,7 +234,7 @@ function getCharts(){
 		if($last/2 > $val && $end != $key){
 			continue;
 		}
-		$k[] = [ 'date' => date('Y-m-d', strtotime($key)),  'value' => round($val*0.05)];
+		$k[] = ['date' => date('Y-m-d', strtotime($key)),  'value' => round($val*0.05)];
 		$last = $val;
 	}
 		
@@ -173,76 +243,51 @@ function getCharts(){
 	});
 	
 	$stat = json_encode($k, JSON_NUMERIC_CHECK);
-	$redis->setex('mainGraph', 360, $stat);
+	$redis->setex($cname, 600, $stat);
 	return $stat;
-}
-
-function format_interval(DateInterval $interval) {
-    if ($interval->y) { return $interval->format("%y years "); }
-    if ($interval->m) { return $interval->format("%m months "); }
-    if ($interval->d) { return $interval->format("%d days "); }
-    if ($interval->h) { return $interval->format("%h hours "); }
-    if ($interval->i) { return $interval->format("%i minutes "); }
-    if ($interval->s) { return $interval->format("%s seconds "); }
-}
-
-function getDonName($id){
-	global $db;
-	$select = $db->prepare('SELECT `name` FROM `donator` WHERE `id` = :id');
-	$select->bindParam(':id', $id);
-	$select->execute();
-	return $select->fetch()['name'];
 }
 
 function getTopDons($room = ''){
 	global $db, $sphinx, $redis;
-	$result = '';
-	$cacheName = 'topDons'.$room;
-	$stat = getCache($cacheName);
+	$cname = getChacheName('topDons'.$room);
+	$stat = getCache($cname);
 	if($stat !== false){
 		return $stat;
 	}
+	$result = ''; $a = ''; $b = '';
 	$date = strtotime(date('d-m-Y', time()).' -1 months');
+	$tmpl = '<tr><td>{URL}</td><td>{TOTAL}</td><td>{AVG}</td></tr>';
 	if(!empty($room)){
-		$query = $sphinx->query("SELECT did, SUM(token) as total, AVG(token) as avg FROM stat WHERE rid = $room AND time > $date GROUP BY did ORDER BY total DESC LIMIT 20");
+		$handler = $db;
+		$a = "rid = $room AND time > $date"; 
 	}else{
-		$query = $sphinx->query("SELECT did, SUM(token) as total, AVG(token) as avg FROM stat WHERE time > $date GROUP BY did HAVING avg < 2000 ORDER BY total DESC LIMIT 20");
+		$handler = $sphinx;
+		$a = "time > $date";
+		$b = "HAVING avg < 2000"; 
 	}
+	$query = $handler->query("SELECT did, SUM(token) as total, AVG(token) as avg FROM stat WHERE $a GROUP BY did $b ORDER BY total DESC LIMIT 20");
 	$row =  $query->fetchAll();
-	foreach($row as $val) {
-		$name = getDonName($val['did']);
-		$arr[$name] = toUSD($val['total']);
-		$result .= "<tr>
-			<td><a href='https://chaturbate.com/{$name}/' target='_blank' rel='nofollow'>{$name}</a></td>
-			<td>".toUSD($val['total'])."</td>
-			<td>".toUSD($val['avg'], 2)."</td>
-		</tr>";
+	foreach($row as $val) {		
+		$tr = str_replace('{URL}', createUrl(getDonName($val['did'])), $tmpl);
+		$tr = str_replace('{TOTAL}', toUSD($val['total']), $tr);
+		$tr = str_replace('{AVG}', toUSD($val['avg'], 2), $tr);
+		$result .= $tr;
 	}
-	$redis->setex($cacheName, 43200, $result);
+	$redis->setex($cname, 600, $result);
 	return $result;
 }
 
 function getAllIncome($id){
-	global $sphinx, $redis;
-	$stat = getCache('allIncome'.$id);
-	
-	if($stat !== false){
-		return $stat;
-	}
-	
-	$query = $sphinx->prepare("SELECT SUM(token) as total FROM stat WHERE rid = $id");
-	$query->execute();
-	$row =  $query->fetch();
-
-	$stat = toUSD($row['0']);
-	$redis->setex('allIncome'.$id, 360, $stat);
-	return $stat;
+	global $db;
+	$query = $db->query("SELECT SUM(token) as total FROM stat WHERE rid = $id");
+	return toUSD($query->fetch()['0']);
 }
 
 function getStat(){
 	global $db, $sphinx, $redis;
 	
-	$stat = getCache('topStat');
+	$cname = getChacheName('topStat');
+	$stat = getCache($cname);
 	if($stat !== false){
 		return $stat;
 	}
@@ -275,9 +320,7 @@ function getStat(){
 	
 	$i = 0; $all = 0; $stat = '';
 	$gender = ['boy', 'girl', 'trans', 'couple'];
-	
-	// $online = json_decode(file_get_contents("https://chaturbate100.com/list/"), true);
-	// && array_key_exists($key, $online)
+	$tmpl = '<tr><td>{ID}</td><td>{URL}</td><td>{GENDER}</td><td>{LAST}</td><td>{ONLINE}</td><td>{USD}</td></tr>';
 	foreach($data as $key => $val){
 		$i++;
 
@@ -292,35 +335,22 @@ function getStat(){
 			$difference = $first_date->diff($second_date);
 			$val['last'] = format_interval($difference);
 		}
-		
-		$stat .= "
-			<tr>
-				<td>$i</td>
-				<td><a href=\"https://chaturbate.com/".htmlspecialchars($key)."\" target=\"_blank\" rel=\"nofollow\">".htmlspecialchars($key)."</a></td>
-				<td>{$gender[$val['gender']]}</td>
-				<td>{$val['last']}</td>
-				<td>{$val['online']}</td>
-				<td><a href=\"#\" data-show-room-stat={$val['id']} data-room-name=".htmlspecialchars($key).">{$val['token']}</a></td>
-			</tr>
-		";
+		$tr = str_replace('{ID}', $i, $tmpl);
+		$tr = str_replace('{URL}', createUrl($key), $tr);
+		$tr = str_replace('{GENDER}', $gender[$val['gender']], $tr);
+		$tr = str_replace('{LAST}', $val['last'], $tr);
+		$tr = str_replace('{ONLINE}', $val['online'], $tr);
+		$tr = str_replace('{USD}', "<a href=\"#\" data-show-room-stat={$val['id']} data-room-name=".strip_tags($key).">{$val['token']}</a>", $tr);
+		$stat .= $tr;
 	}
-	
-	$redis->setex('topStat', 360, $stat);
-	
+	$redis->setex($cname, 600, $stat);
 	return $stat;
-}
-
-function toUSD($v){
-	$x = $v*0.05; // One TK = 0.05 USD
-	if($x < 10){
-		return round($x, 2);
-	}
-	return round($x); 
 }
 
 function getFinStat(){
 	global $sphinx, $redis;
-	$stat = getCache('topIncome');
+	$cname = getChacheName('topIncome');
+	$stat = getCache($cname);
 	if($stat !== false){
 		$stat = json_decode($stat, true);
 		return ['total' => toUSD($stat['0']), 'avg' => toUSD($stat['1']), 'count' => $stat['2']];	
@@ -330,6 +360,34 @@ function getFinStat(){
 	$query->execute();
 	$row =  $query->fetch();
 	
-	$redis->setex('topIncome', 360, json_encode($row));	
+	$redis->setex($cname, 600, json_encode($row));	
 	return ['total' => toUSD($row['0']), 'avg' => toUSD($row['1'], 2), 'count' => $row['2']];
+}
+
+function sendHistory($all = false){
+	global $sphinx, $db; 
+	$sql = '';
+	$msg = "💰 All time income 💰\n\n";
+	
+	if(!$all){
+		$time = strtotime(date('Y-m', time()));
+		$start = strtotime(date('d-m-Y', $time).' -1 months');
+		$end = strtotime(date('d-m-Y', $start).' +1 months');
+		$sql = "WHERE time >= $start AND time <= $end";
+		$msg = "💰 ".date('F Y', $start)." 💰\n\n";
+	}
+
+	$tmpl = "$%income%\t\t-\t\t%name%\n";
+	$query = $sphinx->prepare("SELECT rid, SUM(token) as total, MAX(token) as max FROM stat $sql GROUP BY rid HAVING max < 20000 ORDER BY total DESC LIMIT 10");
+	$query->execute();
+	$row =  $query->fetchAll();
+	foreach($row as $val) {
+		$select = $db->prepare('SELECT `name` FROM `room` WHERE `id` = :rid');
+		$select->bindParam(':rid', $val['rid']);
+		$select->execute();
+		$name = $select->fetch()['name'];
+		$result = str_replace('%name%', $name, $tmpl);
+		$msg .= str_replace('%income%', toUSD($val['total']), $result);
+	}
+	telegram_send($msg);
 }

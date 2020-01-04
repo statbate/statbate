@@ -1,17 +1,21 @@
 body {
-    background-color: #D3D3D3;
+    background-color: #EFEFEF;
     min-width: 800px;
     max-width: 800px;
     margin: 0 auto;
     font: 15px 'Arial';
-    background: #EFEFEF;
     color: #333;
 }
 
+.content-info {
+    min-height: 283px;
+    margin: 0px auto;
+    background: #FFF;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px 0 rgba(0,0,0,0.14), 0 2px 1px -1px rgba(0,0,0,0.12), 0 1px 3px 0 rgba(0,0,0,0.20);
+}
+
 .wslog {
-    //height: 127px;
-    //height: 161px;
-    //height: 178.8px;
     height: 145px;
     width: 60%;
     margin-left: 10px;
@@ -38,10 +42,6 @@ body {
     margin-top: 5px;
     margin-right: 5px;
     margin-bottom: 5px;
-
-
-   // width: 452px;
-   // color: #333;
 }
 
 .message {
@@ -49,7 +49,6 @@ body {
     text-overflow: ellipsis;
     white-space: nowrap;
     color: #333;
-   // width: 452px;
 }
 
 .rinfo {
@@ -99,7 +98,6 @@ th {
 table.dataTable tbody th,
 table.dataTable tbody td {
     padding: 6px 10px;
-    /* e.g. change 8x to 4px here */
 }
 
 .table td,
@@ -111,21 +109,14 @@ table {
     border-radius: 4px;
 }
 
-.content-info {
-    min-height: 283px;
-    margin: 0px auto;
-    background: #FFF;
-    border-radius: 4px;
-}
-
 .content-text {
     padding: 20px 15px;
 }
 
-.box-shadow--2dp {
-    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, .14), 0 2px 1px -2px rgba(0, 0, 0, .2), 0 1px 5px 0 rgba(0, 0, 0, .12)
-}
-
 .clear {
     clear: both;
+}
+
+#donTopLink {
+	display: none; height:20px; width: 200px; position: absolute; margin-left: 245px; margin-top: 7px; z-index: 99;
 }
