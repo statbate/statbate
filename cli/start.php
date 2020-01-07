@@ -57,10 +57,6 @@ function getRoomServer($room, $id){
 
 function startBot($name, $server){
 	$server = 'chatws'.$server;
-	$room = getRoomInfo($name);
-	if($room['last']+60*10 > time()){
-		return;
-	}
 	echo "start $name $server\n";
 	file_get_contents("https://chaturbate100.com/cmd/?room=$name&server=$server");
 }
@@ -76,7 +72,7 @@ function checkPID($pid){
 
 function checkWorker($room){
 	global $workerList;
-	if (array_key_exists($room, $workerList)) {
+	if(!empty($workerList) && array_key_exists($room, $workerList)){
 		return true;
 	}
 	return false;
@@ -86,53 +82,42 @@ function randSleep(){
 	usleep(random_int(1000000, 3000000));
 }
 
+function addTaks($key){
+	if(checkWorker($key)){
+		return;
+	}	
+	$room = getRoomInfo($key);
+	if(empty($room)){
+		$room['id'] = createRoom($key);
+	}
+	$id = getRoomServer($key, $room['id']);
+	if($id){
+		startBot($key, $id);
+	}
+	randSleep();
+}
+
+$workerList = json_decode(file_get_contents('https://chaturbate100.com/list/'), true);
+
+// add top 100 first
+$top100 = $redis->get(getCacheName('top100list'));
+if($top100 !== false){
+	$top100 = json_decode($top100, true);
+	foreach($top100 as $val){
+		addTaks($val);
+	}
+}
+
 $lock = $redis->get('startLock');
 if($lock !== false){
 	die;
 }
+
 $redis->setex('startLock', 600, $pid);
-
-$workerList = json_decode(file_get_contents("https://chaturbate100.com/list/"), true);
-
-$html = getPage("https://chaturbate.com/");
-preg_match_all('/page=(.*)</', $html, $pages);
-$pages = (int) $pages[1][array_search(max($pages[1]), $pages[1])];
-
-if($pages > 10){
-	$pages = 10;
-}
-
-randSleep();
-for($i=1; $i<=$pages; $i++){
-	$html = getPage("https://chaturbate.com/?page=$i");
-	preg_match_all('/alt="(.*)\'s/', $html, $tmp);
-	foreach($tmp[1] as $k => $v){
-		$rooms[] = $v;
-	}
-	randSleep();
-}
-$rooms = array_unique($rooms);
-
-foreach($rooms as $key => $val){
+foreach($var['api']['main'] as $key => $val){
 	if(!checkPID($pid)){
 		die;
 	}
-	if(checkWorker($val)){
-		continue;
-	}	
-	$room = getRoomInfo($val);
-	if(empty($room)){
-		$room['id'] = createRoom($val);
-		$room['last'] = 0;
-	}
-	if($room['last']+60*10 > time()){
-		continue;
-	}
-	$id = getRoomServer($val, $room['id']);
-	if($id){
-		startBot($val, $id);
-	}
-	randSleep();
+	addTaks($key);
 }
-
 $redis->delete('startLock');

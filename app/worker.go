@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"time"
 	"net/url"
-	"strconv"
 	"github.com/gorilla/websocket"
 )
 
 type Worker struct {
-	arg, method, online string
+	arg, method string
 	hello, join, count []byte
 	delay, timeout int64
 }
@@ -31,8 +30,7 @@ func getMethod(msg string) (string, string, bool) {
 
 func statRoom(room, server string, u url.URL) {
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	if err != nil {
-		//fmt.Println("dial:", err)
+	if err != nil { // dial
 		return
 	}
 	addRoom(room, server)
@@ -40,37 +38,32 @@ func statRoom(room, server string, u url.URL) {
 	worker := &Worker{
 		arg: "", 
 		method: "", 
-		online: "",
 		hello: []byte(`["{\"method\":\"connect\",\"data\":{\"user\":\"__anonymous__777\",\"password\":\"anonymous\",\"room\":\"` + room + `\",\"room_password\":\"12345\"}}"]`),
 		join: []byte(`["{\"method\":\"joinRoom\",\"data\":{\"room\":\"` + room + `\"}}"]`),
 		count: []byte(`["{\"method\":\"updateRoomCount\",\"data\":{\"model_name\":\"` + room + `\",\"private_room\":\"false\"}}"]`),
 		delay: time.Now().Unix() + 10,
-		timeout: time.Now().Unix() + 60*30,
+		timeout: time.Now().Unix() + 60*60,
 	}
 	
 	Loop:
 	for {
 		msgType, message, err := c.ReadMessage()
-		if err != nil {
-			//fmt.Println("Read error room:", room)
+		if err != nil { // Read error room
+			break 
+		}
+		
+		if !checkRoom(room) { // Exit room
 			break
 		}
 		
-		if !checkRoom(room) {
-			//fmt.Println("Exit room:", room)
-			break
-		}
-		
-		if time.Now().Unix() > worker.timeout {
-			//fmt.Println("Timeout room:", room)
-			break
+		if time.Now().Unix() > worker.timeout { // Timeout room
+			break 
 		}
 		
 		ok := true
 		worker.method, worker.arg, ok = getMethod(string(message))
-		if !ok {
-			//fmt.Println("Wrong getMethod:", room)
-			continue
+		if !ok { // Wrong getMethod
+			continue 
 		}
 
 		switch worker.method {
@@ -86,24 +79,16 @@ func statRoom(room, server string, u url.URL) {
 			if ok && args["amount"] != nil {
 				donator := fmt.Sprintf("%v", args["from_username"])
 				amount  := fmt.Sprintf("%v", args["amount"])
-				sendPost(room, donator, amount, "0")
-				worker.timeout = time.Now().Unix() + 60*30
+				sendPost(room, donator, amount)
+				worker.timeout = time.Now().Unix() + 60*60
 				fmt.Println("Room[", room, "]", donator, "donate", amount, "tokens")
-			}
-
-		case "onRoomCountUpdate":
-			if randInt(1, 5) == 1 { 
-				o, _ := strconv.ParseInt(worker.arg, 10, 64)
-				x := &saveData{room: room, donator: "", token: 0, online: o}
-				saveStat.online <- x
 			}
 
 		default:
 			if worker.delay < time.Now().Unix() {
 				worker.delay = time.Now().Unix() + 120
 				err := c.WriteMessage(msgType, worker.count)
-				if err != nil {
-					//fmt.Println("Write error room:", room)
+				if err != nil { // Write error room
 					break Loop
 				}
 			}

@@ -6,7 +6,7 @@ import (
     "time"
 )
 
-var saveStat = &Save{donate: make(chan *saveData), online: make(chan *saveData)}
+var saveStat = &Save{donate: make(chan *saveData)}
 
 func randInt(min int, max int) int {
     return min + rand.Intn(max-min)

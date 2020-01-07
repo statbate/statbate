@@ -23,16 +23,11 @@ type tableDonator struct {
 
 type saveData struct {
 	room, donator string
-	token, online int64
+	token int64
 }
 
 type Save struct {
 	donate chan *saveData
-	online chan *saveData
-}
-
-func saveOnline(conn *sqlx.DB, rid, online int64){
-	conn.Exec("INSERT INTO `online` (`rid`, `online`, `time`) VALUES (?, ?, unix_timestamp(now()))", rid, online)
 }
 
 func saveDonate(conn *sqlx.DB, did, rid, token int64) int64 {
@@ -105,28 +100,19 @@ func saveBase(s *Save, h *Hub){
 				lastID := saveDonate(conn, d, room.Id, info.token)
 				saveSphinx(sphinx, lastID, d, room.Id, info.token)
 				if info.token >= 100 {
-					//token := strconv.FormatInt(info.token, 10)
 					msg, err := json.Marshal(map[string]string{"room": info.room, "donator": info.donator, "amount": strconv.FormatInt(info.token, 10), "trackCount": countRooms()})
 					if err == nil {
 						h.broadcast <- msg
 						
 					}
-					//h.broadcast <- []byte(info.donator+" send "+token+" tokens to "+info.room)
 				}
-			}
-			case info := <-s.online:
-			room, ok := getRoomInfo(conn, info.room)
-			if ok {
-				saveOnline(conn, room.Id, info.online);
 			}
 		}
 	}
 }
 
-func sendPost(room, name, token, online string) {
+func sendPost(room, name, token string) {
 	t, _ :=  strconv.ParseInt(token, 10, 64)
-	o, _ :=  strconv.ParseInt(online, 10, 64)
-	
-	data := &saveData{room: room, donator: name, token: t, online: o}
+	data := &saveData{room: room, donator: name, token: t}
 	saveStat.donate <- data
 }

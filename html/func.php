@@ -6,7 +6,7 @@ if(basename(__FILE__) == basename($_SERVER["SCRIPT_FILENAME"])){
 try {
 	$db = new PDO("mysql:host=localhost;dbname=db", "user", "passwd");
 	$db->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
-	$db->exec("set names utf8mb4");
+	$db->exec("set names binary");
 }
 catch(PDOException $e) {
 	die('MySQL ERROR'.PHP_EOL);
@@ -24,7 +24,9 @@ catch(PDOException $e) {
 $redis = new Redis();
 $redis->connect('/var/run/redis/redis-server.sock');
 
-function getChacheName($val){
+$var['api'] = getOnlineList();
+
+function getCacheName($val){
 	return md5($val);
 }
 
@@ -94,7 +96,7 @@ function createRoom($name){
 
 function getList(){
 	global $redis;
-	$cname = getChacheName('onlineList');
+	$cname = getCacheName('onlineList');
 	$stat = getCache($cname);
 	if($stat !== false){
 		return $stat;
@@ -195,7 +197,7 @@ function getChartData($start){
 function getCharts(){
 	global $db, $sphinx, $redis;
 	
-	$cname = getChacheName('mainGraph');
+	$cname = getCacheName('mainGraph');
 	$stat = getCache($cname);
 	if($stat !== false){
 		return $stat;
@@ -249,7 +251,7 @@ function getCharts(){
 
 function getTopDons($room = ''){
 	global $db, $sphinx, $redis;
-	$cname = getChacheName('topDons'.$room);
+	$cname = getCacheName('topDons'.$room);
 	$stat = getCache($cname);
 	if($stat !== false){
 		return $stat;
@@ -284,9 +286,9 @@ function getAllIncome($id){
 }
 
 function getStat(){
-	global $db, $sphinx, $redis;
+	global $db, $sphinx, $redis, $var;
 	
-	$cname = getChacheName('topStat');
+	$cname = getCacheName('topStat');
 	$stat = getCache($cname);
 	if($stat !== false){
 		return $stat;
@@ -321,14 +323,14 @@ function getStat(){
 	$i = 0; $all = 0; $stat = '';
 	$gender = ['boy', 'girl', 'trans', 'couple'];
 	$tmpl = '<tr><td>{ID}</td><td>{URL}</td><td>{GENDER}</td><td>{LAST}</td><td>{ONLINE}</td><td>{USD}</td></tr>';
+	$list = [];
 	foreach($data as $key => $val){
 		$i++;
-
 		$val['token'] = toUSD($val['token']);
 		$all += $val['token'];
-
-		if($val['last']+60*10 > time()){
+		if(array_key_exists($key, $var['api']['list'])){
 			$val['last'] = '<font color="green">online</font>';
+			$list[] = $key;
 		}else{
 			$first_date = new DateTime(date('Y-m-d H:m:s', $val['last']));
 			$second_date = new DateTime(date('Y-m-d H:m:s', time()));
@@ -343,13 +345,14 @@ function getStat(){
 		$tr = str_replace('{USD}', "<a href=\"#\" data-show-room-stat={$val['id']} data-room-name=".strip_tags($key).">{$val['token']}</a>", $tr);
 		$stat .= $tr;
 	}
+	$redis->setex(getCacheName('top100list'), 1800, json_encode($list));
 	$redis->setex($cname, 600, $stat);
 	return $stat;
 }
 
 function getFinStat(){
 	global $sphinx, $redis;
-	$cname = getChacheName('topIncome');
+	$cname = getCacheName('topIncome');
 	$stat = getCache($cname);
 	if($stat !== false){
 		$stat = json_decode($stat, true);
@@ -390,4 +393,61 @@ function sendHistory($all = false){
 		$msg .= str_replace('%income%', toUSD($val['total']), $result);
 	}
 	telegram_send($msg);
+}
+
+function getOnlineList(){
+	global $db, $redis;
+	$cname = getCacheName('apiList');
+	$stat = getCache($cname);
+	if($stat !== false){
+		return json_decode($stat, true);
+	}
+	$stat = [];
+	$arr = json_decode(getAPI('https://chaturbate.com/affiliates/api/onlinerooms/?format=json&wm=50xHQ'), true);
+	usort($arr, function($a, $b) {
+		return $a['num_users'] < $b['num_users'];
+	});
+	foreach($arr as $val){
+		$stat['list'][$val['username']] = $val['num_users'];
+		if($val['num_users'] < 10){
+			continue;
+		}
+		$stat['main'][$val['username']] = $val['num_users'];
+
+		//save online
+		$room = getRoomInfo($val['username']);
+		if(!empty($room)){
+			$query = $db->prepare("INSERT INTO `online` (`rid`, `online`, `time`) VALUES (:rid, :online, unix_timestamp(now()))");
+			$query->bindParam(':rid', $room['id']);
+			$query->bindParam(':online', $val['num_users']);
+			$query->execute();
+		}
+	}
+	$redis->setex($cname, 300, json_encode($stat));
+	return $stat;
+}
+
+// Sometimes cloudflare block request - without cookie
+// best way use https://github.com/KyranRana/cloudflare-bypass
+function getAPI($url){
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $url);
+
+	curl_setopt($ch, CURLOPT_COOKIEJAR, '/var/www/cookie/cookies.txt');
+	curl_setopt($ch, CURLOPT_COOKIEFILE, '/var/www/cookie/cookies.txt');
+
+	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLINFO_HEADER_OUT, true);
+	curl_setopt($ch, CURLOPT_HTTPHEADER,
+		array(
+			"Upgrade-Insecure-Requests: 1",
+			"User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
+			"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
+			"Accept-Language: en-US,en;q=0.9"
+		));
+
+	$output = curl_exec($ch);
+	curl_close($ch);
+	return $output;
 }
