@@ -1,3 +1,4 @@
+#!/usr/bin/env php
 <?php
 
 if(php_sapi_name() != "cli"){
@@ -6,33 +7,109 @@ if(php_sapi_name() != "cli"){
 
 $pid = getmypid();
 
-require_once('autoload.php');
 require_once('/var/www/chaturbate100.com/func.php');
 
-use CloudflareBypass\CFCurlImpl;
-use CloudflareBypass\Model\UAMOptions;
+function newCookie(){
+	global $redis;
+	$command = escapeshellcmd('/home/stat/python/cookie.py');
+	$json = shell_exec($command);
+	$arr = json_decode($json, true);
+	$cookie = '';
+	foreach($arr as $k => $v){
+		if($k != 'ua'){
+			$cookie .= "$k=$v;";
+		}
+	}
+	$result = ['cookie' => $cookie, 'agent' => $arr['ua']['User-Agent']];
+	$cname = getCacheName('pageCookie');
+	$redis->setex($cname, 60*60*24*30, json_encode($result));
+	return $result;
+}
+
+function getCookie(){
+	global $redis;
+	$cname = getCacheName('pageCookie');
+	$result = $redis->get($cname);
+	if($result === false){
+		return newCookie();
+	}
+	return json_decode($result, true);
+}
+
+function checkCloudflare($html){
+	$res = preg_match("/<title>(.*)<\/title>/siU", $html, $title_matches);
+	if(!empty($title_matches[1])){
+		$title = preg_replace('/\s+/', ' ', $title_matches[1]);
+		$title = trim($title);
+		if (strpos($title, 'Cloudflare') !== false) {
+			return true;
+		}
+	}
+	return false;
+}
 
 function getPage($url){
-	$ch = curl_init($url);
+	$h = getCookie();
+	$cookie_file = '/home/stat/php/cli/cookies.txt';
+	
+	$headers = [
+		"User-Agent: {$h["agent"]}",
+	];
+
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $url);
+	curl_setopt($ch, CURLOPT_COOKIESESSION, true);
+	curl_setopt($ch, CURLOPT_COOKIEJAR, $cookie_file);
+	curl_setopt($ch, CURLOPT_COOKIEFILE, $cookie_file);
+	curl_setopt($ch, CURLOPT_COOKIE, "{$h["cookie"]}");
+	
 	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($ch, CURLINFO_HEADER_OUT, true);
-	curl_setopt($ch, CURLOPT_HTTPHEADER,
-		array(
-			"Upgrade-Insecure-Requests: 1",
-			"User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
-			"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
-			"Accept-Language: en-US,en;q=0.9"
-		));
-	$cfCurl = new CFCurlImpl();
-	$cfOptions = new UAMOptions();
-	$cfOptions->setVerbose(true);
-	try {
-		$page = $cfCurl->exec($ch, $cfOptions);
-		return $page;
-	} catch (ErrorException $ex) {
-		return $ex->getMessage();
+	curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+	$output = curl_exec($ch);
+	$info = curl_getinfo($ch);
+	curl_close($ch);
+	
+	if(checkCloudflare($output)){
+		newCookie();
+		die;
 	}
+	
+	return $output;
+}
+
+function getOnlineList(){
+	global $db, $redis;
+	$cname = getCacheName('apiList');
+	$stat = getCache($cname);
+	if($stat !== false){
+		return json_decode($stat, true);
+	}
+	$stat = [];
+	$arr = json_decode(getPage('https://chaturbate.com/affiliates/api/onlinerooms/?format=json&wm=50xHQ'), true);
+	usort($arr, function($a, $b) {
+		return $a['num_users'] < $b['num_users'];
+	});
+	foreach($arr as $val){
+		$stat['list'][$val['username']] = $val['num_users'];
+		if($val['num_users'] < 10){
+			continue;
+		}
+		$stat['main'][$val['username']] = $val['num_users'];
+
+		//save online
+		$room = getRoomInfo($val['username']);
+		if(!empty($room)){
+			$query = $db->prepare("INSERT INTO `online` (`rid`, `online`, `time`) VALUES (:rid, :online, unix_timestamp(now()))");
+			$query->bindParam(':rid', $room['id']);
+			$query->bindParam(':online', $val['num_users']);
+			$query->execute();
+		}
+	}
+	$redis->setex($cname, 1800, json_encode($stat));
+	return $stat;
 }
 
 function getRoomServer($room, $id){
@@ -97,6 +174,10 @@ function addTaks($key){
 	randSleep();
 }
 
+//var_dump(getPage("https://chaturbate.com/angelaagh/"));
+//die;
+
+$var['api'] = getOnlineList();
 $workerList = json_decode(file_get_contents('https://chaturbate100.com/list/'), true);
 
 // add top 100 first

@@ -24,8 +24,6 @@ catch(PDOException $e) {
 $redis = new Redis();
 $redis->connect('/var/run/redis/redis-server.sock');
 
-$var['api'] = getOnlineList();
-
 function getCacheName($val){
 	return md5($val);
 }
@@ -52,7 +50,7 @@ function cleanData(){
 
 function updateCache($key){
 	global $redis;
-	if($_SERVER['REMOTE_ADDR'] == '127.0.0.1' && $redis->ttl($key) < 90){
+	if((php_sapi_name() == "cli" || $_SERVER['REMOTE_ADDR'] == '127.0.0.1') && $redis->ttl($key) < 90){
 		return true;
 	}
 	return false;
@@ -286,7 +284,7 @@ function getAllIncome($id){
 }
 
 function getStat(){
-	global $db, $sphinx, $redis, $var;
+	global $db, $sphinx, $redis;
 	
 	$cname = getCacheName('topStat');
 	$stat = getCache($cname);
@@ -324,11 +322,13 @@ function getStat(){
 	$gender = ['boy', 'girl', 'trans', 'couple'];
 	$tmpl = '<tr><td>{ID}</td><td>{URL}</td><td>{GENDER}</td><td>{LAST}</td><td>{ONLINE}</td><td>{USD}</td></tr>';
 	$list = [];
+	$apiList = json_decode(getCache(getCacheName('apiList')), true);
 	foreach($data as $key => $val){
 		$i++;
 		$val['token'] = toUSD($val['token']);
 		$all += $val['token'];
-		if(array_key_exists($key, $var['api']['list'])){
+		
+		if(array_key_exists($key, $apiList['list'])){
 			$val['last'] = '<font color="green">online</font>';
 			$list[] = $key;
 		}else{
@@ -346,9 +346,10 @@ function getStat(){
 		$stat .= $tr;
 	}
 	$redis->setex(getCacheName('top100list'), 1800, json_encode($list));
-	$redis->setex($cname, 600, $stat);
+	$redis->setex($cname, 600, $stat);	
 	return $stat;
 }
+
 
 function getFinStat(){
 	global $sphinx, $redis;
@@ -395,41 +396,11 @@ function sendHistory($all = false){
 	telegram_send($msg);
 }
 
-function getOnlineList(){
-	global $db, $redis;
-	$cname = getCacheName('apiList');
-	$stat = getCache($cname);
-	if($stat !== false){
-		return json_decode($stat, true);
-	}
-	$stat = [];
-	$arr = json_decode(getAPI('https://chaturbate.com/affiliates/api/onlinerooms/?format=json&wm=50xHQ'), true);
-	usort($arr, function($a, $b) {
-		return $a['num_users'] < $b['num_users'];
-	});
-	foreach($arr as $val){
-		$stat['list'][$val['username']] = $val['num_users'];
-		if($val['num_users'] < 10){
-			continue;
-		}
-		$stat['main'][$val['username']] = $val['num_users'];
-
-		//save online
-		$room = getRoomInfo($val['username']);
-		if(!empty($room)){
-			$query = $db->prepare("INSERT INTO `online` (`rid`, `online`, `time`) VALUES (:rid, :online, unix_timestamp(now()))");
-			$query->bindParam(':rid', $room['id']);
-			$query->bindParam(':online', $val['num_users']);
-			$query->execute();
-		}
-	}
-	$redis->setex($cname, 300, json_encode($stat));
-	return $stat;
-}
-
 // Sometimes cloudflare block request - without cookie
 // best way use https://github.com/KyranRana/cloudflare-bypass
 function getAPI($url){
+	
+	return;
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, $url);
 
