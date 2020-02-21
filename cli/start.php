@@ -86,7 +86,7 @@ function getOnlineList(){
 	$stat = []; $d = ['rooms' => 0, 'viewers' => 0];
 	$arr = json_decode(getPage('https://chaturbate.com/affiliates/api/onlinerooms/?format=json&wm=50xHQ'), true);
 	
-	if(!is_array($arr) || empty($array)){
+	if(!is_array($arr) || empty($arr)){
 		die;
 	}
 	
