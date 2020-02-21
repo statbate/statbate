@@ -1,6 +1,5 @@
 #!/usr/bin/env php
 <?php
-
 if(php_sapi_name() != "cli"){
 	die;
 }
@@ -134,8 +133,12 @@ function getRoomServer($room, $id){
     if(empty($server['1'])){
 		return false;
 	}
-	$server['1'] = (int) filter_var($server['1'], FILTER_SANITIZE_NUMBER_INT);
-	return $server['1'];
+	$server['1'] = str_replace("\u002D", "-", $server['1']);
+	$result = preg_replace("/[^0-9-]/", "", $server['1']);
+	if(empty($result)){
+		return false;
+	}
+	return $result;
 }
 
 function startBot($name, $server){
@@ -170,11 +173,14 @@ function addTaks($key){
 	$room = getRoomInfo($key);
 	$c = getCacheName('server'.$key);
 	$id = getCache($c);
-	if($id === false){ // cache for fast startup
+	//if($id === false){ // cache for fast startup
 		$id = getRoomServer($key, $room['id']);
+		if($id == false){
+			return;
+		}
 		$redis->setex($c, 1200, $id);
 		sleep(1);
-	}
+	//}
 	startBot($key, $id);
 }
 
