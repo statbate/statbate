@@ -82,33 +82,48 @@ function getPage($url){
 
 function getOnlineList(){
 	global $db, $redis;
-	$cname = getCacheName('apiList');
-	$stat = getCache($cname);
-	if($stat !== false){
-		return json_decode($stat, true);
-	}
-	$stat = [];
+	$gender = ['m', 'f', 's', 'c'];
+	$stat = []; $d = ['rooms' => 0, 'viewers' => 0];
 	$arr = json_decode(getPage('https://chaturbate.com/affiliates/api/onlinerooms/?format=json&wm=50xHQ'), true);
+	
+	if(!is_array($arr) || empty($array)){
+		die;
+	}
+	
+	$d['rooms'] = count($arr);
 	usort($arr, function($a, $b) {
 		return $a['num_users'] < $b['num_users'];
 	});
+	
+	$avg = round(array_sum(array_column($arr, 'num_users'))/count($arr));
+	
 	foreach($arr as $val){
+		$d['viewers'] += $val['num_users'];
 		$stat['list'][$val['username']] = $val['num_users'];
-		if($val['num_users'] < 10){
+		if($val['num_users'] < $avg){
 			continue;
 		}
 		$stat['main'][$val['username']] = $val['num_users'];
-
-		//save online
 		$room = getRoomInfo($val['username']);
 		if(!empty($room)){
+			//save online
 			$query = $db->prepare("INSERT INTO `online` (`rid`, `online`, `time`) VALUES (:rid, :online, unix_timestamp(now()))");
 			$query->bindParam(':rid', $room['id']);
 			$query->bindParam(':online', $val['num_users']);
 			$query->execute();
-		}
+			
+			//update gender
+			$g = array_search($val['gender'], $gender);
+			if($room['gender'] != $g){
+				$query = $db->prepare("UPDATE `room` SET `gender` = :gender WHERE `id` = :id");
+				$query->bindParam(':id', $room['id']);
+				$query->bindParam(':gender', $g);
+				$query->execute();
+			}
+		}		
 	}
-	$redis->setex($cname, 1800, json_encode($stat));
+	$redis->setex(getCacheName('apiOnline'), 900, json_encode($d));
+	$redis->setex(getCacheName('apiList'), 900, json_encode($stat));
 	return $stat;
 }
 
@@ -120,21 +135,13 @@ function getRoomServer($room, $id){
 		return false;
 	}
 	$server['1'] = (int) filter_var($server['1'], FILTER_SANITIZE_NUMBER_INT);
-	$gender = ['male', 'female', 'trans', 'couple'];
-	preg_match('/broadcaster_gender: \'(.*)\',/', $html, $sex);
-	if(!empty($sex['1']) && in_array($sex['1'], $gender)){
-		$gender = array_search($sex['1'], $gender);
-		$query = $db->prepare("UPDATE `room` SET `gender` = :gender WHERE `id` = :id");
-		$query->bindParam(':id', $id);
-		$query->bindParam(':gender', $gender);
-		$query->execute();
-	}
 	return $server['1'];
 }
 
 function startBot($name, $server){
 	$server = 'chatws'.$server;
-	echo "start $name $server\n";
+	$date = date('H:i:s', time());
+	echo "[$date] start $name $server\n";
 	file_get_contents("https://chaturbate100.com/cmd/?room=$name&server=$server");
 }
 
@@ -155,30 +162,39 @@ function checkWorker($room){
 	return false;
 }
 
-function randSleep(){	
-	usleep(random_int(1000000, 3000000));
-}
-
 function addTaks($key){
+	global $redis;
 	if(checkWorker($key)){
 		return;
-	}	
+	}
 	$room = getRoomInfo($key);
-	if(empty($room)){
-		$room['id'] = createRoom($key);
+	$c = getCacheName('server'.$key);
+	$id = getCache($c);
+	if($id === false){ // cache for fast startup
+		$id = getRoomServer($key, $room['id']);
+		$redis->setex($c, 1200, $id);
+		sleep(1);
 	}
-	$id = getRoomServer($key, $room['id']);
-	if($id){
-		startBot($key, $id);
-	}
-	randSleep();
+	startBot($key, $id);
 }
 
-//var_dump(getPage("https://chaturbate.com/angelaagh/"));
-//die;
+function cacheList(){
+	global $redis;
+	$json = file_get_contents('https://chaturbate100.com/list/');
+	$arr = json_decode($json, true);
+	foreach($arr as $k => $v){
+		$id = preg_replace('/[^0-9.]+/', '', $v);
+		if(!empty($id)){
+			$c = getCacheName('server'.$k);
+			$redis->setex($c, 1200, $id);
+			//echo "add cache: $k = $c = $id\n";
+		}
+	}
+	return $arr;
+}
 
 $var['api'] = getOnlineList();
-$workerList = json_decode(file_get_contents('https://chaturbate100.com/list/'), true);
+$workerList = cacheList();
 
 // add top 100 first
 $top100 = $redis->get(getCacheName('top100list'));
@@ -194,7 +210,7 @@ if($lock !== false){
 	die;
 }
 
-$redis->setex('startLock', 600, $pid);
+$redis->setex('startLock', 285, $pid);
 foreach($var['api']['main'] as $key => $val){
 	if(!checkPID($pid)){
 		die;

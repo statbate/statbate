@@ -16,7 +16,7 @@ body {
 }
 
 .wslog {
-    height: 145px;
+    height: 152px;
     width: 60%;
     margin-left: 10px;
     background-color: #efefef;
@@ -39,12 +39,13 @@ body {
 
 .wstext {
     margin-left: 5px;
-    margin-top: 5px;
+    margin-top: 4px;
     margin-right: 5px;
     margin-bottom: 5px;
 }
 
 .message {
+	height: 18px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -53,7 +54,6 @@ body {
 
 .rinfo {
     margin-left: 20px;
-    //height: 127px;
     width: 35%;
     border-radius: 4px;
     float: left;
@@ -72,8 +72,8 @@ body {
 }
 
 .content-box {
-    padding-top: 20px;
-    padding-bottom: 20px;
+    padding-top: 12px;
+    padding-bottom: 12px;
 }
 
 a,

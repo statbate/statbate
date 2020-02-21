@@ -13,11 +13,10 @@ $track = trackCount();
 		<title>Chaturbate Top 100</title>
 		<meta name="description" content="How much do webcam models make?" />
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-		<meta name="yandex-verification" content="0fa1c2921d5f7992" />
 		<link rel="stylesheet" href="/css/bootstrap.min.css">
 		<link rel="stylesheet" href="/css/dataTables.bootstrap4.min.css">
 		<link rel="stylesheet" href="/css/metricsgraphics.min.css">
-		<link rel="stylesheet" href="/css/main.css?1000">
+		<link rel="stylesheet" href="/css/main.css?1004">
 		<script src="/js/jquery.js"></script>
 		<script src="/js/d3.v4.min.js"></script>
 		<script src="/js/metricsgraphics.min.js"></script>
@@ -25,8 +24,7 @@ $track = trackCount();
 		<script src="/js/bootstrap.min.js"></script>
 		<script src="/js/jquery.dataTables.min.js"></script>
 		<script src="/js/dataTables.bootstrap4.min.js"></script>		
-		<script src="/js/main.js?1000"></script>
-		
+		<script src="/js/main.js?1002"></script>
 		<style>
 			
 			.x11 {
@@ -38,22 +36,6 @@ $track = trackCount();
 			}
 			
 		</style>
-		
-		<!-- Yandex.Metrika counter -->
-		<script type="text/javascript" >
-		   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-		   m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-		   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-
-		   ym(55635442, "init", {
-				clickmap:true,
-				trackLinks:true,
-				accurateTrackBounce:true
-		   });
-		</script>
-		<noscript><div><img src="https://mc.yandex.ru/watch/55635442" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-		<!-- /Yandex.Metrika counter -->
-		
 	</head>
 	<body>
 		<div class="content-box">
@@ -96,11 +78,11 @@ $track = trackCount();
 					</div>
 					
 					<div class="clear"></div>	
-					<div style="height: 145px;">
+					<div style="height: 152px;">
 						<div class="wslog">
 							<div class="wstext"></div>
 						</div>
-						<div class="rinfo" style="height: 145px;">		
+						<div class="rinfo">		
 							<center>
 								<style>
 									 .table-curved {
@@ -114,22 +96,22 @@ $track = trackCount();
 								</style>
 								<table class="table table-curved table-bordered" style="margin-bottom: 0px; margin-top: 0px;" >
 									<tr>
-										<th colspan="2" style="font-weight: normal; padding: 4px 0px;">Statistics for the last 30 days</th>
+										<th height="28" colspan="2" style="font-weight: normal; padding: 4px 0px;">Statistics for the last 30 days</th>
 									</tr>
 									<tbody>
-										<tr>
-											<td style="padding: 5px 0px;">Total income</td>
-											<td style="padding: 5px 12px;">&#36;<?php echo $fin['total']; ?></td>
+										<tr height="32">
+											<td>Total income</td>
+											<td style="padding: 6px 12px;">&#36;<?php echo $fin['total']; ?></td>
 										</tr>
-										<tr>
+										<tr height="30">
 											<td style="padding: 5px 0px;">Average income</td>
 											<td style="padding: 5px 12px;">&#36;<?php echo round($fin['total']/$fin['count']); ?></td>
 										</tr>
-										<tr>
+										<tr height="30">
 											<td style="padding: 5px 0px;">Average tip</td>
 											<td style="padding: 5px 12px;">&#36;<?php echo $fin['avg']; ?></td>
 											</tr>
-										<tr>
+										<tr height="30">
 											<td style="padding: 5px 0px;">One token</td>
 											<td style="padding: 5px 12px;"><a href="https://support.chaturbate.com/customer/en/portal/articles/2743888-how-do-i-convert-tokens-to-cash-">&#36;0.05</a></td>
 										</tr>
@@ -165,7 +147,7 @@ $track = trackCount();
 			</div>	
 		</div>
 		
-		<div style="padding-bottom: 35px;">
+		<div style="padding-bottom: 29px;">
 			<div style="float: right;">
 				GitHub: <a href="https://github.com/poiuty/chaturbate100.com" target="_blank">source code</a>
 			</div>
@@ -231,5 +213,5 @@ $track = trackCount();
 				</div>
 			</div>
 		</div>
-	</body>
+	</body>	
 </html>

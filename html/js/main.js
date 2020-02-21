@@ -27,6 +27,7 @@ $(document).on("click", "[data-show-room-stat]", function(e) {
 			width: 380,
 			height: 120,
 			right: 10,
+			missing_is_zero: true,
 			top: 30,
 			bottom: 0,
 			left: 40,
@@ -68,6 +69,35 @@ $(document).ready(function() {
     });
 });
 
+function printWsText(text){
+	if(text.length > 0){
+		date = new Date();
+		xMin = (date.getMinutes() < 10 ? '0' : '') + date.getMinutes()
+		xSec = (date.getSeconds() < 10 ? '0' : '') + date.getSeconds()
+		time = date.getHours() + ":" + xMin + ":" + xSec;
+		$(".wstext").prepend('<div class="message">[' + time + '] ' + text + '</div>');
+		msg = $('.wstext .message');
+		if (msg.length > 8) {
+			msg.last().remove();
+		}
+	}
+}
+
+function printOnlineStat(){
+	$.get("//"+document.domain+"/public/online.php", function(text){
+		if(text.length > 0){
+			printWsText(text);
+		}
+	});
+}
+
+$(document).ready(function() {
+	setTimeout(function getOnlineStat() {
+		printOnlineStat();
+		setTimeout(getOnlineStat, 60000);
+	}, 1000);
+});
+
 function bStat() {
     var sock = new WebSocket('wss://chaturbate100.com/ws/');
     sock.onopen = function() {
@@ -83,16 +113,11 @@ function bStat() {
 		if(Math.floor(Math.random() * 5) == 1){
 			$("#trackCount").html("<a href=\"https://chaturbate100.com/?list\">track "+j.trackCount+" rooms</a>");
 		}
-        date = new Date();
-        xMin = (date.getMinutes() < 10 ? '0' : '') + date.getMinutes()
-        xSec = (date.getSeconds() < 10 ? '0' : '') + date.getSeconds()
-        time = date.getHours() + ":" + xMin + ":" + xSec;
         text = "<a href='/public/move.php?room="+j.donator+"' target='_blank'>"+j.donator+"</a> send "+j.amount+" tokens to <a href='/public/move.php?room="+j.room+"' target='_blank'>"+j.room+"</a>";
-        $(".wstext").prepend('<div class="message">[' + time + '] ' + text + '</div>');
-        msg = $('.wstext .message');
-        if (msg.length > 8) {
-            msg.last().remove();
-        }
+        if(j.amount > 499){
+			text = '<font color="#ae8d0b"><b>' +  text + '</b></font>';
+		}
+		printWsText(text);
     };
     sock.onclose = function() {
         console.log('close');

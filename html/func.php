@@ -73,23 +73,14 @@ function getRoomInfo($name){
 	$query = $db->prepare('SELECT * FROM `room` WHERE `name` = :name');
 	$query->bindParam(':name', $name);
 	$query->execute();
-	if($query->rowCount() == 0){
-		return false;	
+	if($query->rowCount() > 0){
+		return $query->fetch();
 	}
-	return $query->fetch();
-}
-
-function createRoom($name){
-	global $db;
-	$query = $db->prepare('SELECT `id` FROM `room` WHERE `name` = :name');
+	$query = $db->prepare('INSERT INTO `room` (`name`) VALUES (:name)');
 	$query->bindParam(':name', $name);
 	$query->execute();
-	if($query->rowCount() == 0){
-		$query = $db->prepare('INSERT INTO `room` (`name`) VALUES (:name)');
-		$query->bindParam(':name', $name);
-		$query->execute();
-		return $db->lastInsertId();
-	}
+	$id = $db->lastInsertId();
+	return ['id' => $id, 'name' => $name, 'gender' => 0, 'last' => 0];		
 }
 
 function getList(){
@@ -230,11 +221,15 @@ function getCharts(){
 	}
 
 	$last = 0;
+	$bl = ['2020-01-09'];
 	foreach($arr as $key => $val){
-		if($last/2 > $val && $end != $key){
-			continue;
+		$d = date('Y-m-d', strtotime($key));
+		if($end != $key){
+			if($last/2 > $val || in_array($d, $bl)){
+				continue;
+			}
 		}
-		$k[] = ['date' => date('Y-m-d', strtotime($key)),  'value' => round($val*0.05)];
+		$k[] = ['date' => $d, 'value' => round($val*0.05)];
 		$last = $val;
 	}
 		
@@ -288,7 +283,7 @@ function getStat(){
 	
 	$cname = getCacheName('topStat');
 	$stat = getCache($cname);
-	if($stat !== false){
+	if($stat !== false && getCache(getCacheName('top100list')) !== false){
 		return $stat;
 	}
 	
@@ -350,7 +345,6 @@ function getStat(){
 	return $stat;
 }
 
-
 function getFinStat(){
 	global $sphinx, $redis;
 	$cname = getCacheName('topIncome');
@@ -394,31 +388,4 @@ function sendHistory($all = false){
 		$msg .= str_replace('%income%', toUSD($val['total']), $result);
 	}
 	telegram_send($msg);
-}
-
-// Sometimes cloudflare block request - without cookie
-// best way use https://github.com/KyranRana/cloudflare-bypass
-function getAPI($url){
-	
-	return;
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_URL, $url);
-
-	curl_setopt($ch, CURLOPT_COOKIEJAR, '/var/www/cookie/cookies.txt');
-	curl_setopt($ch, CURLOPT_COOKIEFILE, '/var/www/cookie/cookies.txt');
-
-	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt($ch, CURLINFO_HEADER_OUT, true);
-	curl_setopt($ch, CURLOPT_HTTPHEADER,
-		array(
-			"Upgrade-Insecure-Requests: 1",
-			"User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
-			"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
-			"Accept-Language: en-US,en;q=0.9"
-		));
-
-	$output = curl_exec($ch);
-	curl_close($ch);
-	return $output;
 }

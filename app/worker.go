@@ -41,28 +41,41 @@ func statRoom(room, server string, u url.URL) {
 		hello: []byte(`["{\"method\":\"connect\",\"data\":{\"user\":\"__anonymous__777\",\"password\":\"anonymous\",\"room\":\"` + room + `\",\"room_password\":\"12345\"}}"]`),
 		join: []byte(`["{\"method\":\"joinRoom\",\"data\":{\"room\":\"` + room + `\"}}"]`),
 		count: []byte(`["{\"method\":\"updateRoomCount\",\"data\":{\"model_name\":\"` + room + `\",\"private_room\":\"false\"}}"]`),
-		delay: time.Now().Unix() + 10,
+		delay: time.Now().Unix() + 20,
 		timeout: time.Now().Unix() + 60*60,
 	}
 	
-	Loop:
 	for {
 		msgType, message, err := c.ReadMessage()
-		if err != nil { // Read error room
+		if err != nil {
+			fmt.Println("Read error room:", room)
+			fmt.Println(err.Error())
 			break 
 		}
 		
-		if !checkRoom(room) { // Exit room
+		if !checkRoom(room) { 
+			fmt.Println("Exit room:", room)
 			break
 		}
 		
-		if time.Now().Unix() > worker.timeout { // Timeout room
+		if time.Now().Unix() > worker.timeout { 
+			fmt.Println("Timeout room:", room)
 			break 
+		}
+		
+		if worker.delay < time.Now().Unix() {
+			err := c.WriteMessage(msgType, worker.count)
+			if err != nil { // Write error room
+				fmt.Println("Write error room:", room)
+				break
+			}
+			worker.delay = time.Now().Unix() + 60
 		}
 		
 		ok := true
 		worker.method, worker.arg, ok = getMethod(string(message))
-		if !ok { // Wrong getMethod
+		if !ok {
+			//fmt.Println("Wrong getMethod:", room)
 			continue 
 		}
 
@@ -81,16 +94,7 @@ func statRoom(room, server string, u url.URL) {
 				amount  := fmt.Sprintf("%v", args["amount"])
 				sendPost(room, donator, amount)
 				worker.timeout = time.Now().Unix() + 60*60
-				fmt.Println("Room[", room, "]", donator, "donate", amount, "tokens")
-			}
-
-		default:
-			if worker.delay < time.Now().Unix() {
-				worker.delay = time.Now().Unix() + 120
-				err := c.WriteMessage(msgType, worker.count)
-				if err != nil { // Write error room
-					break Loop
-				}
+				//fmt.Println("Room[", room, "]", donator, "donate", amount, "tokens")
 			}
 		}
 	}
