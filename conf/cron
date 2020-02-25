@@ -1,0 +1,4 @@
+*/5 * * * *  stat   php    /home/stat/php/start.php  > /home/stat/php/log.txt 2>&1
+0 12 1 * *  stat   php    /home/stat/php/telegram.php      >/dev/null 2>&1
+0 12 15 */3 *  stat   php    /home/stat/php/telegram2.php      >/dev/null 2>&1
+* * * * *  www-data   curl   --silent https://chaturbate100.com/index.php  >/dev/null 2>&1
