@@ -1,0 +1,16 @@
+[Unit]
+Description=Stat Daemon
+After=network.target manticore.service
+
+[Service]
+LimitNOFILE=65535
+Type=simple
+GuessMainPID=no
+ExecStart=/home/stat/go/app/app
+Restart=always
+User=stat
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
