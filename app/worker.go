@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 	"net/url"
+	"strings"
 	"github.com/gorilla/websocket"
 )
 
@@ -14,18 +15,18 @@ type Worker struct {
 }
 
 func getMethod(msg string) (string, string, bool) {
-	arg := ""
 	if len(msg) < 2 { // o, h, g
-		return msg, arg, true
+		return msg, "", true
 	}
 	data, ok := parseMes(msg)
 	if !ok {
 		return "", "", false
 	}
-	if len(data[0].Args) > 0 {
-		arg = data[0].Args[0]
-	}	
-	return data[0].Method, arg, true
+	arg := ""
+	if len(data.Args) > 0 {
+		arg = data.Args[0]
+	}
+	return data.Method, arg, true
 }
 
 func statRoom(room, server string, u url.URL) {
@@ -78,7 +79,7 @@ func statRoom(room, server string, u url.URL) {
 			//fmt.Println("Wrong getMethod:", room)
 			continue 
 		}
-
+		
 		switch worker.method {
 
 		case "o":
@@ -90,10 +91,14 @@ func statRoom(room, server string, u url.URL) {
 		case "onNotify":
 			args, ok = parseArg(worker.arg)
 			if ok && args["amount"] != nil {
-				donator := fmt.Sprintf("%v", args["from_username"])
-				amount  := fmt.Sprintf("%v", args["amount"])
+				donator := args["from_username"].(string)
+				amount  := int64(args["amount"].(float64))
+				if len(strings.TrimSpace(donator)) < 3 { // Skip empty from_username
+					continue
+				}
 				sendPost(room, donator, amount)
 				worker.timeout = time.Now().Unix() + 60*60
+				fmt.Println(string(message))
 				//fmt.Println("Room[", room, "]", donator, "donate", amount, "tokens")
 			}
 		}

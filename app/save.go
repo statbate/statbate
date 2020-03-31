@@ -111,8 +111,8 @@ func saveBase(s *Save, h *Hub){
 	}
 }
 
-func sendPost(room, name, token string) {
-	t, _ :=  strconv.ParseInt(token, 10, 64)
-	data := &saveData{room: room, donator: name, token: t}
+func sendPost(room string, name string, token int64) {
+	//t, _ :=  strconv.ParseInt(token, 10, 64)
+	data := &saveData{room: room, donator: name, token: token}
 	saveStat.donate <- data
 }
