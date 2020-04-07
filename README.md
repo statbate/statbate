@@ -1,3 +1,5 @@
+<img src="https://raw.githubusercontent.com/poiuty/chaturbate100.com/master/html/img/github.jpg">
+
 ```
 apt-get update
 apt-get upgrade
@@ -22,5 +24,10 @@ chown -R stat:stat /home/app
 chown -R www-data:www-data /var/www/chaturbate100.com
 ```
 
-
-<img src="https://raw.githubusercontent.com/poiuty/chaturbate100.com/master/html/img/github.jpg">
+1. <a href="https://github.com/poiuty/chaturbate100.com/blob/master/install/mariadb.md">Mariadb</a><br/>
+2. <a href="https://github.com/poiuty/chaturbate100.com/blob/master/install/manticoresearch.md">ManticoreSearch</a><br/>
+3. <a href="https://github.com/poiuty/chaturbate100.com/blob/master/install/nginx.md">Nginx</a><br/>
+4. <a href="https://github.com/poiuty/chaturbate100.com/blob/master/install/php.md">PHP</a><br/>
+5. <a href="https://github.com/poiuty/chaturbate100.com/blob/master/install/python.md">Python</a><br/>
+6. <a href="https://github.com/poiuty/chaturbate100.com/blob/master/install/redis.md">Redis</a><br/>
+7. <a href="https://github.com/poiuty/chaturbate100.com/blob/master/install/app.md">App</a>
