@@ -31,7 +31,7 @@ chown -R www-data:www-data /var/www/chaturbate100.com
 5. <a href="https://github.com/poiuty/chaturbate100.com/blob/master/install/python.md">Python</a><br/>
 6. <a href="https://github.com/poiuty/chaturbate100.com/blob/master/install/redis.md">Redis</a><br/>
 7. <a href="https://github.com/poiuty/chaturbate100.com/blob/master/install/app.md">App</a>
-8. Add <a href="https://github.com/poiuty/chaturbate100.com/blob/master/conf/cron">cron</a>.
+8. Add <a href="https://github.com/poiuty/chaturbate100.com/blob/master/conf/cron">cron</a>
 ```
 # nano /etc/cron.d/php
 
