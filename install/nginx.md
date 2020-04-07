@@ -13,5 +13,11 @@ certbot certonly --webroot -w /var/www/html -d chaturbate100.com -m test@test.co
 
 Update config files.
 ```
+wget -O /etc/nginx/nginx.conf https://raw.githubusercontent.com/poiuty/chaturbate100.com/master/conf/nginx.conf
 wget -O /etc/nginx/sites-available/default https://raw.githubusercontent.com/poiuty/chaturbate100.com/master/conf/default
+```
+
+```
+systemctl restart nginx
+systemctl status nginx
 ```
