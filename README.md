@@ -2,7 +2,8 @@
 apt-get update
 apt-get upgrade
 apt-get install htop bwm-ng strace lsof iotop nginx redis-server python-pip git build-essential screen
-apt-get install php-cli php-fpm php-redis php-mysql php-xml php-json php-gd php-igbinary php-curl php-mbstring php-xml
+apt-get install php-cli php-fpm 
+apt-get install php-redis php-mysql php-xml php-json php-gd php-igbinary php-curl php-mbstring php-xml
 ```
 ```
 # adduser --disabled-login stat
