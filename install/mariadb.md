@@ -7,6 +7,8 @@ add-apt-repository 'deb [arch=amd64] http://mirror.rackspace.com/mariadb/repo/10
 
 apt-get update
 apt-get install mariadb-server
+mysql_secure_installation
+mysql -uroot -p
 ```
 
 MariaDB config
