@@ -5,4 +5,4 @@ if(empty($_POST['room']) || !ctype_digit($_POST['room'])){
 	die;
 }
 
-echo getAllIncome($_POST['room']);
+echo dotFormat(getAllIncome($_POST['room']));

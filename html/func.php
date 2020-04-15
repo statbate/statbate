@@ -152,7 +152,14 @@ function getDonName($id){
 	$select = $db->prepare('SELECT `name` FROM `donator` WHERE `id` = :id');
 	$select->bindParam(':id', $id);
 	$select->execute();
-	return $select->fetch()['name'];
+	
+	$name = $select->fetch()['name'];
+	
+	if(empty($name)){
+		var_dump($id);
+	}
+	
+	return $name;
 }
 
 function getModelChartData($id){
@@ -182,6 +189,73 @@ function getChartData($start){
 	return [$row['ndate'], $row['total']];
 }
 
+function genderIncome($start){
+	global $db;
+	$arr = [];
+	$result = [0, 0, 0, 0];
+	$end = strtotime("+1 day", strtotime($start));
+	$start = strtotime($start);	
+	$query = $db->query("SELECT DISTINCT rid FROM stat WHERE `time` BETWEEN $start AND $end");
+	while($row = $query->fetch()){
+		$select = $db->prepare("SELECT `gender` FROM `room` WHERE `id` = :id");
+		$select->bindParam(':id', $row['rid']);
+		$select->execute();
+		$arr[] = ['id' => $row['rid'], 'gender' => $select->fetch()['gender']];
+	}
+	foreach($arr as $key => $val){	
+		$query = $db->prepare("SELECT SUM(token) as total FROM `stat` WHERE `rid` = :rid AND `time` BETWEEN $start AND $end");
+		$query->bindParam(':rid', $val['id']);
+		$query->execute();
+		$result[$val['gender']] += $query->fetch()['total'];
+	}
+	ksort($result);
+	return $result;
+}
+
+function genderIncomeSave($date, $arr){
+	global $db;
+	$json = json_encode($arr);
+	$select = $db->prepare("SELECT `amount` FROM `cache` WHERE `date` = :date");
+	$select->bindParam(':date', $date);
+	$select->execute();
+	if($select->rowCount() == 1){
+		$query = $db->prepare("UPDATE `cache` SET `info` = :json WHERE `date` = :date");
+		$query->bindParam(':json', $json);
+		$query->bindParam(':date', $date);
+		$query->execute();
+	}	
+}
+
+function sumOther($arr){
+	$result = []; $v = 0;
+	foreach($arr as $key => $val){
+		if($key != 1) $v += $val;
+	}
+	return ['0' => $v, '1' => $arr['1']];
+}
+
+function getChartsLines(){
+	global $db;
+	$result = [];
+	$today = date('Ymd', time());
+	$query = $db->query("SELECT * FROM `cache`");
+	while($row = $query->fetch()){
+		if(empty($row['info'])){
+			$a = genderIncome($row['date']);
+			genderIncomeSave($row['date'], $a);
+			$arr[$row['date']] = sumOther($a);
+		}else{
+			$arr[$row['date']] = sumOther(json_decode($row['info'], true));	
+		}
+	}
+	$arr[$today] = sumOther(genderIncome($today));
+	foreach($arr as $k => $v){
+		foreach($v as $key => $val){
+			$result[$key][] = ['date' => date('Y-m-d', strtotime($k)), 'value' => round($val*0.05)];
+		}
+	}
+	return $result;
+}
 
 function getCharts(){
 	global $db, $sphinx, $redis;
@@ -237,7 +311,27 @@ function getCharts(){
 		return $a['0'] <=> $b['0'];
 	});
 	
-	$stat = json_encode($k, JSON_NUMERIC_CHECK);
+	$arr = getChartsLines();
+	$arr[] = $k;
+	
+	foreach($arr['2'] as $key => $val){
+		$dates[] = $val["date"];
+	}
+
+	foreach($arr as $key => $val){
+		if($key != 2){
+			foreach($val as $k => $v){
+				if(!in_array($v["date"], $dates)){
+					unset($arr["$key"]["$k"]);
+				}
+			}
+		}
+	}
+
+	$arr[0] = array_values($arr[0]);
+	$arr[1] = array_values($arr[1]);
+		
+	$stat = json_encode($arr, JSON_NUMERIC_CHECK);
 	$redis->setex($cname, 600, $stat);
 	return $stat;
 }
@@ -388,4 +482,40 @@ function sendHistory($all = false){
 		$msg .= str_replace('%income%', toUSD($val['total']), $result);
 	}
 	telegram_send($msg);
+}
+
+function get_ads(){
+	$ads = [
+		//'<a href="http://wallet.advcash.com/referral/2d41167a-bda8-4403-a3e0-cb32bd49412a" target="_blank"><img class="z11" src="/img/1.gif"></a>' => '1',
+		//'<a target="_blank" href="https://www.bestchange.com/" onclick="this.href=\'https://www.bestchange.com/?p=1082361\'"><img class="z11" src="/img/2.jpg"></a>' => '1',
+		'<a href="https://www.lovense.com/r/3xe6vd" target="_blank"><img class="z11" src="/img/lv1.png" /></a>' => '1',
+		'<a href="https://www.lovense.com/r/3xe6vd" target="_blank"><img class="z11" src="/img/lv2.png" /></a>' => '1'
+	];
+	$link = [];
+	foreach($ads as $key => $val){
+		$link = array_merge($link, array_fill(0, $val, $key));
+	}
+	shuffle($link);
+	return $link[random_int(0, count($link) - 1)];
+}
+
+function dotFormat($v){
+	return number_format($v, 0, ',', ',');
+}
+
+function getPieStat(){
+	global $db; $x = []; $arr = [];
+	$names = ['Boys', 'Girls', 'Trans', 'Couple'];
+	$date = date('Ymd', strtotime("-1 month", time()));
+	$query = $db->query("SELECT * FROM `cache` WHERE `date` >= $date");
+	while($row = $query->fetch()){
+		$a = json_decode($row['info']);
+		foreach($a as $k => $v){
+			$arr[$k] += $v;
+		}
+	}
+	foreach($arr as $k => $v){
+		$x[] = ['name' => $names[$k], 'y' => $v];
+	}
+	return json_encode($x);
 }

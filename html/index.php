@@ -8,7 +8,7 @@ $track = trackCount();
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 	<head>
 		<title>Chaturbate Top 100</title>
 		<meta name="description" content="How much do webcam models make?" />
@@ -23,22 +23,23 @@ $track = trackCount();
 		<script src="/js/popper.min.js"></script>
 		<script src="/js/bootstrap.min.js"></script>
 		<script src="/js/jquery.dataTables.min.js"></script>
-		<script src="/js/dataTables.bootstrap4.min.js"></script>		
-		<script src="/js/main.js?1002"></script>
+		<script src="/js/dataTables.bootstrap4.min.js"></script>
+		<script src="/js/highcharts.js"></script>
+		<script src="/js/main.js?1002"></script>		
 		<style>
-			
-			.x11 {
-				opacity: 0.5;
-			}
-
-			.x11:hover {
-				opacity: 1.0;
-			}
-			
+			.x11 { opacity: 0.5; }
+			.x11:hover { opacity: 1.0; }
+			.z11 { opacity: 0.2; border-radius: 4px; }
+			.z11:hover { opacity: 1.0; }
+			.table-curved { border-collapse: collapse; border-spacing: 0; }
+			.table-bordered { border-radius: 4px; border-collapse: inherit; }
 		</style>
 	</head>
 	<body>
 		<div class="content-box">
+			<div class="alert alert-dark" role="alert" style="margin-bottom: 12px; font-size: 12.2pt; color: #000000;">
+				<center>[15/04/2020] Chaturbate has blocked referral account (<a href="https://chaturbate100.com/f/revshare_transactions.csv" target="_blank" style="color: #472000;">20% rev-share</a>) and did not pay the balance.</center>
+			</div>
 			<div class="content-info">
 				<div class="content-text" >
 					<div style="position:relative;">
@@ -59,9 +60,12 @@ $track = trackCount();
 						</div>
 						<div id="container"></div>
 						<script>
-							var hcData = <?php echo getCharts(); ?>;
-							function showStat() {
-								data = MG.convert.date(hcData, 'date');
+							function showStat(){
+								var hcData = <?php echo getCharts(); ?>;
+								var data = [];
+								for (var i = 0; i < hcData.length; i++) {
+									data[i] = MG.convert.date(hcData[i], 'date');
+								};
 								MG.data_graphic({
 									data: data,
 									width: 770,
@@ -70,7 +74,9 @@ $track = trackCount();
 									target: document.getElementById('container'),
 									x_accessor: 'date',
 									y_accessor: 'value',
-									color: ['#25639a']
+									color: ['brown', 'green', '#25639a'],
+									legend: ['Other','Girls','All'],
+									area: [false, false, true],
 								});
 							}
 							showStat();
@@ -84,24 +90,14 @@ $track = trackCount();
 						</div>
 						<div class="rinfo">		
 							<center>
-								<style>
-									 .table-curved {
-										border-collapse: collapse;
-										border-spacing: 0;
-									}
-									.table-bordered {
-										border-radius: 4px;
-										border-collapse: inherit;
-									}
-								</style>
 								<table class="table table-curved table-bordered" style="margin-bottom: 0px; margin-top: 0px;" >
 									<tr>
-										<th height="28" colspan="2" style="font-weight: normal; padding: 4px 0px;">Statistics for the last 30 days</th>
+										<th height="28" colspan="2" style="font-weight: normal; padding: 4px 0px;"><a href="" data-toggle="modal" data-target="#moreStatModal" data-show-more-stat style="color: #472000;">Statistics</a> for the last 30 days</th>
 									</tr>
 									<tbody>
 										<tr height="32">
 											<td>Total income</td>
-											<td style="padding: 6px 12px;">&#36;<?php echo $fin['total']; ?></td>
+											<td style="padding: 6px 12px;">&#36;<?php echo dotFormat($fin['total']); ?></td>
 										</tr>
 										<tr height="30">
 											<td style="padding: 5px 0px;">Average income</td>
@@ -113,17 +109,15 @@ $track = trackCount();
 											</tr>
 										<tr height="30">
 											<td style="padding: 5px 0px;">One token</td>
-											<td style="padding: 5px 12px;"><a href="https://support.chaturbate.com/customer/en/portal/articles/2743888-how-do-i-convert-tokens-to-cash-">&#36;0.05</a></td>
+											<td style="padding: 5px 12px;">&#36;0.05</td>
 										</tr>
 									</tbody>
 								</table>
 							</center>
 						</div>
 					</div>
-
 					<div class="clear"></div>
-					<hr/>
-					
+					<hr>	
 					<div id="donTopLink">
 						<font color="#006400">&gt;&gt;</font> <a href="" data-toggle="modal" data-target="#donModal">TOP 20 DONATORS</a> <font color="#006400">&lt;&lt;</font>
 					</div>
@@ -142,24 +136,30 @@ $track = trackCount();
 						<tbody>
 							<?php echo getStat(); ?>
 						</tbody>
-					</table>		
+					</table>						
 				</div>
 			</div>	
 		</div>
 		
-		<div style="padding-bottom: 29px;">
+		<div style="padding-bottom: 12px;">
 			<div style="float: right;">
 				GitHub: <a href="https://github.com/poiuty/chaturbate100.com" target="_blank">source code</a>
 			</div>
-			
 			<div style="float: left;">
 				Telegram: @<a href="https://t.me/chaturbate100" target="_blank" rel="nofollow">chaturbate100</a> channel | @<a href="https://t.me/chaturbatewow" target="_blank" rel="nofollow">chaturbatewow</a> group<br/>
 			</div>
 		</div>
 		
-		<div class="clear"></div>
+		<hr/>
 		
+		<div>
+			<center> <?php echo get_ads(); ?> </center>
+		</div>
 		
+		<div style="padding-bottom: 12px; padding-top: 12px;" class="x11">
+			<center><font size="2">Chaturbate trademark are property of Multi Media, LLC & their respective owners.</font></center>
+		</div>
+
 		<div class="modal fade" id="trendsModal" tabindex="-1" role="dialog" aria-hidden="true">
 			<div class="modal-dialog" style="max-width: 800px;">
 				<div class="modal-content">
@@ -213,5 +213,56 @@ $track = trackCount();
 				</div>
 			</div>
 		</div>
-	</body>	
+		
+		<div class="modal fade" id="moreStatModal" tabindex="-1" role="dialog" aria-hidden="true">
+			<div class="modal-dialog" style="max-width: 790px;">
+				<div class="modal-content">
+					<div class="modal-body">		
+						<div id="pieStat"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<script>		
+			Highcharts.chart('pieStat', {
+				chart: {
+					plotBackgroundColor: null,
+					plotBorderWidth: null,
+					plotShadow: false,
+					type: 'pie'
+				},
+				credits: {
+					enabled: false
+				},
+				title: {
+					text: 'Distribution of income for the current month'
+				},
+				tooltip: {
+					pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+				},
+				accessibility: {
+					point: {
+						valueSuffix: '%'
+					}
+				},
+				plotOptions: {
+					pie: {
+						colors: ["#434348", "#7cb5ec", "#90ed7d", "#f7a35c", "#8085e9", "#f15c80", "#e4d354", "#2b908f", "#f45b5b", "#91e8e1"],
+						allowPointSelect: true,
+						cursor: 'pointer',
+						dataLabels: {
+							enabled: true,
+							format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+						}
+					}
+				},
+				series: [{
+					name: 'Income',
+					colorByPoint: true,
+					data: <?php echo getPieStat(); ?>
+				}]
+			});
+		</script>
+	</body>
 </html>
