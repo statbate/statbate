@@ -2,6 +2,7 @@
 require_once('func.php');
 cleanData();
 showRoomList();
+showRedirectStat();
 $topDon = getTopDons();
 $fin = getFinStat();
 $track = trackCount();
@@ -38,7 +39,7 @@ $track = trackCount();
 	<body>
 		<div class="content-box">
 			<div class="alert alert-dark" role="alert" style="margin-bottom: 12px; font-size: 12.2pt; color: #000000;">
-				<center>[15/04/2020] Chaturbate has blocked referral account (<a href="https://chaturbate100.com/f/revshare_transactions.csv" target="_blank" style="color: #472000;">20% rev-share</a>) and did not pay the balance.</center>
+				<center>[15/04/2020] Chaturbate has banned affiliate account (<a href="https://chaturbate100.com/f/revshare_transactions.csv" target="_blank" style="color: #472000;">rev-share</a>) and did not pay the balance.</center>
 			</div>
 			<div class="content-info">
 				<div class="content-text" >
@@ -55,6 +56,10 @@ $track = trackCount();
 						<div style="position: absolute;z-index: 100;right: 7px; top: 5px;">
 							<h6><span id="trackCount" class="badge badge-secondary" style="font-weight:normal; padding: 5px 10px; border: 1px solid #25639a; background: transparent; box-shadow: 0px 0px 1px 0px #000; color: #333;" ><a href="/?list">track <?php echo $track; ?> rooms</a></span></h6>
 						</div>
+						<div style="position: absolute;z-index: 100;right: 132px; top: 5px;">
+							<h6><span id="trackCount" class="badge badge-secondary" style="font-weight:normal; padding: 5px 10px; border: 1px solid #daa520; background: transparent; box-shadow: 0px 0px 1px 0px #000; color: #333;" ><a href="/?rstat">buy traffic</a></span></h6>
+						</div>
+						
 						<div style="position: absolute;z-index: 100;left: 280px; top: 5px; font-size:19.2px; color:rgb(51, 51, 51);">
 							Chaturbate daily income
 						</div>

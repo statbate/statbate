@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 	"net/url"
-	"strings"
 	"github.com/gorilla/websocket"
 )
 
@@ -93,12 +92,11 @@ func statRoom(room, server string, u url.URL) {
 			if ok && args["amount"] != nil {
 				donator := args["from_username"].(string)
 				amount  := int64(args["amount"].(float64))
-				if len(strings.TrimSpace(donator)) < 3 { // Skip empty from_username
-					continue
+				if len(donator) > 3 { // Skip empty from_username
+					sendPost(room, donator, amount)
 				}
-				sendPost(room, donator, amount)
 				worker.timeout = time.Now().Unix() + 60*60
-				fmt.Println(string(message))
+				//fmt.Println(string(message))
 				//fmt.Println("Room[", room, "]", donator, "donate", amount, "tokens")
 			}
 		}

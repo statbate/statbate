@@ -104,15 +104,50 @@ function trackCount(){
 	return count(json_decode($list, true));
 }
 
+function showRedirectStat(){
+	if(isset($_GET['rstat'])){
+		echo "<title>Buy chaturbate referral traffic</title>";
+		echo "<meta http-equiv='refresh' content='60'>";
+		echo "<pre>";
+		echo "<a href='/'>main page</a>\n\n";
+		echo "Chaturbate has banned affiliate account (<a href='https://chaturbate100.com/f/revshare_transactions.csv' target='_blank' style='color: #472000;'>rev-share</a>) and did not pay the balance.\n\n";
+		echo "At your own risk, you can buy this traffic.\nPrice per month 0.01 BTC, telegram: <a href='https://t.me/poiuty' target='_blank' rel='nofollow'>@poiuty</a>\n\n";
+		global $db; $arr = []; $time = strtotime(date('d-m-Y', time()).' -1 months');
+		$query = $db->query("SELECT * FROM `redirect` WHERE `time` > $time ORDER BY `time` DESC");
+		while($row = $query->fetch()){
+			$ip = $row['ip'];
+			$date = date('d/m/Y', $row['time']);
+			$arr[$date][] = $ip;
+		}
+		$text = ''; $a = [0, 0];
+		foreach($arr as $key => $val){
+			$c = count($val);
+			$q = count(array_unique($val));
+			$text .= "[$key]\tunique $q\tclicks $c\n";
+			$a['0'] += $q;
+			$a['1'] += $c;
+		}
+		echo "Total\t\tunique {$a['0']}\tclicks {$a['1']}\n\n";
+		echo $text;
+		echo "\n\nBy collecting statistics, chaturbate100.com does not store your IP address.";
+		echo "</pre>";
+		die;
+	}
+}
+
 function showRoomList(){
 	if(isset($_GET['list'])){
-		echo "<pre><a href='/'>main page</a>\n\n";
+		echo "<title>Chaturbate100 Track List</title>";
+		echo "<meta http-equiv='refresh' content='60'>";
+		echo "<pre>";
+		echo "<a href='/'>main page</a>\n\n";
 		$arr = json_decode(getList(), true);
 		ksort($arr);
-		echo "track ".count($arr)." rooms<br/><br/>";
+		echo "track ".count($arr)." rooms\n\n";
 		foreach($arr as $key => $val){
-			echo $key."<br/>";
+			echo $key."\n";
 		}
+		echo "</pre>";
 		die;
 	}
 }
@@ -504,7 +539,7 @@ function dotFormat($v){
 }
 
 function getPieStat(){
-	global $db; $x = []; $arr = [];
+	global $db; $x = []; $arr = [0, 0, 0, 0];
 	$names = ['Boys', 'Girls', 'Trans', 'Couple'];
 	$date = date('Ymd', strtotime("-1 month", time()));
 	$query = $db->query("SELECT * FROM `cache` WHERE `date` >= $date");
