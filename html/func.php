@@ -110,8 +110,22 @@ function showRedirectStat(){
 		echo "<meta http-equiv='refresh' content='60'>";
 		echo "<pre>";
 		echo "<a href='/'>main page</a>\n\n";
-		echo "Chaturbate has banned affiliate account (<a href='https://chaturbate100.com/f/revshare_transactions.csv' target='_blank' style='color: #472000;'>rev-share</a>) and did not pay the balance.\n\n";
-		echo "At your own risk, you can buy this traffic.\nPrice per month 0.01 BTC, telegram: <a href='https://t.me/poiuty' target='_blank' rel='nofollow'>@poiuty</a>\n\n";
+		echo "Chaturbate has banned affiliate account (<a href='https://chaturbate100.com/f/revshare_transactions.csv' target='_blank' style='color: #472000;'>rev-share</a>)\n\n";
+		echo "At your own risk, you can buy this traffic.\nPrice per month 0.01 BTC, chaturbate100@protonmail.com\n\n\n";
+		echo "> How does it work?\n\n";
+		echo "All links that lead to chaturbate.com are referral.\n\n";
+		echo "For example, a link to room wetdream111\n";
+		echo "chaturbate100.com/public/move.php?room=wetdream111\n\n";
+		echo "redirect to\n";
+		echo "chaturbate.com/in/?track=default&<u>tour=dT8X</u>&<u>campaign=CODE</u>&room=wetdream111\n\n";
+		echo "where\n";
+		echo "tour - affiliate program choice\n";
+		echo "dT8X - constant is Revshare: 20% of Money Spent + $50 per broadcaster + 5% Referred Affiliate Income\n";
+		echo "ZQAI - constant is $1.00 Pay Per Registration + $50.00 Per Broadcaster + 5% Referred Affiliate Income\n";
+		echo "campaign - your affiliate code\n\n";
+		echo "chaturbate.com/affiliates/linkcodes/\n\n\n";
+		echo "> Statistics, unique in 30 days, not in a day.";
+		echo "\n\n";
 		global $db; $arr = []; $time = strtotime(date('d-m-Y', time()).' -1 months');
 		$query = $db->query("SELECT * FROM `redirect` WHERE `time` > $time ORDER BY `time` DESC");
 		while($row = $query->fetch()){
@@ -387,7 +401,7 @@ function getTopDons($room = ''){
 	}else{
 		$handler = $sphinx;
 		$a = "time > $date";
-		$b = "HAVING avg < 2000"; 
+		$b = "HAVING avg < 2000"; // 100 USD
 	}
 	$query = $handler->query("SELECT did, SUM(token) as total, AVG(token) as avg FROM stat WHERE $a GROUP BY did $b ORDER BY total DESC LIMIT 20");
 	$row =  $query->fetchAll();
@@ -407,19 +421,28 @@ function getAllIncome($id){
 	return toUSD($query->fetch()['0']);
 }
 
+function getBlackList($date){
+	global $sphinx; $bl = []; $sql = '';
+	$query = $sphinx->query("SELECT did, AVG(token) as avg FROM stat WHERE time > $date GROUP BY did HAVING avg > 20000 ORDER BY avg DESC LIMIT 10000");
+	while($row = $query->fetch()){
+		$bl[] = $row['did'];
+	}
+	if(!empty($bl)){
+		$sql = "AND did NOT IN (".implode(",", $bl).")";
+	}
+	return $sql;
+}
+
 function getStat(){
 	global $db, $sphinx, $redis;
-	
 	$cname = getCacheName('topStat');
 	$stat = getCache($cname);
 	if($stat !== false && getCache(getCacheName('top100list')) !== false){
 		return $stat;
 	}
-	
 	$data = [];
-	
-	$date = strtotime(date('d-m-Y', time()).' -1 months');
-	$query = $sphinx->prepare("SELECT rid, SUM(token) as total, MAX(token) as max FROM stat WHERE time > $date GROUP BY rid HAVING max < 20000 ORDER BY total DESC LIMIT 100");
+	$date = strtotime(date('d-m-Y', time()).' -1 months'); 
+	$query = $sphinx->prepare("SELECT rid, SUM(token) as total, AVG(token) as avg FROM stat WHERE time > $date ".getBlackList($date)." GROUP BY rid HAVING avg < 1000 ORDER BY total DESC LIMIT 100");
 	$query->execute();
 	$row =  $query->fetchAll();
 		

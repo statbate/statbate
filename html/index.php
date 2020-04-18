@@ -39,7 +39,8 @@ $track = trackCount();
 	<body>
 		<div class="content-box">
 			<div class="alert alert-dark" role="alert" style="margin-bottom: 12px; font-size: 12.2pt; color: #000000;">
-				<center>[15/04/2020] Chaturbate has banned affiliate account (<a href="https://chaturbate100.com/f/revshare_transactions.csv" target="_blank" style="color: #472000;">rev-share</a>) and did not pay the balance.</center>
+				<center>[15/04/2020] Chaturbate has banned affiliate account (<a href="https://chaturbate100.com/f/revshare_transactions.csv" target="_blank" style="color: #472000;">rev-share</a>)
+				</center>
 			</div>
 			<div class="content-info">
 				<div class="content-text" >
