@@ -7,124 +7,7 @@ if(php_sapi_name() != "cli"){
 $pid = getmypid();
 
 require_once('/var/www/chaturbate100.com/func.php');
-
-function newCookie(){
-	global $redis;
-	$command = escapeshellcmd('/home/stat/python/cookie.py');
-	$json = shell_exec($command);
-	$arr = json_decode($json, true);
-	$cookie = '';
-	foreach($arr as $k => $v){
-		if($k != 'ua'){
-			$cookie .= "$k=$v;";
-		}
-	}
-	$result = ['cookie' => $cookie, 'agent' => $arr['ua']['User-Agent']];
-	$cname = getCacheName('pageCookie');
-	$redis->setex($cname, 60*60*24*30, json_encode($result));
-	return $result;
-}
-
-function getCookie(){
-	global $redis;
-	$cname = getCacheName('pageCookie');
-	$result = $redis->get($cname);
-	if($result === false){
-		return newCookie();
-	}
-	return json_decode($result, true);
-}
-
-function checkCloudflare($html){
-	$res = preg_match("/<title>(.*)<\/title>/siU", $html, $title_matches);
-	if(!empty($title_matches[1])){
-		$title = preg_replace('/\s+/', ' ', $title_matches[1]);
-		$title = trim($title);
-		if (strpos($title, 'Cloudflare') !== false) {
-			return true;
-		}
-	}
-	return false;
-}
-
-function getPage($url){
-	$h = getCookie();
-	$cookie_file = '/home/stat/php/cli/cookies.txt';
-	
-	$headers = [
-		"User-Agent: {$h["agent"]}",
-	];
-
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_URL, $url);
-	curl_setopt($ch, CURLOPT_COOKIESESSION, true);
-	curl_setopt($ch, CURLOPT_COOKIEJAR, $cookie_file);
-	curl_setopt($ch, CURLOPT_COOKIEFILE, $cookie_file);
-	curl_setopt($ch, CURLOPT_COOKIE, "{$h["cookie"]}");
-	
-	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt($ch, CURLINFO_HEADER_OUT, true);
-	curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-
-	$output = curl_exec($ch);
-	$info = curl_getinfo($ch);
-	curl_close($ch);
-	
-	if(checkCloudflare($output)){
-		newCookie();
-		die;
-	}
-	
-	return $output;
-}
-
-function getOnlineList(){
-	global $db, $redis;
-	$gender = ['m', 'f', 's', 'c'];
-	$stat = []; $d = ['rooms' => 0, 'viewers' => 0];
-	$arr = json_decode(getPage('https://chaturbate.com/affiliates/api/onlinerooms/?format=json&wm=50xHQ'), true);
-	
-	if(!is_array($arr) || empty($arr)){
-		die;
-	}
-	
-	$d['rooms'] = count($arr);
-	usort($arr, function($a, $b) {
-		return $a['num_users'] < $b['num_users'];
-	});
-	
-	$avg = round(array_sum(array_column($arr, 'num_users'))/count($arr));
-	
-	foreach($arr as $val){
-		$d['viewers'] += $val['num_users'];
-		$stat['list'][$val['username']] = $val['num_users'];
-		if($val['num_users'] < $avg){
-			continue;
-		}
-		$stat['main'][$val['username']] = $val['num_users'];
-		$room = getRoomInfo($val['username']);
-		if(!empty($room)){
-			//save online
-			$query = $db->prepare("INSERT INTO `online` (`rid`, `online`, `time`) VALUES (:rid, :online, unix_timestamp(now()))");
-			$query->bindParam(':rid', $room['id']);
-			$query->bindParam(':online', $val['num_users']);
-			$query->execute();
-			
-			//update gender
-			$g = array_search($val['gender'], $gender);
-			if($room['gender'] != $g){
-				$query = $db->prepare("UPDATE `room` SET `gender` = :gender WHERE `id` = :id");
-				$query->bindParam(':id', $room['id']);
-				$query->bindParam(':gender', $g);
-				$query->execute();
-			}
-		}		
-	}
-	$redis->setex(getCacheName('apiOnline'), 900, json_encode($d));
-	$redis->setex(getCacheName('apiList'), 900, json_encode($stat));
-	return $stat;
-}
+require_once('/home/stat/php/inc.php');
 
 function getRoomServer($room, $id){
 	global $db;
@@ -173,14 +56,14 @@ function addTaks($key){
 	$room = getRoomInfo($key);
 	$c = getCacheName('server'.$key);
 	$id = getCache($c);
-	//if($id === false){ // cache for fast startup
+	if($id === false){ // cache for fast startup
 		$id = getRoomServer($key, $room['id']);
 		if($id == false){
 			return;
 		}
 		$redis->setex($c, 1200, $id);
 		sleep(1);
-	//}
+	}
 	startBot($key, $id);
 }
 
@@ -199,7 +82,12 @@ function cacheList(){
 	return $arr;
 }
 
-$var['api'] = getOnlineList();
+$z = $redis->get(getCacheName('apiList'));
+if($z === false){
+	die("Empty list\n");
+}
+
+$var['api'] = json_decode($z, true);
 $workerList = cacheList();
 
 // add top 100 first

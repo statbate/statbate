@@ -26,7 +26,7 @@ $track = trackCount();
 		<script src="/js/jquery.dataTables.min.js"></script>
 		<script src="/js/dataTables.bootstrap4.min.js"></script>
 		<script src="/js/highcharts.js"></script>
-		<script src="/js/main.js?1002"></script>		
+		<script src="/js/main.js?1005"></script>		
 		<style>
 			.x11 { opacity: 0.5; }
 			.x11:hover { opacity: 1.0; }
@@ -39,7 +39,9 @@ $track = trackCount();
 	<body>
 		<div class="content-box">
 			<div class="alert alert-dark" role="alert" style="margin-bottom: 12px; font-size: 12.2pt; color: #000000;">
-				<center>[15/04/2020] Chaturbate has banned affiliate account (<a href="https://chaturbate100.com/f/revshare_transactions.csv" target="_blank" style="color: #472000;">rev-share</a>)
+				<center>
+					Telegram <a href="https://t.me/ChaturbateAnnounceBot" target="_blank" style="color: #472000;">Chaturbate Announce Bot</a>. Don't miss the broadcast of your favorite model.
+					<!--[15/04/2020] Chaturbate has banned affiliate account (<a href="https://chaturbate100.com/f/revshare_transactions.csv" target="_blank" style="color: #472000;">rev-share</a>)-->
 				</center>
 			</div>
 			<div class="content-info">

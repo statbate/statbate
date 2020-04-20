@@ -30,7 +30,7 @@ function getCacheName($val){
 
 function createUrl($name){
 	$name = strip_tags($name);
-	return "<a href='/public/move.php?room={$name}' target='_blank' rel='nofollow'>{$name}</a>";
+	return "<a href='/room/{$name}' target='_blank' rel='nofollow'>{$name}</a>";
 }
 
 function toUSD($v){
@@ -68,13 +68,16 @@ function getCache($key){
 	return $stat;
 }
 
-function getRoomInfo($name){
+function getRoomInfo($name, $create = true){
 	global $db;
 	$query = $db->prepare('SELECT * FROM `room` WHERE `name` = :name');
 	$query->bindParam(':name', $name);
 	$query->execute();
 	if($query->rowCount() > 0){
 		return $query->fetch();
+	}
+	if(!$create){
+		return false;
 	}
 	$query = $db->prepare('INSERT INTO `room` (`name`) VALUES (:name)');
 	$query->bindParam(':name', $name);
@@ -110,12 +113,14 @@ function showRedirectStat(){
 		echo "<meta http-equiv='refresh' content='60'>";
 		echo "<pre>";
 		echo "<a href='/'>main page</a>\n\n";
-		echo "Chaturbate has banned affiliate account (<a href='https://chaturbate100.com/f/revshare_transactions.csv' target='_blank' style='color: #472000;'>rev-share</a>)\n\n";
+		echo "[15/04/2020] Chaturbate has banned affiliate account (<a href='https://chaturbate100.com/f/revshare_transactions.csv' target='_blank' style='color: #472000;'>rev-share</a>)\n\n";
 		echo "At your own risk, you can buy this traffic.\nPrice per month 0.01 BTC, chaturbate100@protonmail.com\n\n\n";
+		
+		echo "First, please read chaturbate.com/affiliates/\n\n\n";
 		echo "> How does it work?\n\n";
 		echo "All links that lead to chaturbate.com are referral.\n\n";
 		echo "For example, a link to room wetdream111\n";
-		echo "chaturbate100.com/public/move.php?room=wetdream111\n\n";
+		echo "chaturbate100.com/room/wetdream111\n\n";
 		echo "redirect to\n";
 		echo "chaturbate.com/in/?track=default&<u>tour=dT8X</u>&<u>campaign=CODE</u>&room=wetdream111\n\n";
 		echo "where\n";
@@ -123,10 +128,12 @@ function showRedirectStat(){
 		echo "dT8X - constant is Revshare: 20% of Money Spent + $50 per broadcaster + 5% Referred Affiliate Income\n";
 		echo "ZQAI - constant is $1.00 Pay Per Registration + $50.00 Per Broadcaster + 5% Referred Affiliate Income\n";
 		echo "campaign - your affiliate code\n\n";
-		echo "chaturbate.com/affiliates/linkcodes/\n\n\n";
+		
+		echo "Open Linking Codes chaturbate.com/affiliates/linkcodes/\n";
+		echo "Here you can find your affiliate code. Just send me any Link Code.\n\n\n";
 		echo "> Statistics, unique in 30 days, not in a day.";
 		echo "\n\n";
-		global $db; $arr = []; $time = strtotime(date('d-m-Y', time()).' -1 months');
+		global $db; $arr = []; $time = strtotime(date('d-m-Y', time()).' -30 days');
 		$query = $db->query("SELECT * FROM `redirect` WHERE `time` > $time ORDER BY `time` DESC");
 		while($row = $query->fetch()){
 			$ip = $row['ip'];
@@ -155,9 +162,18 @@ function showRoomList(){
 		echo "<meta http-equiv='refresh' content='60'>";
 		echo "<pre>";
 		echo "<a href='/'>main page</a>\n\n";
+		echo "chaturbate100.com сollects data from open sources:\n";
+		echo "- room name or nickname (public information)\n";
+		echo "- chat log (public information)\n";
+		echo "Information from open sources cannot be private.\n\n";
+		echo "Tracks rooms where online more than 10 viewers.\n\n";
+		echo "excluded from rating (top 100):\n";
+		echo "- donators with an average tips of more than 20000 (1000 USD)\n";
+		echo "- rooms with an average tips of more than 1000 (50 USD)\n\n";
+		echo "chaturbate100.com does not hide any information.\n\n";
 		$arr = json_decode(getList(), true);
 		ksort($arr);
-		echo "track ".count($arr)." rooms\n\n";
+		echo "now tracked ".count($arr)." rooms\n\n";
 		foreach($arr as $key => $val){
 			echo $key."\n";
 		}
@@ -515,20 +531,16 @@ function getFinStat(){
 }
 
 function sendHistory($all = false){
-	global $sphinx, $db; 
-	$sql = '';
+	global $sphinx, $db; $time = 0;
+	$sql = "WHERE time >= $time";
 	$msg = "💰 All time income 💰\n\n";
-	
 	if(!$all){
-		$time = strtotime(date('Y-m', time()));
-		$start = strtotime(date('d-m-Y', $time).' -1 months');
-		$end = strtotime(date('d-m-Y', $start).' +1 months');
-		$sql = "WHERE time >= $start AND time <= $end";
+		$time = strtotime(date('d-m-Y', $time).' -1 months');
+		$sql = "WHERE time >= $time";
 		$msg = "💰 ".date('F Y', $start)." 💰\n\n";
 	}
-
 	$tmpl = "$%income%\t\t-\t\t%name%\n";
-	$query = $sphinx->prepare("SELECT rid, SUM(token) as total, MAX(token) as max FROM stat $sql GROUP BY rid HAVING max < 20000 ORDER BY total DESC LIMIT 10");
+	$query = $sphinx->prepare("SELECT rid, SUM(token) as total, MAX(token) as max FROM stat $sql ".getBlackList($time)." GROUP BY rid HAVING max < 20000 ORDER BY total DESC LIMIT 10");
 	$query->execute();
 	$row =  $query->fetchAll();
 	foreach($row as $val) {
@@ -576,4 +588,19 @@ function getPieStat(){
 		$x[] = ['name' => $names[$k], 'y' => $v];
 	}
 	return json_encode($x);
+}
+
+function send($method, $chatID, $text){
+	$markup = json_encode(['keyboard' => [["info", "list", "remove all"]], 'resize_keyboard' => true]);
+	$data = ['chat_id' => $chatID, 'reply_markup' => $markup, 'text' => $text];
+    $url = "https://api.telegram.org/botX". "/" . $method;
+    if (!$curld = curl_init()) {
+        exit;
+    }
+    curl_setopt($curld, CURLOPT_POST, true);
+    curl_setopt($curld, CURLOPT_POSTFIELDS, $data);
+    curl_setopt($curld, CURLOPT_URL, $url);
+    curl_setopt($curld, CURLOPT_RETURNTRANSFER, true);
+    $output = curl_exec($curld);
+    curl_close($curld);
 }

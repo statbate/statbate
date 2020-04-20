@@ -15,7 +15,9 @@ function hashIP($ip){
 	return hash('whirlpool', password_hash(hash('sha512', $ip), PASSWORD_BCRYPT, ['cost' => 10, 'salt' => hash('sha256', $ip)]));
 }
 
-$arr = ['8uHNv', 'zl8g8', 'Wu1wo', 'H0dyQ'];
+//$arr = ['8uHNv', 'zl8g8', 'Wu1wo', 'H0dyQ'];
+$arr = ['NMnpQ'];
+
 if(empty($_GET['room'])){
 	die;
 }
