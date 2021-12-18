@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "github.com/ClickHouse/clickhouse-go"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 
@@ -13,6 +14,7 @@ type tableRoom struct {
 	Id     int64   `db:"id"`
 	Name   string  `db:"name"`
 	Gender int     `db:"gender"`
+	Fans   int     `db:"fans"`
 	Last   int64   `db:"last"`
 }
 
@@ -36,8 +38,10 @@ func saveDonate(conn *sqlx.DB, did, rid, token int64) int64 {
 	return id
 }
 
-func saveSphinx(conn *sqlx.DB, id, did, rid, token int64) {
-	conn.Exec("INSERT INTO stat VALUES (?, ?, ?, ?, ?, ?)", id, "", did, rid, token, time.Now().Unix())
+func saveClickhouse(conn *sqlx.DB, id, did, rid, token int64) {
+	tx, _ := conn.Begin()
+	tx.Exec("INSERT INTO stat VALUES (?, ?, ?, ?, ?)", id, did, rid, token, time.Now().Unix())
+	tx.Commit()
 }
 
 func getDonatorID(conn *sqlx.DB, name string) int64 {
@@ -82,11 +86,11 @@ func saveBase(s *Save, h *Hub){
 	}
 	defer conn.Close()
 	
-	sphinx, err := sqlx.Connect("mysql", "@tcp(127.0.0.1:9306)/?interpolateParams=true")
+	clickhouse, err := sqlx.Connect("clickhouse", "tcp://127.0.0.1:9000/?database=statbate&compress=true&debug=false")
 	if err != nil {
 		panic(err)
 	}
-	defer sphinx.Close()
+	defer clickhouse.Close()
 	
 	for {
 		select {
@@ -98,7 +102,7 @@ func saveBase(s *Save, h *Hub){
 				d := getDonatorID(conn, info.donator)
 				
 				lastID := saveDonate(conn, d, room.Id, info.token)
-				saveSphinx(sphinx, lastID, d, room.Id, info.token)
+				saveClickhouse(clickhouse, lastID, d, room.Id, info.token)
 				if info.token >= 100 {
 					msg, err := json.Marshal(map[string]string{"room": info.room, "donator": info.donator, "amount": strconv.FormatInt(info.token, 10), "trackCount": countRooms()})
 					if err == nil {
