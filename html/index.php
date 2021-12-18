@@ -1,32 +1,31 @@
 <?php
-require_once('func.php');
-cleanData();
+require_once('./private/init.php');
 showRoomList();
-showRedirectStat();
-$topDon = getTopDons();
-$fin = getFinStat();
+$topDon = cacheResult('getTopDons', [], 3600);
+$fin = cacheResult('getFinStat', [], 3600, true);
 $track = trackCount();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Chaturbate Top 100</title>
+		<title>Statbate Top 100</title>
 		<meta name="description" content="How much do webcam models make?" />
+		<meta name="viewport" content="width=device-width, initial-scale=0.7">
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-		<link rel="stylesheet" href="/css/bootstrap.min.css">
-		<link rel="stylesheet" href="/css/dataTables.bootstrap4.min.css">
-		<link rel="stylesheet" href="/css/metricsgraphics.min.css">
-		<link rel="stylesheet" href="/css/main.css?1004">
-		<script src="/js/jquery.js"></script>
-		<script src="/js/d3.v4.min.js"></script>
-		<script src="/js/metricsgraphics.min.js"></script>
-		<script src="/js/popper.min.js"></script>
-		<script src="/js/bootstrap.min.js"></script>
-		<script src="/js/jquery.dataTables.min.js"></script>
-		<script src="/js/dataTables.bootstrap4.min.js"></script>
-		<script src="/js/highcharts.js"></script>
-		<script src="/js/main.js?1005"></script>		
+		<link rel="stylesheet" href="./css/bootstrap.min.css">
+		<link rel="stylesheet" href="./css/dataTables.bootstrap4.min.css">
+		<link rel="stylesheet" href="./css/metricsgraphics.min.css">
+		<link rel="stylesheet" href="./css/main.css?1004">
+		<script src="./js/jquery.js"></script>
+		<script src="./js/d3.min.js"></script>
+		<script src="./js/metricsgraphics.min.js"></script>
+		<script src="./js/popper.min.js"></script>
+		<script src="./js/bootstrap.min.js"></script>
+		<script src="./js/jquery.dataTables.min.js"></script>
+		<script src="./js/dataTables.bootstrap4.min.js"></script>
+		<script src="./js/highcharts.js"></script>
+		<script src="./js/main.js?1005"></script>		
 		<style>
 			.x11 { opacity: 0.5; }
 			.x11:hover { opacity: 1.0; }
@@ -34,39 +33,51 @@ $track = trackCount();
 			.z11:hover { opacity: 1.0; }
 			.table-curved { border-collapse: collapse; border-spacing: 0; }
 			.table-bordered { border-radius: 4px; border-collapse: inherit; }
+			
+			.modal-dialog {
+    margin: 50px auto 0px auto;
+}
 		</style>
 	</head>
 	<body>
-		<div class="content-box">
-			<div class="alert alert-dark" role="alert" style="margin-bottom: 12px; font-size: 12.2pt; color: #000000;">
-				<center>
-					Telegram <a href="https://t.me/ChaturbateAnnounceBot" target="_blank" style="color: #472000;">Chaturbate Announce Bot</a>. Don't miss the broadcast of your favorite model.
-					<!--[15/04/2020] Chaturbate has banned affiliate account (<a href="https://chaturbate100.com/f/revshare_transactions.csv" target="_blank" style="color: #472000;">rev-share</a>)-->
-				</center>
-			</div>
+		<div class="content-box">			
+			<nav class="navbar navbar-expand-lg navbar-expand navbar-light">
+  <a class="navbar-brand" href="/">Statbate.com</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" href="#" data-toggle="modal" data-target="#donModal">best donators</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#" data-toggle="modal" data-target="#trendsModal">google trends</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#" data-toggle="modal" data-target="#moreStatModal" data-show-more-stat>distribution of income</a>
+      </li>
+      
+      
+      
+  </div>
+  
+  <div class="collapse navbar-collapse justify-content-end">
+  <ul class="navbar-nav">
+    <li class="nav-item">
+     <a id="trackCount" class="nav-link" href="/?list">track <?php echo $track; ?> rooms</a>
+    </li>
+  </ul>
+</div>
+  
+</nav>
 			<div class="content-info">
 				<div class="content-text" >
 					<div style="position:relative;">
-						<div style="position: absolute;z-index: 100;left: 330px; top: 30px;">
-							<a href="" data-toggle="modal" data-target="#trendsModal"><img style="height:18px;" src="/img/trends.png"></a>
-						</div>
-						<div style="position: absolute;z-index: 100;left: 5px; top: -15px;">
-							<a href="https://www.youtube.com/watch?v=Gc2en3nHxA4" target="_blank"><img class="x11" src="/img/bitcoin.png"></a>
-						</div>
-						<div style="position: absolute;z-index: 100; top: 25px;">
-							<a href="https://web.getmonero.org/" target="_blank"><img class="x11" src="/img/monero.png"></a>
-						</div>
-						<div style="position: absolute;z-index: 100;right: 7px; top: 5px;">
-							<h6><span id="trackCount" class="badge badge-secondary" style="font-weight:normal; padding: 5px 10px; border: 1px solid #25639a; background: transparent; box-shadow: 0px 0px 1px 0px #000; color: #333;" ><a href="/?list">track <?php echo $track; ?> rooms</a></span></h6>
-						</div>
-						<div style="position: absolute;z-index: 100;right: 132px; top: 5px;">
-							<h6><span id="trackCount" class="badge badge-secondary" style="font-weight:normal; padding: 5px 10px; border: 1px solid #daa520; background: transparent; box-shadow: 0px 0px 1px 0px #000; color: #333;" ><a href="/?rstat">buy traffic</a></span></h6>
-						</div>
 						
-						<div style="position: absolute;z-index: 100;left: 280px; top: 5px; font-size:19.2px; color:rgb(51, 51, 51);">
-							Chaturbate daily income
-						</div>
+
 						<div id="container"></div>
+						
 						<script>
 							function showStat(){
 								var hcData = <?php echo getCharts(); ?>;
@@ -75,11 +86,14 @@ $track = trackCount();
 									data[i] = MG.convert.date(hcData[i], 'date');
 								};
 								MG.data_graphic({
+									title: false,
 									data: data,
-									width: 770,
-									height: 225,
-									right: 0,
-									target: document.getElementById('container'),
+									width: 760,
+									height: 180,
+									bottom: 32,
+									right: 36,
+									top: 0,
+									target: '#container',
 									x_accessor: 'date',
 									y_accessor: 'value',
 									color: ['brown', 'green', '#25639a'],
@@ -89,7 +103,11 @@ $track = trackCount();
 							}
 							showStat();
 						</script>
+						
+
 					</div>
+					
+					<hr style="margin-top: 6px; margin-bottom: 10px;">
 					
 					<div class="clear"></div>	
 					<div style="height: 152px;">
@@ -100,7 +118,7 @@ $track = trackCount();
 							<center>
 								<table class="table table-curved table-bordered" style="margin-bottom: 0px; margin-top: 0px;" >
 									<tr>
-										<th height="28" colspan="2" style="font-weight: normal; padding: 4px 0px;"><a href="" data-toggle="modal" data-target="#moreStatModal" data-show-more-stat style="color: #472000;">Statistics</a> for the last 30 days</th>
+										<th height="28" colspan="2" style="font-weight: normal; padding: 4px 0px;">Statistics for the last 30 days</th>
 									</tr>
 									<tbody>
 										<tr height="32">
@@ -125,9 +143,10 @@ $track = trackCount();
 						</div>
 					</div>
 					<div class="clear"></div>
-					<hr>	
+					<hr style="margin-top: 10px; margin-bottom: 10px;">	
+					
 					<div id="donTopLink">
-						<font color="#006400">&gt;&gt;</font> <a href="" data-toggle="modal" data-target="#donModal">TOP 20 DONATORS</a> <font color="#006400">&lt;&lt;</font>
+						<?php echo get_ads(); ?>
 					</div>
 					
 					<table id="main" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" width="100%" role="grid" aria-describedby="supportList_info" style="width: 100%;">
@@ -137,39 +156,25 @@ $track = trackCount();
 								<th>room</th>
 								<th style="width:1px;">gender</th>
 								<th data-toggle="tooltip" data-placement="top" title="Use search online">last</th>
-								<th data-toggle="tooltip" data-placement="top" title="Avarage online">online</th>
+								<th data-toggle="tooltip" data-placement="top" title="In thousands">fans</th>
 								<th data-toggle="tooltip" data-placement="top" title="Income per 30 days">USD</th>
 							</tr>
 						</thead>
 						<tbody>
-							<?php echo getStat(); ?>
+							<?php echo prepareTable(); ?>
 						</tbody>
 					</table>						
 				</div>
-			</div>	
-		</div>
-		
-		<div style="padding-bottom: 12px;">
-			<div style="float: right;">
-				GitHub: <a href="https://github.com/poiuty/chaturbate100.com" target="_blank">source code</a>
-			</div>
-			<div style="float: left;">
-				Telegram: @<a href="https://t.me/chaturbate100" target="_blank" rel="nofollow">chaturbate100</a> channel | @<a href="https://t.me/chaturbatewow" target="_blank" rel="nofollow">chaturbatewow</a> group<br/>
 			</div>
 		</div>
 		
-		<hr/>
 		
-		<div>
-			<center> <?php echo get_ads(); ?> </center>
-		</div>
+		<!--<div class="alert alert-dark" role="alert" style="box-shadow: 0 1px 1px 0 rgba(0,0,0,0.14), 0 2px 1px -1px rgba(0,0,0,0.12), 0 1px 3px 0 rgba(0,0,0,0.20); margin-bottom: 12px; font-size: 12.2pt; color: #000000;">
+			<center>test test test</center>
+		</div> -->
 		
-		<div style="padding-bottom: 12px; padding-top: 12px;" class="x11">
-			<center><font size="2">Chaturbate trademark are property of Multi Media, LLC & their respective owners.</font></center>
-		</div>
-
 		<div class="modal fade" id="trendsModal" tabindex="-1" role="dialog" aria-hidden="true">
-			<div class="modal-dialog" style="max-width: 800px;">
+			<div class="modal-dialog" style="max-width: 770px;">
 				<div class="modal-content">
 					<div class="modal-body">
 						<script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/1937_RC01/embed_loader.js"></script> <script type="text/javascript"> trends.embed.renderExploreWidget("TIMESERIES", {"comparisonItem":[{"keyword":"Chaturbate","geo":"","time":"2011-07-01 <?php echo date("Y-m-d", time()); ?>"},{"keyword":"MyFreeCams","geo":"","time":"2011-07-01 <?php echo date("Y-m-d", time()); ?>"},{"keyword":"Stripchat","geo":"","time":"2011-07-01 <?php echo date("Y-m-d", time()); ?>"},{"keyword":"BongaCams","geo":"","time":"2011-07-01 <?php echo date("Y-m-d", time()); ?>"},{"keyword":"LiveJasmin","geo":"","time":"2011-07-01 <?php echo date("Y-m-d", time()); ?>"}],"category":0,"property":""}, {"exploreQuery":"date=today%205-y&q=Chaturbate,MyFreeCams,Stripchat,BongaCams,LiveJasmin","guestPath":"https://trends.google.com:443/trends/embed/"}); </script> 
@@ -185,7 +190,7 @@ $track = trackCount();
 						<table class="table table-striped DonTable">
 							<thead>
 								<tr>
-									<th>TOP 20 DONATORS</th>
+									<th></th>
 									<th>USD</th>
 									<th data-toggle="tooltip" data-placement="right" title="Average tip">AVG</th>
 								</tr>
@@ -223,7 +228,7 @@ $track = trackCount();
 		</div>
 		
 		<div class="modal fade" id="moreStatModal" tabindex="-1" role="dialog" aria-hidden="true">
-			<div class="modal-dialog" style="max-width: 790px;">
+			<div class="modal-dialog" style="max-width: 770px;">
 				<div class="modal-content">
 					<div class="modal-body">		
 						<div id="pieStat"></div>

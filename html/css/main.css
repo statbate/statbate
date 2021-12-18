@@ -7,8 +7,15 @@ body {
     color: #333;
 }
 
+.navbar {
+	//background: #FFF;
+    //border-radius: 4px;
+    //box-shadow: 0 1px 1px 0 rgba(0,0,0,0.14), 0 2px 1px -1px rgba(0,0,0,0.12), 0 1px 3px 0 rgba(0,0,0,0.20);
+}
+
 .content-info {
     min-height: 283px;
+    //margin: 12px auto;
     margin: 0px auto;
     background: #FFF;
     border-radius: 4px;
@@ -72,7 +79,7 @@ body {
 }
 
 .content-box {
-    padding-top: 12px;
+  //  padding-top: 12px;
     padding-bottom: 12px;
 }
 
@@ -118,5 +125,14 @@ table {
 }
 
 #donTopLink {
-	display: none; height:20px; width: 200px; position: absolute; margin-left: 245px; margin-top: 7px; z-index: 99;
+box-shadow: 0 1px 1px 0 rgba(0,0,0,0.14), 0 2px 1px -1px rgba(0,0,0,0.12), 0 1px 3px 0 rgba(0,0,0,0.20);
+	background-color: #ffffff;
+    display: none;
+    border-radius: 4px;
+    height: 40px;
+    width: 340px;
+    position: absolute;
+    margin-left: 186px;
+    margin-top: -5px;
+    z-index: 99;
 }

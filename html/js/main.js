@@ -99,7 +99,7 @@ $(document).ready(function() {
 });
 
 function bStat() {
-    var sock = new WebSocket('wss://chaturbate100.com/ws/');
+    var sock = new WebSocket('wss://statbate.com/ws/');
     sock.onopen = function() {
         console.log('open');
         setTimeout(function wsPing() {
@@ -111,9 +111,9 @@ function bStat() {
     sock.onmessage = function(evt) {
 		j = JSON.parse(evt.data);
 		if(Math.floor(Math.random() * 5) == 1){
-			$("#trackCount").html("<a href=\"https://chaturbate100.com/?list\">track "+j.trackCount+" rooms</a>");
+			$("#trackCount").text("track "+j.trackCount+" rooms");
 		}
-        text = "<a href='/public/move.php?room="+j.donator+"' target='_blank'>"+j.donator+"</a> send "+j.amount+" tokens to <a href='/public/move.php?room="+j.room+"' target='_blank'>"+j.room+"</a>";
+        text = "<a href='https://chaturbate.com/"+j.donator+"' rel='nofollow' target='_blank'>"+j.donator+"</a> send "+j.amount+" tokens to <a href='https://chaturbate.com/"+j.room+"' rel='nofollow' target='_blank'>"+j.room+"</a>";
         if(j.amount > 499){
 			text = '<font color="#ae8d0b"><b>' +  text + '</b></font>';
 		}

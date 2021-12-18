@@ -1,8 +1,8 @@
 <?php
-require_once('/var/www/chaturbate100.com/func.php');
+require_once('../private/init.php');
 
 if(empty($_POST['room']) || !ctype_digit($_POST['room'])){
 	die;
 }
 
-echo dotFormat(getAllIncome($_POST['room']));
+echo dotFormat(cacheResult('getAllIncome', ['rid' => $_POST['room']], 3600));

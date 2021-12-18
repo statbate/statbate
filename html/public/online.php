@@ -1,5 +1,7 @@
 <?php
-require_once('/var/www/chaturbate100.com/func.php');
+require_once('../private/init.php');
+
+// получаем онлайн из базы 
 
 $d = $redis->get(getCacheName('apiOnline'));
 if($d !== false){
