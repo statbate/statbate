@@ -29,7 +29,7 @@ function cacheResult($name, $params = [], $time = 600, $json = false){
 	global $redis;
 	$key = md5($name.implode('.',$params));
 	$result = $redis->get($key);
-	if($result === false || php_sapi_name() == "cli"){
+	if($result === false || (php_sapi_name() == "cli" && $redis->ttl($key) < 60)){
 		$result = call_user_func($name, $params);
 		if(!empty($result)){
 			if($json){

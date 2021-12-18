@@ -2,8 +2,7 @@
 
 function getFinStat(){ // cache done
 	global $clickhouse;
-	$date = strtotime(date('d-m-Y', time()).' -1 months');
-	$query = $clickhouse->query("SELECT SUM(token), AVG(token), count(DISTINCT rid) FROM stat WHERE time > $date");
+	$query = $clickhouse->query("SELECT SUM(token), AVG(token), count(DISTINCT rid) FROM stat WHERE time > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month)))");
 	$row =  $query->fetch();
 	return ['total' => toUSD($row['0']), 'avg' => toUSD($row['1'], 2), 'count' => $row['2']];
 }
@@ -76,7 +75,7 @@ function getRoomInfo($arr){ // cache done
 function getTop(){ // cache done
 	global $db, $clickhouse;
 	$data = [];
-	$date = strtotime(date('d-m-Y', time()).' -1 months'); 
+	$date = strtotime(date('d-m-Y', time()).' -1 months');
 	$query = $clickhouse->query("SELECT rid, SUM(token) as total FROM stat WHERE time > $date AND did not in (SELECT did FROM stat WHERE time > $date GROUP BY did HAVING AVG(token) > 20000) GROUP BY rid HAVING AVG(token) < 1000 ORDER BY total DESC LIMIT 100");
 	$row =  $query->fetchAll();
 	foreach($row as $val) {
@@ -118,179 +117,51 @@ function prepareTable(){ // cache done
 	return $stat;
 }
 
-// TODO add cache //
-
-function genderIncome($start){
+function genderIncome(){ // cache done
 	global $clickhouse;
 	$arr = [];
-	$result = [0, 0, 0, 0];
-	$end = strtotime("+1 day", strtotime($start));
-	$start = strtotime($start);
-	$query = $clickhouse->query("SELECT room.gender, SUM(token) as total FROM `stat` LEFT JOIN `room` ON stat.rid = room.id WHERE `time` BETWEEN $start AND $end GROUP by `gender`");
+	$query = $clickhouse->query("SELECT room.gender, SUM(token) as total, FROM_UNIXTIME(time, '%Y-%m-%d') as ndate FROM `stat` LEFT JOIN `room` ON stat.rid = room.id WHERE time > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month))) GROUP by `gender`, ndate ORDER BY ndate ASC");
 	while($row = $query->fetch()){
-		$result[$row['gender']] += $row['total'];
+		@$arr[$row['gender']][$row['ndate']] = ['value' => toUSD($row['total'])];
+		@$arr['4'][$row['ndate']]['value'] += toUSD($row['total']);
+		if($row['gender'] != 1){
+			@$arr['5'][$row['ndate']]['value'] += toUSD($row['total']);
+		}
 	}
-	ksort($result);
-	return $result;
+	ksort($arr);
+	return $arr;
 }
 
-function getChartData($start){	
-	global $clickhouse;
-	$end = date('Ymd', strtotime("+1 day", strtotime($start)));	
-	$start = strtotime($start);
-	$end = strtotime($end);
-	$query = $clickhouse->query("SELECT FROM_UNIXTIME(time, '%Y%m%d') as ndate, SUM(token) as total FROM stat WHERE `time` > $start AND `time` < $end GROUP BY ndate ORDER BY ndate DESC");
-	if($query->rowCount() == 0){
-		return false;
-	}
-	$row = $query->fetch();
-	return [$row['ndate'], $row['total']];
-}
-
-function getCharts(){
-	global $db, $clickhouse, $redis;
-	
-	$cname = getCacheName('mainGraph');
-	$stat = getCache($cname);
-	if($stat !== false){
-		return $stat;
-	}
-	
-	$k = [];
-	$arr = [];
-	$cur = strtotime(date('Y-m-d', time()));
-	
-	$query = $db->query("SELECT * FROM `cache`");
-	while($row = $query->fetch()){
-		$arr[$row['date']] = $row['amount'];
-	}
-	
-	$begin = '20211125';
-	$end   = date('Ymd', time());
-
-	while(1){
-		if(!array_key_exists($begin, $arr)){
-			$ok = getChartData($begin);
-			if($ok){
-				$arr[$ok['0']] = $ok['1'];
-				if($begin != $end){
-					saveCharts($ok['0'], $ok['1']);
-				}
-			}
-		}
-		if($begin == $end){
-			break;
-		}
-		$begin = date('Ymd', strtotime("+1 day", strtotime($begin)));
-	}
-
-	$last = 0;
-	$bl = ['2021-11-23', '2021-11-24'];
+function getCharts(){ // cache done
+	$data = [];
+	$arr = cacheResult('genderIncome', [], 900, true);
 	foreach($arr as $key => $val){
-		$d = date('Y-m-d', strtotime($key));
-		if($end != $key){
-			if($last/2 > $val || in_array($d, $bl)){
-				continue;
-			}
+		if($key == 0 || $key == 2 || $key == 3){
+			continue;
 		}
-		$k[] = ['date' => $d, 'value' => round($val*0.05)];
-		$last = $val;
-	}
-		
-	usort($arr, function ($a, $b) {
-		return $a['0'] <=> $b['0'];
-	});
-	
-	$arr = getChartsLines();
-	$arr[] = $k;
-	
-	foreach($arr['2'] as $key => $val){
-		$dates[] = $val["date"];
-	}
-
-	foreach($arr as $key => $val){
-		if($key != 2){
-			foreach($val as $k => $v){
-				if(!in_array($v["date"], $dates)){
-					unset($arr["$key"]["$k"]);
-				}
-			}
+		foreach($val as $k => $v){
+			$data[$key][] = ['date' => $k, 'value' => $v['value']];
 		}
 	}
-
-	$arr[0] = array_values($arr[0]);
-	$arr[1] = array_values($arr[1]);
-		
-	$stat = json_encode($arr, JSON_NUMERIC_CHECK);
-	$redis->setex($cname, 600, $stat);
+	$data = array_values($data);
+	$stat = json_encode($data, JSON_NUMERIC_CHECK);
 	return $stat;
 }
 
-// No need cache //
-
-function saveCharts($date, $amount){
-	global $db;
-	$select = $db->prepare("SELECT `amount` FROM `cache` WHERE `date` = :date");
-	$select->bindParam(':date', $date);
-	$select->execute();
-	if($select->rowCount() == 0){
-		$query = $db->prepare("INSERT INTO `cache` (`date`, `amount`) VALUES (:date, :amount)");
-		$query->bindParam(':date', $date);
-		$query->bindParam(':amount', $amount);
-		$query->execute();
-	}
-}
-
-function genderIncomeSave($date, $arr){
-	global $db;
-	$json = json_encode($arr);
-	$select = $db->prepare("SELECT `amount` FROM `cache` WHERE `date` = :date");
-	$select->bindParam(':date', $date);
-	$select->execute();
-	if($select->rowCount() == 1){
-		$query = $db->prepare("UPDATE `cache` SET `info` = :json WHERE `date` = :date");
-		$query->bindParam(':json', $json);
-		$query->bindParam(':date', $date);
-		$query->execute();
-	}	
-}
-
-function getChartsLines(){
-	global $db;
-	$result = [];
-	$today = date('Ymd', time());
-	$query = $db->query("SELECT * FROM `cache`");
-	while($row = $query->fetch()){
-		if(empty($row['info'])){
-			$a = genderIncome($row['date']);
-			genderIncomeSave($row['date'], $a);
-			$arr[$row['date']] = sumOther($a);
-		}else{
-			$arr[$row['date']] = sumOther(json_decode($row['info'], true));	
-		}
-	}
-	$arr[$today] = sumOther(genderIncome($today));
-	foreach($arr as $k => $v){
-		foreach($v as $key => $val){
-			$result[$key][] = ['date' => date('Y-m-d', strtotime($k)), 'value' => round($val*0.05)];
-		}
-	}
-	return $result;
-}
-
 function getPieStat(){
-	global $db; $x = []; $arr = [0, 0, 0, 0];
+	global $db; $r = []; $x = [];
 	$names = ['Boys', 'Girls', 'Trans', 'Couple'];
-	$date = date('Ymd', strtotime("-1 month", time()));
-	$query = $db->query("SELECT * FROM `cache` WHERE `date` >= $date");
-	while($row = $query->fetch()){
-		$a = json_decode($row['info']);
-		foreach($a as $k => $v){
-			$arr[$k] += $v;
+	$arr = cacheResult('genderIncome', [], 900, true);
+	foreach($arr as $key => $val){
+		if($key == 4 || $key == 5){
+			continue;
+		}
+		foreach($val as $k => $v){
+			@$x[$key] += $v['value'];
 		}
 	}
-	foreach($arr as $k => $v){
-		$x[] = ['name' => $names[$k], 'y' => $v];
+	foreach($x as $k => $v){
+		$r[] = ['name' => $names[$k], 'y' => $v];
 	}
-	return json_encode($x);
+	return json_encode($r);
 }

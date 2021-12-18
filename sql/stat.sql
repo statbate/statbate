@@ -1,12 +1,3 @@
-CREATE TABLE `cache` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `date` int(11) NOT NULL,
-  `amount` int(11) NOT NULL,
-  `info` varbinary(1024) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `date` (`date`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=binary;
-
 CREATE TABLE `donator` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varbinary(30) NOT NULL,

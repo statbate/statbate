@@ -96,9 +96,9 @@ $track = trackCount();
 									target: '#container',
 									x_accessor: 'date',
 									y_accessor: 'value',
-									color: ['brown', 'green', '#25639a'],
-									legend: ['Other','Girls','All'],
-									area: [false, false, true],
+									color: ['green', '#25639a', 'brown'],
+									legend: ['Girls', 'All', 'Other',],
+									area: [false, true, false],
 								});
 							}
 							showStat();
