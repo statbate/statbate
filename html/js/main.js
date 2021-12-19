@@ -7,36 +7,45 @@ $(document).on("click", "[data-show-room-stat]", function(e) {
 	e.preventDefault();
 	var id = $(this).data('show-room-stat');
 	var name = $(this).data('room-name');
-	$.post("//"+document.domain+"/public/top.php", {'room': id}, function(table){
-		if(table.length != 0){
+	
+	
+	
+	
+	
+	
+	$.post("//"+document.domain+"/public/info.php", {'room': id}, function(json){
+		data = JSON.parse(json);
+		
+		
+		if(data.table.length != 0){
 			$("#donRoomTable tr:first th:first").html(name);
-			$("#donRoomTable tbody").html(table);
+			$("#donRoomTable tbody").html(data.table);
 			$('#donRoomModal').modal('show');
 		}
-	});
-	
-	$.post("//"+document.domain+"/public/all.php", {'room': id}, function(msg){
-		$("#allIncome").html("<hr/><center><b>All time income: "+msg+" USD</b></center><hr/>");
-	});
-	
-	$.post("//"+document.domain+"/public/chart.php", {'room': id}, function(json){
-		xx11 = JSON.parse(json);
-		var xx22 = MG.convert.date(xx11, 'date');
-		MG.data_graphic({
-			data: xx22,
-			width: 380,
-			height: 120,
-			right: 10,
-			missing_is_zero: true,
-			top: 30,
-			bottom: 0,
-			left: 40,
-			target: document.getElementById('modelChart'),
-			x_accessor: 'date',
-			y_accessor: 'value',
-			//color: ['#25639a'],
-			x_axis: false,
-		});
+		
+		if(data.income.length != 0){
+			$("#allIncome").html("<hr/><center><b>All time income: "+data.income+" USD</b></center><hr/>");
+		}
+		
+		if(data.chart.length != 0){
+			xx11 = JSON.parse(data.chart);
+			var xx22 = MG.convert.date(xx11, 'date');
+			MG.data_graphic({
+				data: xx22,
+				width: 380,
+				height: 120,
+				right: 10,
+				missing_is_zero: true,
+				top: 30,
+				bottom: 0,
+				left: 40,
+				target: document.getElementById('modelChart'),
+				x_accessor: 'date',
+				y_accessor: 'value',
+				//color: ['#25639a'],
+				x_axis: false,
+			});
+		}		
 	});
 });
 
@@ -116,5 +125,3 @@ bStat();
 $(document).ready(function() {
 	$("#donTopLink").show();
 });
-
-// todo update from ws
