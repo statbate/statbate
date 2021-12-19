@@ -104,8 +104,11 @@ function bStat() {
 		}
 		printWsText(text);
     };
-    sock.onclose = function() {
-        console.log('close');
+    sock.onclose = function(e) {
+		console.log('Socket is closed. Reconnect will be attempted in 1 second.', e.reason);
+		setTimeout(function() {
+			bStat();
+		}, 1000);
     };
 }
 bStat();
@@ -114,4 +117,4 @@ $(document).ready(function() {
 	$("#donTopLink").show();
 });
 
-// todo reconnect ws, update from ws
+// todo update from ws
