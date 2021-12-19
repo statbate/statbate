@@ -96,7 +96,7 @@ function prepareTable(){ // cache done
 	$i = 0; $stat = ''; $list = [];
 	$gender = ['boy', 'girl', 'trans', 'couple'];
 	$data = cacheResult('getTop', [], 600, true);
-	$online = json_decode(cacheResult('getList', [], 60), true);
+	$online = json_decode(cacheResult('getList', [], 180), true);
 	$tmpl = '<tr><td>{ID}</td><td>{URL}</td><td>{GENDER}</td><td>{LAST}</td><td>{FANS}</td><td>{USD}</td></tr>';
 	foreach($data as $key => $val){
 		$i++;
@@ -149,7 +149,7 @@ function getCharts(){ // cache done
 }
 
 function getPieStat(){
-	global $db; $r = []; $x = [];
+	$r = []; $x = [];
 	$names = ['Boys', 'Girls', 'Trans', 'Couple'];
 	$arr = cacheResult('genderIncome', [], 900, true);
 	foreach($arr as $key => $val){

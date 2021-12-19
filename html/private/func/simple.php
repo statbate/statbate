@@ -1,35 +1,10 @@
 <?php
-
-function getCacheName($val){
-	return md5($val);
-}
-
-function updateCache($key){
-	global $redis;
-	if(php_sapi_name() == "cli" && $redis->ttl($key) < 120){
-		return true;
-	}
-	return false;
-}
-
-function getCache($key){
-	global $redis;
-	$stat = $redis->get($key);
-	if($stat === false){
-		return false;
-	}
-	if(updateCache($key)){
-		return false;
-	}
-	return $stat;
-}
-
 // example: cacheResult('getList', [], 30)
 function cacheResult($name, $params = [], $time = 600, $json = false){
 	global $redis;
 	$key = md5($name.implode('.',$params));
 	$result = $redis->get($key);
-	if($result === false || (php_sapi_name() == "cli" && $redis->ttl($key) < 60)){
+	if($result === false || (php_sapi_name() == "cli" && $redis->ttl($key) < 120)){
 		$result = call_user_func($name, $params);
 		if(!empty($result)){
 			if($json){
@@ -61,7 +36,7 @@ function toUSD($v){
 }
 
 function trackCount(){
-	if(!$list = cacheResult('getList', [], 60)){
+	if(!$list = cacheResult('getList', [], 180)){
 		return 0;
 	}
 	return count(json_decode($list, true));
@@ -122,14 +97,6 @@ function get_time_ago($time){
             return $t.' '.$str.($t > 1 ? 's' : '');
         }
     }
-}
-
-function sumOther($arr){ // rewrite
-	$result = []; $v = 0;
-	foreach($arr as $key => $val){
-		if($key != 1) $v += $val;
-	}
-	return ['0' => $v, '1' => $arr['1']];
 }
 
 function createUrl($name){

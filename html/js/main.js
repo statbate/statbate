@@ -83,21 +83,6 @@ function printWsText(text){
 	}
 }
 
-function printOnlineStat(){
-	$.get("//"+document.domain+"/public/online.php", function(text){
-		if(text.length > 0){
-			printWsText(text);
-		}
-	});
-}
-
-$(document).ready(function() {
-	setTimeout(function getOnlineStat() {
-		printOnlineStat();
-		setTimeout(getOnlineStat, 60000);
-	}, 1000);
-});
-
 function bStat() {
     var sock = new WebSocket('wss://statbate.com/ws/');
     sock.onopen = function() {
@@ -128,3 +113,5 @@ bStat();
 $(document).ready(function() {
 	$("#donTopLink").show();
 });
+
+// todo reconnect ws, update from ws

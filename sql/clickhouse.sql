@@ -13,6 +13,6 @@ CREATE TABLE stat
     did   Int32,
     rid   Int32,
     token Int32,
-    time  Int64
+    time  Int32
 ) ENGINE = MergeTree ORDER BY rid
 SETTINGS index_granularity = 8192;

@@ -118,7 +118,7 @@ $track = trackCount();
 							<center>
 								<table class="table table-curved table-bordered" style="margin-bottom: 0px; margin-top: 0px;" >
 									<tr>
-										<th height="28" colspan="2" style="font-weight: normal; padding: 4px 0px;">Statistics for the last 30 days</th>
+										<th height="28" colspan="2" style="font-weight: normal; padding: 4px 0px;">Statistics for the last month</th>
 									</tr>
 									<tbody>
 										<tr height="32">
