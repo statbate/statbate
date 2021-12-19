@@ -11,7 +11,7 @@ function isJson($string) {
 function getPage($url){
 	$command = escapeshellcmd("/home/stat/python/cloudscraper.py $url");
 	return shell_exec($command);
-} 
+}
 
 function startBot($name, $server){
 	if(empty($name) || empty($server)){
@@ -100,7 +100,6 @@ function updateFollowers($name, $num){
 }
 
 function getAPIList(){
-	global $redis;
 	$stat = [];
 	$json = getPage('https://chaturbate.com/affiliates/api/onlinerooms/?format=json&wm=50xHQ');
 	randSleep();
@@ -128,7 +127,6 @@ function getAPIList(){
 	if(empty($stat) || !is_array($stat)){
 		return false;
 	}
-	$redis->setex(getCacheName('apiOnline'), 900, json_encode(['rooms' => count($arr), 'viewers' => $viewers]));
 	return $stat;
 }
 
@@ -195,12 +193,11 @@ function importList(){
 	if(isJson($online)){
 		$onlineList = json_decode($online, true);
 		if(!empty($onlineList) && count($onlineList) > 100){
-			$c = getCacheName('importList');
-			$redis->setex($c, 3600, $online);
+			$redis->setex('importList', 3600, $online);
 			return;
 		}
 	}
-	$online = $redis->get(getCacheName('importList'));
+	$online = $redis->get('importList');
 	if($online !== false && isJson($online)){
 		$onlineList = json_decode($online, true);
 		foreach($onlineList as $key => $val){
