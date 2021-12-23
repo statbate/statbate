@@ -1,5 +1,5 @@
 <?php
-require_once('./private/init.php');
+require_once('/var/www/statbate/root/private/init.php');
 showRoomList();
 $topDon = cacheResult('getTopDons', [], 3600);
 $fin = cacheResult('getFinStat', [], 3600, true);
@@ -9,8 +9,8 @@ $track = trackCount();
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Statbate Top 100</title>
-		<meta name="description" content="How much do webcam models make?" />
+		<title>Statbate: Chaturbate Top 100</title>
+		<meta name="description" content="How much do webcam models make? Now you know the answer!" />
 		<meta name="viewport" content="width=device-width, initial-scale=0.7">
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<link rel="stylesheet" href="./css/bootstrap.min.css">
@@ -49,7 +49,7 @@ $track = trackCount();
   <div class="collapse navbar-collapse" id="navbarNav">
     <ul class="navbar-nav">
       <li class="nav-item">
-        <a class="nav-link" href="#" data-toggle="modal" data-target="#donModal">best donators</span></a>
+        <a class="nav-link" href="#" data-toggle="modal" data-target="#donModal"><b>best simp</b></span></a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="#" data-toggle="modal" data-target="#trendsModal">google trends</a>
@@ -146,7 +146,9 @@ $track = trackCount();
 					<hr style="margin-top: 10px; margin-bottom: 10px;">	
 					
 					<div id="donTopLink">
-						<?php echo get_ads(); ?>
+						<div class="x11" style="display: flex; justify-content: center; align-items: center; font-size: 18px; padding-top: 10px; text-shadow: 1px 1px 1px black, 0 0 1em grey;">
+						<b>don`t buy <p style="color:#ff6600; display:inline;">Monero</p> and <p style="color:#f7931a; display:inline;">Bitcoin</p></b>
+						</div>
 					</div>
 					
 					<table id="main" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" width="100%" role="grid" aria-describedby="supportList_info" style="width: 100%;">
@@ -157,7 +159,7 @@ $track = trackCount();
 								<th style="width:1px;">gender</th>
 								<th data-toggle="tooltip" data-placement="top" title="Use search online">last</th>
 								<th data-toggle="tooltip" data-placement="top" title="In thousands">fans</th>
-								<th data-toggle="tooltip" data-placement="top" title="Income per 30 days">USD</th>
+								<th data-toggle="tooltip" data-placement="top" title="Income per month">USD</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -166,8 +168,11 @@ $track = trackCount();
 					</table>						
 				</div>
 			</div>
+			<div style="padding-top: 12px;" class="x11">
+				<center><font size="2"><strong>How much do webcam models make?</strong> To answer this question, we collect data from open sources.</font></center>
+			</div>
+			
 		</div>
-		
 		
 		<!--<div class="alert alert-dark" role="alert" style="box-shadow: 0 1px 1px 0 rgba(0,0,0,0.14), 0 2px 1px -1px rgba(0,0,0,0.12), 0 1px 3px 0 rgba(0,0,0,0.20); margin-bottom: 12px; font-size: 12.2pt; color: #000000;">
 			<center>test test test</center>
@@ -182,7 +187,6 @@ $track = trackCount();
 				</div>
 			</div>
 		</div>
-		
 		<div class="modal fade" id="donModal" tabindex="-1" role="dialog" aria-hidden="true">
 			<div class="modal-dialog" style="max-width: 400px;">
 				<div class="modal-content">

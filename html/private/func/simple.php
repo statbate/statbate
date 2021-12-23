@@ -44,7 +44,7 @@ function trackCount(){
 
 function showRoomList(){
 	if(isset($_GET['list'])){
-		echo "<title>Chaturbate100 Track List</title>";
+		echo "<title>Statbate Track List</title>";
 		echo "<meta http-equiv='refresh' content='60'>";
 		echo "<pre>";
 		echo "<a href='/'>main page</a>\n\n";
@@ -65,20 +65,6 @@ function showRoomList(){
 		die;
 	}
 }
-
-function get_ads(){
-	$ads = [
-		'<a href="http://wallet.advcash.com/referral/2d41167a-bda8-4403-a3e0-cb32bd49412a" rel="nofollow" target="_blank"><img class="z11" style="border-radius: 4px;" width="340" height="40" src="/img/cash.gif"></a>' => '1',
-		//'<a href="https://www.lovense.com/r/3xe6vd" rel="nofollow" target="_blank"><img class="z11" style="border-radius: 4px;" width="340" height="40" src="/img/lv1.png" /></a>' => '1',
-	];
-	$link = [];
-	foreach($ads as $key => $val){
-		$link = array_merge($link, array_fill(0, $val, $key));
-	}
-	shuffle($link);
-	return $link[random_int(0, count($link) - 1)];
-}
-
 // https://www.w3schools.in/php-script/time-ago-function/
 function get_time_ago($time){
     $time_difference = time() - $time;
