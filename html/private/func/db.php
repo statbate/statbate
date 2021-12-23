@@ -9,8 +9,7 @@ function getFinStat(){ // cache done
 
 function getModelChartData($a){ // cache done
 	global $clickhouse; $arr = [];
-	$start = strtotime(date('d-m-Y', time()).' -1 months');
-	$query = $clickhouse->query("SELECT FROM_UNIXTIME(time, '%Y-%m-%d') as ndate, SUM(token) as total FROM stat WHERE `rid` = {$a['rid']} AND `time` > $start GROUP BY ndate ORDER BY ndate DESC");
+	$query = $clickhouse->query("SELECT FROM_UNIXTIME(time, '%Y-%m-%d') as ndate, SUM(token) as total FROM stat WHERE `rid` = {$a['rid']} AND `time` > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month))) GROUP BY ndate ORDER BY ndate DESC");
 	if($query->rowCount() == 0){
 		return false;
 	}
@@ -24,15 +23,13 @@ function getModelChartData($a){ // cache done
 function getTopDons($room){ // cache done
 	global $clickhouse;
 	$result = ''; $a = ''; $b = '';
-	$date = strtotime(date('d-m-Y', time()).' -1 months');
 	$tmpl = '<tr><td>{URL}</td><td>{TOTAL}</td><td>{AVG}</td></tr>';
 	if(!empty($room['rid'])){
-		$a = "rid = {$room['rid']} AND time > $date"; 
+		$a = "rid = {$room['rid']} AND"; 
 	}else{
-		$a = "time > $date";
 		$b = "HAVING avg < 2000"; // 100 USD
 	}
-	$query = $clickhouse->query("SELECT did, SUM(token) as total, AVG(token) as avg FROM stat WHERE $a GROUP BY did $b ORDER BY total DESC LIMIT 20");
+	$query = $clickhouse->query("SELECT did, SUM(token) as total, AVG(token) as avg FROM stat WHERE $a time > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month))) GROUP BY did $b ORDER BY total DESC LIMIT 20");
 	$row =  $query->fetchAll();
 	foreach($row as $val) {
 		$tr = str_replace('{URL}', createUrl(cacheResult('getDonName', ['id' => $val['did']], 86000)), $tmpl);
@@ -75,8 +72,7 @@ function getRoomInfo($arr){ // cache done
 function getTop(){ // cache done
 	global $db, $clickhouse;
 	$data = [];
-	$date = strtotime(date('d-m-Y', time()).' -1 months');
-	$query = $clickhouse->query("SELECT rid, SUM(token) as total FROM stat WHERE time > $date AND did not in (SELECT did FROM stat WHERE time > $date GROUP BY did HAVING AVG(token) > 20000) GROUP BY rid HAVING AVG(token) < 1000 ORDER BY total DESC LIMIT 100");
+	$query = $clickhouse->query("SELECT rid, SUM(token) as total FROM stat WHERE time > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month))) AND did not in (SELECT did FROM stat WHERE time > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month))) GROUP BY did HAVING AVG(token) > 20000) GROUP BY rid HAVING AVG(token) < 1000 ORDER BY total DESC LIMIT 100");
 	$row =  $query->fetchAll();
 	foreach($row as $val) {
 		$data[$val['rid']]['token'] = $val['total'];
