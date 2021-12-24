@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"encoding/json"
-	"strconv"
+	"fmt"
+	"unicode/utf8"
 )
 
 type Data struct {
@@ -11,28 +11,35 @@ type Data struct {
 	Method string   `json:"method"`
 }
 
-func parseArg(s string) (map[string]interface{}, bool) {
-	arg := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(s), &arg); err != nil {
-		fmt.Println("There was an error:", err)
-		return arg, false
-	}
-	return arg, true
+type DonateMessage struct {
+	From   string `json:"from_username"`
+	Amount int    `json:"amount"`
 }
 
-func parseMes(s string) (Data, bool) {
-    var data = Data{}
-    if s[0:2] == "a[" {
-		s = s[1:len(s)]
+func trimFirstRune(s string) string {
+	_, i := utf8.DecodeRuneInString(s)
+	return s[i:]
+}
+
+func parseMes(message string) (Data, DonateMessage) {
+	var parsedData []string
+	var parsedData2 Data
+	var _data = trimFirstRune(message)
+	if err := json.Unmarshal([]byte(_data), &parsedData); err != nil {
+		fmt.Println("[1] There was an error:", err)
 	}
-	if s[0:1] == "[" {
-		s = s[1:len(s)-1]
-	}	
-    a, _ := strconv.Unquote(s)
-    if err := json.Unmarshal([]byte(a), &data); err != nil {
-		fmt.Println(a)
-		fmt.Println("There was an error:", err)
-		return data, false
-	}	
-	return data, true
+	if err := json.Unmarshal([]byte(parsedData[0]), &parsedData2); err != nil {
+		fmt.Println("[2] There was an error:", err)
+	}
+	var donMessage DonateMessage
+
+	switch parsedData2.Method {
+	case "onNotify":
+		if err := json.Unmarshal([]byte(parsedData2.Args[0]), &donMessage); err != nil {
+			fmt.Println("[onNotify] There was an error:", err)
+		}
+		break
+	}
+
+	return parsedData2, donMessage
 }
