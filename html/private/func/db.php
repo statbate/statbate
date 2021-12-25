@@ -9,7 +9,7 @@ function getFinStat(){ // cache done
 
 function getModelChartData($a){ // cache done
 	global $clickhouse; $arr = [];
-	$query = $clickhouse->query("SELECT FROM_UNIXTIME(time, '%Y-%m-%d') as ndate, SUM(token) as total FROM stat WHERE `rid` = {$a['rid']} AND `time` > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month))) GROUP BY ndate ORDER BY ndate DESC");
+	$query = $clickhouse->query("SELECT FROM_UNIXTIME(time, '%Y-%m-%d') as ndate, SUM(token) as total FROM stat WHERE `rid` = {$a['rid']} AND `time` > toUInt64(toDateTime(DATE_SUB((DATE_SUB(NOW(), INTERVAL 1 MONTH)), INTERVAL 1 DAY))) GROUP BY ndate ORDER BY ndate DESC");
 	if($query->rowCount() == 0){
 		return false;
 	}

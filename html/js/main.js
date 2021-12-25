@@ -7,28 +7,19 @@ $(document).on("click", "[data-show-room-stat]", function(e) {
 	e.preventDefault();
 	var id = $(this).data('show-room-stat');
 	var name = $(this).data('room-name');
-	
-	
-	
-	
-	
-	
 	$.post("//"+document.domain+"/public/info.php", {'room': id}, function(json){
 		data = JSON.parse(json);
-		
-		
 		if(data.table.length != 0){
 			$("#donRoomTable tr:first th:first").html(name);
 			$("#donRoomTable tbody").html(data.table);
 			$('#donRoomModal').modal('show');
 		}
-		
 		if(data.income.length != 0){
 			$("#allIncome").html("<hr/><center><b>All time income: "+data.income+" USD</b></center><hr/>");
 		}
-		
 		if(data.chart.length != 0){
 			xx11 = JSON.parse(data.chart);
+			xx11 = xx11.slice(1, xx11.length);
 			var xx22 = MG.convert.date(xx11, 'date');
 			MG.data_graphic({
 				data: xx22,
