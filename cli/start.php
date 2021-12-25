@@ -244,9 +244,11 @@ if(!empty($arrApiList) && !empty($arrPagesList)){ // Stop offline rooms
 	}
 }
 
-foreach($arr100 as $val){ // Start top 100
-	if(in_array($val, $arrPagesList) || in_array($val, $arrApiList)){
-		sendStart($val);
+echo "Top100 \n";
+
+foreach($arr100 as $val){ // Start top 100	
+	if(in_array($val['name'], $arrPagesList) || in_array($val['name'], $arrApiList)){
+		sendStart($val['name']);
 	}
 }
 
