@@ -13,7 +13,7 @@ type Worker struct {
 	delay, timeout     int64
 }
 
-func statRoom(room, server string, u url.URL) {
+func statRoom(room string, u url.URL) {
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil { // dial
 		fmt.Println(err.Error())
@@ -46,40 +46,28 @@ func statRoom(room, server string, u url.URL) {
 
 		if len(string(message)) < 2 {
 			if string(message) == "o" {
-				fmt.Println("----send hello ----")
+				fmt.Println("----send hello " + room + " ----")
 				c.WriteMessage(websocket.TextMessage, worker.hello)
 				continue
 			}
 
 			if string(message) == "h" {
-				fmt.Println("----got heartbeat ----")
+				fmt.Println("----got heartbeat " + room + " ----")
 				c.WriteMessage(websocket.TextMessage, worker.count)
 				continue
 			}
 
-			fmt.Println("----skip it ----")
+			//fmt.Println("----skip it ----")
 
 			continue
 		}
 
-		result, donInfo := parseMes(string(message))
+		response := parseMes(string(message), room)
 
-		switch result.Method {
-
-		case "o":
-			c.WriteMessage(websocket.TextMessage, worker.hello)
-
+		switch response.Method {
 		case "onAuthResponse":
 			c.WriteMessage(websocket.TextMessage, worker.join)
-
-		case "onNotify":
-			if donInfo.Amount > 0 {
-				donator := donInfo.From
-				amount := donInfo.Amount
-				worker.timeout = time.Now().Unix() + 60*60
-				//fmt.Println(string(message))
-				fmt.Println("Room[", room, "]", donator, "donate", amount, "tokens")
-			}
+			break
 		}
 	}
 	c.Close()
