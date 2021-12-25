@@ -13,6 +13,16 @@ function getPage($url){
 	return shell_exec($command);
 }
 
+function stopBot($name){
+	if(empty($name)){
+		echo "empty name\n";
+		return false;
+	}
+	echo "[".date('H:i:s', time())."] stop $name\n";
+	echo "https://statbate.com/cmd/?exit=$name\n";
+	file_get_contents("https://statbate.com/cmd/?exit=$name");
+}
+
 function startBot($name, $server){
 	if(empty($name) || empty($server)){
 		echo "empty name or server\n";
@@ -138,6 +148,7 @@ function randSleep(){
 
 function getFromPages(){
 	$pages = 3;
+	echo "get list from pages";
 	for($i=1; $i<=$pages; $i++){
 		$html = getPage("https://chaturbate.com/?page=$i");
 		preg_match_all('/alt="(.*)\'s/', $html, $tmp);
@@ -147,9 +158,10 @@ function getFromPages(){
 				$rooms[] = $v;
 			}
 		}
-		echo "get list from pages $i...\n";
-		randSleep();
+		echo " $i";
+		sleep(mt_rand(10,15));
 	}
+	echo "\n";
 	if(empty($rooms) || !is_array($rooms)){
 		return false;
 	}
@@ -215,6 +227,22 @@ importList();
 $arr100 = cacheResult('getTop', [], 600, true);
 $arrPagesList =  getFromPages();
 $arrApiList = getAPIList();
+
+if(!empty($arrApiList) && !empty($arrPagesList)){ // Stop offline rooms
+	foreach($onlineList as $key => $val){
+		if(!in_array($key, $arrApiList)){
+			if(in_array($key, $arrPagesList)){
+				continue;
+			}
+			$query = $db->prepare('SELECT `last` FROM `room` WHERE `name` = :name');
+			$query->bindParam(':name', $key);
+			$query->execute();
+			if($query->rowCount() == 1 && $query->fetch()['last'] < time()+60*10){ // update last onNotice
+				stopBot($key);
+			}
+		}
+	}
+}
 
 foreach($arr100 as $val){ // Start top 100
 	if(in_array($val, $arrPagesList) || in_array($val, $arrApiList)){
