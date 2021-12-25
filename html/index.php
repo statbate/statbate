@@ -5,7 +5,6 @@ $topDon = cacheResult('getTopDons', [], 3600);
 $fin = cacheResult('getFinStat', [], 3600, true);
 $track = trackCount();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -83,6 +82,7 @@ $track = trackCount();
 								var hcData = <?php echo getCharts(); ?>;
 								var data = [];
 								for (var i = 0; i < hcData.length; i++) {
+									hcData[i] = hcData[i].slice(1, hcData[i].length); // remove first day
 									data[i] = MG.convert.date(hcData[i], 'date');
 								};
 								MG.data_graphic({

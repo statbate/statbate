@@ -116,7 +116,7 @@ function prepareTable(){ // cache done
 function genderIncome(){ // cache done
 	global $clickhouse;
 	$arr = [];
-	$query = $clickhouse->query("SELECT room.gender, SUM(token) as total, FROM_UNIXTIME(time, '%Y-%m-%d') as ndate FROM `stat` LEFT JOIN `room` ON stat.rid = room.id WHERE time > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month))) GROUP by `gender`, ndate ORDER BY ndate ASC");
+	$query = $clickhouse->query("SELECT room.gender, SUM(token) as total, FROM_UNIXTIME(time, '%Y-%m-%d') as ndate FROM `stat` LEFT JOIN `room` ON stat.rid = room.id WHERE time > toUInt64(toDateTime(DATE_SUB((DATE_SUB(NOW(), INTERVAL 1 MONTH)), INTERVAL 1 DAY))) GROUP by `gender`, ndate ORDER BY ndate ASC");
 	while($row = $query->fetch()){
 		@$arr[$row['gender']][$row['ndate']] = ['value' => toUSD($row['total'])];
 		@$arr['4'][$row['ndate']]['value'] += toUSD($row['total']);
