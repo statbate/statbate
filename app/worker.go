@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 	"net/url"
+	"strconv"
 	"github.com/gorilla/websocket"
 )
 
@@ -32,7 +33,7 @@ func statRoom(room, server string, u url.URL) {
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil { // dial
 		return
-	}
+	}	
 	addRoom(room, server)
 	args := make(map[string]interface{})
 	worker := &Worker{
@@ -75,7 +76,7 @@ func statRoom(room, server string, u url.URL) {
 		ok := true
 		worker.method, worker.arg, ok = getMethod(string(message))
 		if !ok {
-			//fmt.Println("Wrong getMethod:", room)
+			fmt.Println("Wrong getMethod:", room)
 			continue 
 		}
 		
@@ -86,6 +87,9 @@ func statRoom(room, server string, u url.URL) {
 
 		case "onAuthResponse":
 			c.WriteMessage(websocket.TextMessage, worker.join)
+			
+		case "onRoomCountUpdate":
+			updateRoom(room, "online", worker.arg)			
 
 		case "onNotify":
 			args, ok = parseArg(worker.arg)
@@ -95,10 +99,11 @@ func statRoom(room, server string, u url.URL) {
 				if len(donator) > 3 { // Skip empty from_username
 					sendPost(room, donator, amount)
 				}
-				worker.timeout = time.Now().Unix() + 60*60
 				//fmt.Println(string(message))
 				//fmt.Println("Room[", room, "]", donator, "donate", amount, "tokens")
 			}
+			worker.timeout = time.Now().Unix() + 60*60
+			updateRoom(room, "last", strconv.FormatInt(time.Now().Unix(), 10))
 		}
 	}
 	

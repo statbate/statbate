@@ -6,20 +6,34 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+    "time"
+    "strconv"
 	"encoding/json"
 )
 
 type Rooms struct {
     sync.Mutex
-    name map[string]string
+    name map[string]map[string]string
 }
 
-var rooms = &Rooms{name: make(map[string]string) }
+var rooms = &Rooms{name: make(map[string]map[string]string) }
 
 func addRoom(room, server string) {
 	rooms.Lock()
     defer rooms.Unlock()
-	rooms.name[room] = server
+	rooms.name[room] = map[string]string{
+            "server": server,
+            "last": strconv.FormatInt(time.Now().Unix(), 10),
+            "online": "0",
+    }
+}
+
+func updateRoom(room, key, val string){
+	if checkRoom(room) {
+		rooms.Lock()
+		defer rooms.Unlock()
+		rooms.name[room][key] = val
+	}
 }
 
 func removeRoom(room string) {
@@ -58,7 +72,7 @@ func cmdHandler(w http.ResponseWriter, r *http.Request){
 		server := params["server"][0]
 		if !checkRoom(room) {
 			u := url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"}
-			//fmt.Println("Start", room, "server", server)
+			fmt.Println("Start", room, "server", server)
 			go statRoom(room, server, u)
 		}
 	}

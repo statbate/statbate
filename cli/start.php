@@ -110,6 +110,7 @@ function updateFollowers($name, $num){
 }
 
 function getAPIList(){
+	global $redis;
 	$stat = [];
 	$json = getPage('https://chaturbate.com/affiliates/api/onlinerooms/?format=json&wm=50xHQ');
 	randSleep();
@@ -120,10 +121,10 @@ function getAPIList(){
 	if(!is_array($arr) || empty($arr)){
 		return false;
 	}
-	usort($arr, function($a, $b) {
+	$redis->setex('chaturbateList', 86400, $json);
+	usort($arr, function($a, $b){
 		return $a['num_users'] < $b['num_users'];
 	});
-	
 	$viewers = 0;	
 	foreach($arr as $val){
 		cacheResult('getRoomInfo', ['name' => $val['username']], 3600, true);
@@ -213,8 +214,8 @@ function importList(){
 	if($online !== false && isJson($online)){
 		$onlineList = json_decode($online, true);
 		foreach($onlineList as $key => $val){
-			echo "import from importList $key $val\n";
-			startBot($key, $val);
+			echo "import from importList $key {$val['server']}\n";
+			startBot($key, $val['server']);
 		}
 	}
 }
@@ -230,22 +231,16 @@ $arrApiList = getAPIList();
 
 if(!empty($arrApiList) && !empty($arrPagesList)){ // Stop offline rooms
 	foreach($onlineList as $key => $val){
-		if(!in_array($key, $arrApiList)){
+		if(!in_array($key, $arrApiList) && $val['last'] < time()+60*15){
 			if(in_array($key, $arrPagesList)){
 				continue;
 			}
-			$query = $db->prepare('SELECT `last` FROM `room` WHERE `name` = :name');
-			$query->bindParam(':name', $key);
-			$query->execute();
-			if($query->rowCount() == 1 && $query->fetch()['last'] < time()+60*10){ // update last onNotice
-				stopBot($key);
-			}
+			stopBot($key);
 		}
 	}
 }
 
 echo "Top100 \n";
-
 foreach($arr100 as $val){ // Start top 100	
 	if(in_array($val['name'], $arrPagesList) || in_array($val['name'], $arrApiList)){
 		sendStart($val['name']);
@@ -253,7 +248,6 @@ foreach($arr100 as $val){ // Start top 100
 }
 
 echo "PagesList \n";
-
 foreach($arrPagesList as $val){ // Start hiden rooms
 	if(!in_array($val, $arrApiList)){
 		sendStart($val);
@@ -261,7 +255,6 @@ foreach($arrPagesList as $val){ // Start hiden rooms
 }
 
 echo "ApiList \n";
-
 foreach($arrApiList as $val){ // Start api list by num_users
 	sendStart($val);
 }

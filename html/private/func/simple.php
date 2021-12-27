@@ -43,9 +43,11 @@ function trackCount(){
 }
 
 function showRoomList(){
+	global $redis;
 	if(isset($_GET['list'])){
 		echo "<title>Statbate Track List</title>";
 		echo "<meta http-equiv='refresh' content='60'>";
+		echo "<style>table, th, td {border: 1px solid black;border-collapse: collapse;} td {width: 100px; height: 25px; text-align: center; vertical-align: middle;}</style>";
 		echo "<pre>";
 		echo "<a href='/'>main page</a>\n\n";
 		echo "statbate.com сollects data from open sources:\n";
@@ -55,6 +57,24 @@ function showRoomList(){
 		echo "excluded from rating (top 100):\n";
 		echo "- donators with an average tips of more than 20000 (1000 USD)\n";
 		echo "- rooms with an average tips of more than 1000 (50 USD)\n\n";
+		$cb_list = $redis->get('chaturbateList');
+		if($cb_list !== false){
+			$count = [0, 0, 0, 0];
+			$arr = json_decode($cb_list, true);
+			foreach($arr as $val){
+				if($val['num_users'] > 100){
+					$count['0']++;
+				}
+				if($val['num_users'] > 50){
+					$count['1']++;
+				}
+				if($val['num_users'] > 25){
+					$count['2']++;
+				}
+				$count['3'] += $val['num_users'];
+			}
+			echo"<table><tr><td>online more</td><td>25</td><td>50</td><td>100</td></tr><tr><td>rooms</td><td>{$count['2']}</td><td>{$count['1']}</td><td>{$count['0']}</td></tr><tr><td>total rooms</td><td colspan='3'>".count($arr)."</td></tr><tr><td>total online</td><td colspan='3'>{$count['3']}</td></tr></table>\n";
+		}
 		$arr = json_decode(cacheResult('getList', [], 30), true);
 		ksort($arr);
 		echo "now tracked ".count($arr)." rooms\n\n";
