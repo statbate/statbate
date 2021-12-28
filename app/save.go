@@ -7,7 +7,7 @@ import (
 
 	"time"
 	"strconv"
-	"encoding/json"
+	//"encoding/json"
 )
 
 type tableRoom struct {
@@ -107,7 +107,6 @@ func saveBase(s *Save, h *Hub){
 					msg, err := json.Marshal(map[string]string{"room": info.room, "donator": info.donator, "amount": strconv.FormatInt(info.token, 10), "trackCount": countRooms()})
 					if err == nil {
 						h.broadcast <- msg
-						
 					}
 				}
 			}

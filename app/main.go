@@ -4,7 +4,10 @@ import (
 	"net/http"
 	"math/rand"
     "time"
+    jsoniter "github.com/json-iterator/go"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 var saveStat = &Save{donate: make(chan *saveData)}
 
@@ -24,5 +27,5 @@ func main() {
 	http.HandleFunc("/cmd/", cmdHandler)
 	http.HandleFunc("/list/", listHandler)
 
-	http.ListenAndServe("localhost:8080", nil)
+	http.ListenAndServe("127.0.0.1:8080", nil)
 }
