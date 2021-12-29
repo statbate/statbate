@@ -76,7 +76,7 @@ func getRoomInfo(conn *sqlx.DB, name string) (tableRoom, bool) {
 func countRooms() string {
 	rooms.Lock()
     defer rooms.Unlock()
-    return strconv.Itoa(len(rooms.name))
+    return strconv.Itoa(len(rooms.Name))
 }
 
 func saveBase(s *Save, h *Hub){

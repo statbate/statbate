@@ -7,57 +7,66 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"strconv"
+//	"strconv"
 //	"encoding/json"
 )
 
 type Rooms struct {
     sync.Mutex
-    name map[string]map[string]string
+    Name map[string]*Info
 }
 
-var rooms = &Rooms{name: make(map[string]map[string]string) }
+type Info struct {
+	Server    string `json:"server"`
+	Start     int64  `json:"start"`
+	Last      int64  `json:"last"`
+	Online    string `json:"online"`
+	Income    int64  `json:"income"`
+}
+
+var rooms = &Rooms{Name: make(map[string]*Info) }
 
 func addRoom(room, server string) {
 	rooms.Lock()
     defer rooms.Unlock()
-	rooms.name[room] = map[string]string{
-            "server": server,
-            "start": strconv.FormatInt(time.Now().Unix(), 10),
-            "last": strconv.FormatInt(time.Now().Unix(), 10),
-            "online": "0",
-            "income": "0",
-    }
+	now := time.Now().Unix()
+    rooms.Name[room] = &Info{server, now, now, "0", 0}
 }
 
-func updateRoom(room, key, val string){
+func updateRoomLast(room string){
 	if checkRoom(room) {
 		rooms.Lock()
 		defer rooms.Unlock()
-		if(key == "income"){
-			a, err := strconv.Atoi(rooms.name[room][key]); if err != nil {
-				return
-			}
-			b, err := strconv.Atoi(val); if err != nil {
-				return
-			}
-			rooms.name[room][key] = strconv.Itoa(a+b)
-			return
-		}
-		rooms.name[room][key] = val
+		rooms.Name[room].Last = time.Now().Unix()
+	}
+}
+
+func updateRoomOnline(room string, val string){
+	if checkRoom(room) {
+		rooms.Lock()
+		defer rooms.Unlock()
+		rooms.Name[room].Online = val
+	}
+}
+
+func updateRoomIncome(room string, val int64){
+	if checkRoom(room) {
+		rooms.Lock()
+		defer rooms.Unlock()
+		rooms.Name[room].Income += val
 	}
 }
 
 func removeRoom(room string) {
 	rooms.Lock()
     defer rooms.Unlock()
-	delete(rooms.name, room)
+	delete(rooms.Name, room)
 }
 
 func checkRoom(room string) bool{
 	rooms.Lock()
     defer rooms.Unlock()
-	if _, ok := rooms.name[room]; ok {
+	if _, ok := rooms.Name[room]; ok {
 		return true
 	}
 	return false
@@ -65,8 +74,8 @@ func checkRoom(room string) bool{
 
 func listRooms() string {
 	rooms.Lock()
-    defer rooms.Unlock()
-    j, err := json.Marshal(rooms.name)
+    defer rooms.Unlock()    
+    j, err := json.Marshal(rooms.Name)
     if err != nil {
 		return ""
 	}

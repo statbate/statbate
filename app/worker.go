@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 	"net/url"
-	"strconv"
+	//"strconv"
 	"github.com/gorilla/websocket"
 )
 
@@ -89,7 +89,7 @@ func statRoom(room, server string, u url.URL) {
 			c.WriteMessage(websocket.TextMessage, worker.join)
 			
 		case "onRoomCountUpdate":
-			updateRoom(room, "online", worker.arg)	
+			updateRoomOnline(room, worker.arg)
 
 		case "onNotify":
 			args, ok = parseArg(worker.arg)
@@ -98,13 +98,13 @@ func statRoom(room, server string, u url.URL) {
 				amount  := int64(args["amount"].(float64))
 				if len(donator) > 3 { // Skip empty from_username
 					sendPost(room, donator, amount)
-					updateRoom(room, "income", strconv.FormatInt(amount, 10))
+					updateRoomIncome(room, amount)
 				}
 				//fmt.Println(string(message))
 				//fmt.Println("Room[", room, "]", donator, "donate", amount, "tokens")
 			}
 			worker.timeout = time.Now().Unix() + 60*60
-			updateRoom(room, "last", strconv.FormatInt(time.Now().Unix(), 10))
+			updateRoomLast(room)
 		}
 	}
 	
