@@ -45,23 +45,26 @@ function trackCount(){
 function showRoomList(){
 	global $redis;
 	if(isset($_GET['list'])){
-		echo "<title>Statbate Track List</title>";
+		$arr = json_decode(cacheResult('getList', [], 30), true);
+		uasort($arr, function($a, $b){
+			return $a['online'] < $b['online'];
+		});
+		echo "<title>tracking ".count($arr)." rooms</title>";
 		echo "<meta http-equiv='refresh' content='60'>";
-		echo "<style>table, th, td {border: 1px solid black;border-collapse: collapse;} td {width: 100px; height: 25px; text-align: center; vertical-align: middle;}</style>";
+		echo "<style>body {background-color: #eeeeee;}table, th, td {border: 1px solid black;border-collapse: collapse;} td {min-width: 100px; height: 25px; text-align: center; vertical-align: middle;}</style>";
 		echo "<pre>";
 		echo "<a href='/'>main page</a>\n\n";
-		echo "statbate.com сollects data from open sources:\n";
-		echo "- room name or nickname (public information)\n";
-		echo "- chat log (public information)\n\n";
-		echo "Tracks rooms where online more than 50 viewers.\n\n";
-		echo "excluded from rating (top 100):\n";
-		echo "- donators with an average tips of more than 20000 (1000 USD)\n";
-		echo "- rooms with an average tips of more than 1000 (50 USD)\n\n";
+		echo "statbate.com сollects data from open sources\n";
+		echo "- room name or nickname\n";
+		echo "- chat log\n\n";
+		echo "excluded from rating\n";
+		echo "- rooms with an average tips of more than 1000\n";
+		echo "- donators with an average tips of more than 20000\n\n\n";
 		$cb_list = $redis->get('chaturbateList');
 		if($cb_list !== false){
 			$count = [0, 0, 0, 0];
-			$arr = json_decode($cb_list, true);
-			foreach($arr as $val){
+			$a = json_decode($cb_list, true);
+			foreach($a as $val){
 				if($val['num_users'] > 100){
 					$count['0']++;
 				}
@@ -73,15 +76,19 @@ function showRoomList(){
 				}
 				$count['3'] += $val['num_users'];
 			}
-			echo"<table><tr><td>online more</td><td>25</td><td>50</td><td>100</td></tr><tr><td>rooms</td><td>{$count['2']}</td><td>{$count['1']}</td><td>{$count['0']}</td></tr><tr><td>total rooms</td><td colspan='3'>".count($arr)."</td></tr><tr><td>total online</td><td colspan='3'>{$count['3']}</td></tr></table>\n";
+			echo "<table><tr><td>online more</td><td>25</td><td>50</td><td>100</td></tr><tr><td>rooms</td><td>{$count['2']}</td><td>{$count['1']}</td><td>{$count['0']}</td></tr><tr><td>total rooms</td><td colspan='3'>".count($arr)."</td></tr><tr><td>total online</td><td colspan='3'>{$count['3']}</td></tr></table>\n\n";
 		}
-		$arr = json_decode(cacheResult('getList', [], 30), true);
-		ksort($arr);
-		echo "now tracked ".count($arr)." rooms\n\n";
+		echo "<table><tr><td></td><td>room</td><td>online</td><td>$ income</td><td title='In minutes'>duration</td></tr>";
+		$i=0;
+		$time = time();
 		foreach($arr as $key => $val){
-			echo $key."\n";
+			$i++;
+			if($val['online'] == 0){
+				$val['online'] = 'new';
+			}			
+			echo "<tr><td>$i</td><td>$key</td><td>{$val['online']}</td> <td> ".toUSD($val['income'])." </td> <td> ".round(($time - $val['start'])/60)." </td> </tr>";
 		}
-		echo "</pre>";
+		echo "</table></pre>";
 		die;
 	}
 }

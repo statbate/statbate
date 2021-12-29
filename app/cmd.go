@@ -23,8 +23,10 @@ func addRoom(room, server string) {
     defer rooms.Unlock()
 	rooms.name[room] = map[string]string{
             "server": server,
+            "start": strconv.FormatInt(time.Now().Unix(), 10),
             "last": strconv.FormatInt(time.Now().Unix(), 10),
             "online": "0",
+            "income": "0",
     }
 }
 
@@ -32,6 +34,16 @@ func updateRoom(room, key, val string){
 	if checkRoom(room) {
 		rooms.Lock()
 		defer rooms.Unlock()
+		if(key == "income"){
+			a, err := strconv.Atoi(rooms.name[room][key]); if err != nil {
+				return
+			}
+			b, err := strconv.Atoi(val); if err != nil {
+				return
+			}
+			rooms.name[room][key] = strconv.Itoa(a+b)
+			return
+		}
 		rooms.name[room][key] = val
 	}
 }
