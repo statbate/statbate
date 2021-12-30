@@ -4,6 +4,9 @@ import (
 	"net/http"
 	"math/rand"
     "time"
+    "net"
+    "os"
+	"log"
     jsoniter "github.com/json-iterator/go"
 )
 
@@ -27,5 +30,13 @@ func main() {
 	http.HandleFunc("/cmd/", cmdHandler)
 	http.HandleFunc("/list/", listHandler)
 
-	http.ListenAndServe("127.0.0.1:8080", nil)
+	const SOCK = "/tmp/statbate.sock"
+	os.Remove(SOCK)
+	unixListener, err := net.Listen("unix", SOCK)
+	if err != nil {
+		log.Fatal("Listen (UNIX socket): ", err)
+	}
+	defer unixListener.Close()
+	os.Chmod(SOCK, 0777)
+	log.Fatal(http.Serve(unixListener, nil))
 }

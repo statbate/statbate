@@ -7,8 +7,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-//	"strconv"
-//	"encoding/json"
 )
 
 type Rooms struct {
@@ -92,13 +90,14 @@ func cmdHandler(w http.ResponseWriter, r *http.Request){
 		room := params["room"][0]
 		server := params["server"][0]
 		if !checkRoom(room) {
-			u := url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"}
 			fmt.Println("Start", room, "server", server)
-			go statRoom(room, server, u)
+			go statRoom(room, server, url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"})
 		}
 	}
 	if len(params["exit"]) > 0 {
 		room := strings.Join(params["exit"], "")
-		removeRoom(room)
+		if checkRoom(room) {
+			removeRoom(room)
+		}
 	}
 }
