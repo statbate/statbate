@@ -1,13 +1,10 @@
 package main
 
 import (
+	"time"
 	_ "github.com/ClickHouse/clickhouse-go"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-
-	"time"
-	"strconv"
-	//"encoding/json"
 )
 
 type tableRoom struct {
@@ -19,7 +16,7 @@ type tableRoom struct {
 }
 
 type tableDonator struct {
-	Id    int64    `db:"id"`
+	Id    int64   `db:"id"`
 	Name  string  `db:"name"`
 }
 
@@ -73,13 +70,7 @@ func getRoomInfo(conn *sqlx.DB, name string) (tableRoom, bool) {
 	return room, result
 }
 
-func countRooms() string {
-	rooms.Lock()
-    defer rooms.Unlock()
-    return strconv.Itoa(len(rooms.Name))
-}
-
-func saveBase(s *Save, h *Hub){
+func saveBase(s *Save){
 	conn, err := sqlx.Connect("mysql", "user:passwd@unix(/var/run/mysqld/mysqld.sock)/stat?interpolateParams=true")
 	if err != nil {
 		panic(err)
@@ -103,19 +94,7 @@ func saveBase(s *Save, h *Hub){
 				
 				lastID := saveDonate(conn, d, room.Id, info.token)
 				saveClickhouse(clickhouse, lastID, d, room.Id, info.token)
-				if info.token >= 100 {
-					msg, err := json.Marshal(map[string]string{"room": info.room, "donator": info.donator, "amount": strconv.FormatInt(info.token, 10), "trackCount": countRooms()})
-					if err == nil {
-						h.broadcast <- msg
-					}
-				}
 			}
 		}
 	}
-}
-
-func sendPost(room string, name string, token int64) {
-	//t, _ :=  strconv.ParseInt(token, 10, 64)
-	data := &saveData{room: room, donator: name, token: token}
-	saveStat.donate <- data
 }

@@ -18,6 +18,12 @@ type Donate struct {
 	Amount int64  `json:"amount"`
 }
 
+type AnnounceDonate struct {
+    Room string     `json:"room"`
+    Donator string  `json:"donator"`
+    Amount int64    `json:"amount"`
+}
+
 func statRoom(room, server string, u url.URL) {
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil); if err != nil {
 		fmt.Println(err.Error())
@@ -86,8 +92,15 @@ func statRoom(room, server string, u url.URL) {
 				continue;
 			}
 			if(len(donate.From) > 3){
-				sendPost(room, donate.From, donate.Amount)
+				saveStat.donate <- &saveData{room: room, donator: donate.From, token: donate.Amount}
 				updateRoomIncome(room, donate.Amount)
+				
+				if donate.Amount > 99 {
+					msg, err := json.Marshal(AnnounceDonate{Room: room, Donator: donate.From, Amount: donate.Amount}); if err == nil {
+						hub.broadcast <- msg
+					}
+				}
+				
 				//fmt.Println(donate.From)
 				//fmt.Println(donate.Amount)
 			}

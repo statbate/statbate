@@ -18,13 +18,14 @@ func randInt(min int, max int) int {
     return min + rand.Intn(max-min)
 }
 
+var hub = newHub()
+
 func main() {
 	
 	rand.Seed(time.Now().UTC().UnixNano())
 	
-	hub := newHub()
 	go hub.run()
-	go saveBase(saveStat, hub)
+	go saveBase(saveStat)
 	
 	http.HandleFunc("/ws/", hub.wsHandler)
 	http.HandleFunc("/cmd/", cmdHandler)

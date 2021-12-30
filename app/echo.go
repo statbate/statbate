@@ -27,6 +27,16 @@ type Client struct {
 	send chan []byte
 }
 
+type AnnounceCount struct {
+    Count int `json:"count"`
+}
+
+func countRooms() int {
+	rooms.Lock()
+	defer rooms.Unlock()
+	return len(rooms.Name)
+}
+
 func (h *Hub) run() {
 	for {
 		select {
@@ -66,9 +76,13 @@ func (c *Client) writePump() {
 func (c *Client) readPump() {
 	for {
 		// Client close connection
-		_, _, err := c.conn.ReadMessage() 
-		if err != nil {
+		_, message, err := c.conn.ReadMessage(); if err != nil {
 			break
+		}
+		if string(message) == "o"{
+			msg, err := json.Marshal(AnnounceCount{Count: countRooms()}); if err == nil {
+				c.conn.WriteMessage(websocket.TextMessage, msg)
+			}
 		}
 	}
 	c.hub.unregister <- c
