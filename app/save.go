@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 type tID struct {
 	Id     int64   `db:"id"`
 }
@@ -21,12 +23,13 @@ func saveDonate(name string, rid, token int64) {
 		res, _ := Mysql.Exec("INSERT INTO donator (`name`) VALUES (?)", name)
 		donator.Id, _ = res.LastInsertId()
 	}
+	
 	res, _ := Mysql.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, unix_timestamp(now()))", donator.Id, rid, token)
-	id, err := res.LastInsertId(); if err == nil {
-		tx, _ := Clickhouse.Begin()
-		tx.Exec("INSERT INTO stat VALUES (?, ?, ?, ?, toUInt64(now()))", id, donator.Id, rid, token)
-		tx.Commit()
-	}
+	id, _ := res.LastInsertId();
+	
+	tx, _ := Clickhouse.Begin()
+	tx.Exec("INSERT INTO stat VALUES (?, ?, ?, ?, ?)", id, donator.Id, rid, token, time.Now().Unix())
+	tx.Commit()
 }
 
 func getRoomInfo(name string) (*tID, bool) {
