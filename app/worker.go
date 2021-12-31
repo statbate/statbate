@@ -29,6 +29,10 @@ func statRoom(room, server string, u url.URL) {
 		fmt.Println(err.Error())
 		return
 	}
+	info, ok := getRoomInfo(room); if !ok {
+		fmt.Println("No room in MySQL:", room)
+		return
+	}
 	addRoom(room, server)
 	timeout := time.Now().Unix() + 60*60
 	for {
@@ -92,7 +96,7 @@ func statRoom(room, server string, u url.URL) {
 				continue;
 			}
 			if(len(donate.From) > 3){
-				saveStat.donate <- &saveData{room: room, donator: donate.From, token: donate.Amount}
+				saveStat.donate <- &saveData{rid: info.Id, donator: donate.From, token: donate.Amount}
 				updateRoomIncome(room, donate.Amount)
 				
 				if donate.Amount > 99 {

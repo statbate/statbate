@@ -8,21 +8,35 @@ import (
     "os"
 	"log"
     jsoniter "github.com/json-iterator/go"
+    _ "github.com/ClickHouse/clickhouse-go"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 )
 
+var hub = newHub()
+var Mysql, Clickhouse *sqlx.DB
+var saveStat = &Save{donate: make(chan *saveData)}
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-var saveStat = &Save{donate: make(chan *saveData)}
-
-func randInt(min int, max int) int {
-    return min + rand.Intn(max-min)
+func initMysql(){
+	db, err := sqlx.Connect("mysql", "user:passwd@unix(/var/run/mysqld/mysqld.sock)/stat?interpolateParams=true"); if err != nil {
+		panic(err)
+	}
+	Mysql = db
 }
 
-var hub = newHub()
+func initClickhouse(){
+	db, err := sqlx.Connect("clickhouse", "tcp://127.0.0.1:9000/?database=statbate&compress=true&debug=false"); if err != nil {
+		panic(err)
+	}
+	Clickhouse = db
+}
 
 func main() {
-	
 	rand.Seed(time.Now().UTC().UnixNano())
+	
+	initMysql()
+	initClickhouse()
 	
 	go hub.run()
 	go saveBase(saveStat)
