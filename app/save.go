@@ -41,12 +41,3 @@ func getRoomInfo(name string) (*tID, bool) {
 	}
 	return room, result
 }
-
-func saveBase(s *Save){	
-	for {
-		select {
-			case info := <-s.donate:
-			saveDonate(info.donator, info.rid, info.token)
-		}
-	}
-}

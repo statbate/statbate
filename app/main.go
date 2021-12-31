@@ -2,8 +2,6 @@ package main
 
 import (
 	"net/http"
-	"math/rand"
-    "time"
     "net"
     "os"
 	"log"
@@ -15,7 +13,6 @@ import (
 
 var hub = newHub()
 var Mysql, Clickhouse *sqlx.DB
-var saveStat = &Save{donate: make(chan *saveData)}
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func initMysql(){
@@ -33,13 +30,11 @@ func initClickhouse(){
 }
 
 func main() {
-	rand.Seed(time.Now().UTC().UnixNano())
-	
 	initMysql()
 	initClickhouse()
 	
 	go hub.run()
-	go saveBase(saveStat)
+	go announceCount()
 	
 	http.HandleFunc("/ws/", hub.wsHandler)
 	http.HandleFunc("/cmd/", cmdHandler)

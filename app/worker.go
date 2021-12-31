@@ -18,10 +18,29 @@ type Donate struct {
 	Amount int64  `json:"amount"`
 }
 
+type AnnounceCount struct {
+    Count int `json:"count"`
+}
+
 type AnnounceDonate struct {
     Room string     `json:"room"`
     Donator string  `json:"donator"`
     Amount int64    `json:"amount"`
+}
+
+func countRooms() int {
+	rooms.Lock()
+	defer rooms.Unlock()
+	return len(rooms.Name)
+}
+
+func announceCount(){
+	for {
+		time.Sleep(30 * time.Second)
+		msg, err := json.Marshal(AnnounceCount{Count: countRooms()}); if err == nil {
+			hub.broadcast <- msg
+		}
+	}
 }
 
 func statRoom(room, server string, u url.URL) {
@@ -96,7 +115,7 @@ func statRoom(room, server string, u url.URL) {
 				continue;
 			}
 			if(len(donate.From) > 3){
-				saveStat.donate <- &saveData{rid: info.Id, donator: donate.From, token: donate.Amount}
+				saveDonate(donate.From, info.Id, donate.Amount)
 				updateRoomIncome(room, donate.Amount)
 				
 				if donate.Amount > 99 {
