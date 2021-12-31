@@ -1,29 +1,31 @@
 package main
 
 import (
-	"net/http"
-    "net"
-    "os"
-	"log"
-    jsoniter "github.com/json-iterator/go"
-    _ "github.com/ClickHouse/clickhouse-go"
+	_ "github.com/ClickHouse/clickhouse-go"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	jsoniter "github.com/json-iterator/go"
+	"log"
+	"net"
+	"net/http"
+	"os"
 )
 
 var hub = newHub()
 var Mysql, Clickhouse *sqlx.DB
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-func initMysql(){
-	db, err := sqlx.Connect("mysql", "user:passwd@unix(/var/run/mysqld/mysqld.sock)/stat?interpolateParams=true"); if err != nil {
+func initMysql() {
+	db, err := sqlx.Connect("mysql", "user:passwd@unix(/var/run/mysqld/mysqld.sock)/stat?interpolateParams=true")
+	if err != nil {
 		panic(err)
 	}
 	Mysql = db
 }
 
-func initClickhouse(){
-	db, err := sqlx.Connect("clickhouse", "tcp://127.0.0.1:9000/?database=statbate&compress=true&debug=false"); if err != nil {
+func initClickhouse() {
+	db, err := sqlx.Connect("clickhouse", "tcp://127.0.0.1:9000/?database=statbate&compress=true&debug=false")
+	if err != nil {
 		panic(err)
 	}
 	Clickhouse = db
@@ -32,10 +34,10 @@ func initClickhouse(){
 func main() {
 	initMysql()
 	initClickhouse()
-	
+
 	go hub.run()
 	go announceCount()
-	
+
 	http.HandleFunc("/ws/", hub.wsHandler)
 	http.HandleFunc("/cmd/", cmdHandler)
 	http.HandleFunc("/list/", listHandler)

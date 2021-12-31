@@ -1,8 +1,8 @@
 package main
 
 import (
-	"net/http"
 	"github.com/gorilla/websocket"
+	"net/http"
 )
 
 func newHub() *Hub {
@@ -15,14 +15,14 @@ func newHub() *Hub {
 }
 
 type Hub struct {
-	clients map[*Client]bool
-	broadcast chan []byte
-	register chan *Client
+	clients    map[*Client]bool
+	broadcast  chan []byte
+	register   chan *Client
 	unregister chan *Client
 }
 
 type Client struct {
-	hub *Hub
+	hub  *Hub
 	conn *websocket.Conn
 	send chan []byte
 }
@@ -66,7 +66,8 @@ func (c *Client) writePump() {
 func (c *Client) readPump() {
 	for {
 		// Client close connection
-		_, _, err := c.conn.ReadMessage(); if err != nil {
+		_, _, err := c.conn.ReadMessage()
+		if err != nil {
 			break
 		}
 	}

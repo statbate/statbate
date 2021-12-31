@@ -10,28 +10,28 @@ import (
 )
 
 type Rooms struct {
-    sync.Mutex
-    Name map[string]*Info
+	sync.Mutex
+	Name map[string]*Info
 }
 
 type Info struct {
-	Server    string `json:"server"`
-	Start     int64  `json:"start"`
-	Last      int64  `json:"last"`
-	Online    string `json:"online"`
-	Income    int64  `json:"income"`
+	Server string `json:"server"`
+	Start  int64  `json:"start"`
+	Last   int64  `json:"last"`
+	Online string `json:"online"`
+	Income int64  `json:"income"`
 }
 
-var rooms = &Rooms{Name: make(map[string]*Info) }
+var rooms = &Rooms{Name: make(map[string]*Info)}
 
 func addRoom(room, server string) {
 	rooms.Lock()
-    defer rooms.Unlock()
+	defer rooms.Unlock()
 	now := time.Now().Unix()
-    rooms.Name[room] = &Info{server, now, now, "0", 0}
+	rooms.Name[room] = &Info{server, now, now, "0", 0}
 }
 
-func updateRoomLast(room string){
+func updateRoomLast(room string) {
 	if checkRoom(room) {
 		rooms.Lock()
 		defer rooms.Unlock()
@@ -39,7 +39,7 @@ func updateRoomLast(room string){
 	}
 }
 
-func updateRoomOnline(room string, val string){
+func updateRoomOnline(room string, val string) {
 	if checkRoom(room) {
 		rooms.Lock()
 		defer rooms.Unlock()
@@ -47,7 +47,7 @@ func updateRoomOnline(room string, val string){
 	}
 }
 
-func updateRoomIncome(room string, val int64){
+func updateRoomIncome(room string, val int64) {
 	if checkRoom(room) {
 		rooms.Lock()
 		defer rooms.Unlock()
@@ -57,13 +57,13 @@ func updateRoomIncome(room string, val int64){
 
 func removeRoom(room string) {
 	rooms.Lock()
-    defer rooms.Unlock()
+	defer rooms.Unlock()
 	delete(rooms.Name, room)
 }
 
-func checkRoom(room string) bool{
+func checkRoom(room string) bool {
 	rooms.Lock()
-    defer rooms.Unlock()
+	defer rooms.Unlock()
 	if _, ok := rooms.Name[room]; ok {
 		return true
 	}
@@ -72,21 +72,21 @@ func checkRoom(room string) bool{
 
 func listRooms() string {
 	rooms.Lock()
-    defer rooms.Unlock()    
-    j, err := json.Marshal(rooms.Name)
-    if err != nil {
+	defer rooms.Unlock()
+	j, err := json.Marshal(rooms.Name)
+	if err != nil {
 		return ""
 	}
-    return string(j)
+	return string(j)
 }
 
-func listHandler(w http.ResponseWriter, r *http.Request){
+func listHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, listRooms())
 }
 
-func cmdHandler(w http.ResponseWriter, r *http.Request){
-	params := r.URL.Query()	
-	if len(params["room"]) > 0 && len(params["server"]) > 0 {	
+func cmdHandler(w http.ResponseWriter, r *http.Request) {
+	params := r.URL.Query()
+	if len(params["room"]) > 0 && len(params["server"]) > 0 {
 		room := params["room"][0]
 		server := params["server"][0]
 		if !checkRoom(room) {
