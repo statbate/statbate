@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"strings"
 	"sync"
-	"time"
 )
 
 type Rooms struct {
@@ -24,18 +23,17 @@ type Info struct {
 
 var rooms = &Rooms{Name: make(map[string]*Info)}
 
-func addRoom(room, server string) {
+func addRoom(room, server string, now int64) {
 	rooms.Lock()
 	defer rooms.Unlock()
-	now := time.Now().Unix()
 	rooms.Name[room] = &Info{server, now, now, "0", 0}
 }
 
-func updateRoomLast(room string) {
+func updateRoomLast(room string, now int64) {
 	if checkRoom(room) {
 		rooms.Lock()
 		defer rooms.Unlock()
-		rooms.Name[room].Last = time.Now().Unix()
+		rooms.Name[room].Last = now
 	}
 }
 

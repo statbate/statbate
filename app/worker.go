@@ -55,9 +55,11 @@ func statRoom(room, server string, u url.URL) {
 		fmt.Println("No room in MySQL:", room)
 		return
 	}
-	addRoom(room, server)
+	
+	now := time.Now().Unix()
+	addRoom(room, server, now)
 	donID := make(map[string]int64)
-	timeout := time.Now().Unix() + 60*60
+	timeout := now + 60*60
 	for {
 
 		_, message, err := c.ReadMessage()
@@ -71,7 +73,7 @@ func statRoom(room, server string, u url.URL) {
 			break
 		}
 		
-		now := time.Now().Unix()
+		now = time.Now().Unix()
 		if now > timeout {
 			fmt.Println("Timeout room:", room)
 			break
@@ -114,7 +116,7 @@ func statRoom(room, server string, u url.URL) {
 		if input.Method == "onNotify" {
 
 			timeout = now + 60*60
-			updateRoomLast(room)
+			updateRoomLast(room, now)
 
 			if err := json.Unmarshal([]byte(input.Args[0]), &donate); err != nil {
 				fmt.Println(err.Error())
