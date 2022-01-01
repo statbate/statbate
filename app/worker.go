@@ -70,8 +70,9 @@ func statRoom(room, server string, u url.URL) {
 			fmt.Println("Exit room:", room)
 			break
 		}
-
-		if time.Now().Unix() > timeout {
+		
+		now := time.Now().Unix()
+		if now > timeout {
 			fmt.Println("Timeout room:", room)
 			break
 		}
@@ -112,7 +113,7 @@ func statRoom(room, server string, u url.URL) {
 		donate := Donate{}
 		if input.Method == "onNotify" {
 
-			timeout = time.Now().Unix() + 60*60
+			timeout = now + 60*60
 			updateRoomLast(room)
 
 			if err := json.Unmarshal([]byte(input.Args[0]), &donate); err != nil {
@@ -123,7 +124,7 @@ func statRoom(room, server string, u url.URL) {
 				if _, ok := donID[donate.From]; !ok {
 					donID[donate.From] = getDonId(donate.From)
 				}
-				saveDonate(donID[donate.From], info.Id, donate.Amount)
+				saveDonate(donID[donate.From], info.Id, donate.Amount, now)
 				updateRoomIncome(room, donate.Amount)
 
 				if donate.Amount > 99 {

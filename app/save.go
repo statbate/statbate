@@ -1,7 +1,5 @@
 package main
 
-import "time"
-
 type tID struct {
 	Id int64 `db:"id"`
 }
@@ -16,14 +14,12 @@ type Save struct {
 	donate chan *saveData
 }
 
-func saveDonate(did, rid, token int64) {
-	t := time.Now().Unix()
-	
-	res, _ := Mysql.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)", did, rid, token, t)
+func saveDonate(did, rid, token, now int64) {	
+	res, _ := Mysql.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)", did, rid, token, now)
 	id, _ := res.LastInsertId()
 
 	tx, _ := Clickhouse.Begin()
-	tx.Exec("INSERT INTO stat VALUES (?, ?, ?, ?, ?)", id, did, rid, token, t)
+	tx.Exec("INSERT INTO stat VALUES (?, ?, ?, ?, ?)", id, did, rid, token, now)
 	tx.Commit()
 }
 
