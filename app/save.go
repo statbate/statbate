@@ -16,20 +16,23 @@ type Save struct {
 	donate chan *saveData
 }
 
-func saveDonate(name string, rid, token int64) {
+func saveDonate(did, rid, token int64) {
+	res, _ := Mysql.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, unix_timestamp(now()))", did, rid, token)
+	id, _ := res.LastInsertId()
+
+	tx, _ := Clickhouse.Begin()
+	tx.Exec("INSERT INTO stat VALUES (?, ?, ?, ?, ?)", id, did, rid, token, time.Now().Unix())
+	tx.Commit()
+}
+
+func getDonId(name string) int64{
 	donator := new(tID)
 	err := Mysql.Get(donator, "SELECT id FROM donator WHERE name=?", name)
 	if err != nil {
 		res, _ := Mysql.Exec("INSERT INTO donator (`name`) VALUES (?)", name)
 		donator.Id, _ = res.LastInsertId()
 	}
-
-	res, _ := Mysql.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, unix_timestamp(now()))", donator.Id, rid, token)
-	id, _ := res.LastInsertId()
-
-	tx, _ := Clickhouse.Begin()
-	tx.Exec("INSERT INTO stat VALUES (?, ?, ?, ?, ?)", id, donator.Id, rid, token, time.Now().Unix())
-	tx.Commit()
+	return donator.Id
 }
 
 func getRoomInfo(name string) (*tID, bool) {

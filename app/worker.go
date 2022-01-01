@@ -56,6 +56,7 @@ func statRoom(room, server string, u url.URL) {
 		return
 	}
 	addRoom(room, server)
+	donID := make(map[string]int64)
 	timeout := time.Now().Unix() + 60*60
 	for {
 
@@ -119,7 +120,10 @@ func statRoom(room, server string, u url.URL) {
 				continue
 			}
 			if len(donate.From) > 3 {
-				saveDonate(donate.From, info.Id, donate.Amount)
+				if _, ok := donID[donate.From]; !ok {
+					donID[donate.From] = getDonId(donate.From)
+				}
+				saveDonate(donID[donate.From], info.Id, donate.Amount)
 				updateRoomIncome(room, donate.Amount)
 
 				if donate.Amount > 99 {
