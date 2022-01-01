@@ -17,11 +17,13 @@ type Save struct {
 }
 
 func saveDonate(did, rid, token int64) {
-	res, _ := Mysql.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, unix_timestamp(now()))", did, rid, token)
+	t := time.Now().Unix()
+	
+	res, _ := Mysql.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)", did, rid, token, t)
 	id, _ := res.LastInsertId()
 
 	tx, _ := Clickhouse.Begin()
-	tx.Exec("INSERT INTO stat VALUES (?, ?, ?, ?, ?)", id, did, rid, token, time.Now().Unix())
+	tx.Exec("INSERT INTO stat VALUES (?, ?, ?, ?, ?)", id, did, rid, token, t)
 	tx.Commit()
 }
 
