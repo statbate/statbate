@@ -41,6 +41,7 @@ func main() {
 	http.HandleFunc("/ws/", hub.wsHandler)
 	http.HandleFunc("/cmd/", cmdHandler)
 	http.HandleFunc("/list/", listHandler)
+	http.HandleFunc("/debug/", debugHandler)
 
 	const SOCK = "/tmp/statbate.sock"
 	os.Remove(SOCK)

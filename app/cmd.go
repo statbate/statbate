@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"runtime"
 )
 
 type Rooms struct {
@@ -21,6 +22,14 @@ type Info struct {
 	Income int64  `json:"income"`
 }
 
+type Debug struct {
+	Goroutines int
+	Alloc      uint64
+	HeapSys    uint64
+	Uptime	   int64 
+}
+
+var memInfo runtime.MemStats
 var chWorker = map[string]chan struct{}{}
 var rooms = &Rooms{Name: make(map[string]*Info)}
 
@@ -92,6 +101,14 @@ func listRooms() string {
 
 func listHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, listRooms())
+}
+
+func debugHandler(w http.ResponseWriter, r *http.Request) {
+	runtime.ReadMemStats(&memInfo)
+	j, err := json.Marshal(Debug{runtime.NumGoroutine(), memInfo.Alloc, memInfo.HeapSys, uptime})
+	if err == nil {
+		fmt.Fprint(w, string(j))
+	}
 }
 
 func cmdHandler(w http.ResponseWriter, r *http.Request) {

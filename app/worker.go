@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+var uptime = time.Now().Unix()
+
 type Input struct {
 	Args   []string `json:"args"`
 	Method string   `json:"method"`

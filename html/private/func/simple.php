@@ -23,6 +23,10 @@ function getList(){
 	return file_get_contents('https://statbate.com/list/');
 }
 
+function getDebug(){
+	return file_get_contents('https://statbate.com/debug/');
+}
+
 function dotFormat($v){
 	return number_format($v, 0, ',', ',');
 }
@@ -42,15 +46,26 @@ function trackCount(){
 	return count(json_decode($list, true));
 }
 
+function formatBytes($size, $precision = 2){
+	if(empty($size)){
+		return 0;
+	}
+    $base = log($size, 1024);
+    $suffixes = ['', 'KB', 'MB', 'GB', 'TB', 'PB'];
+    return round(pow(1024, $base - floor($base)), $precision) .' '. $suffixes[floor($base)];
+}
+
 function showRoomList(){
 	global $redis;
 	if(isset($_GET['list'])){
 		$arr = json_decode(cacheResult('getList', [], 30), true);
+		$debug = json_decode(cacheResult('getDebug', [], 30), true);
+		
 		uasort($arr, function($a, $b){
 			return $a['online'] < $b['online'];
 		});
 		echo "<title>tracking ".count($arr)." rooms</title>";
-		echo "<meta http-equiv='refresh' content='60'>";
+		//echo "<meta http-equiv='refresh' content='60'>";
 		echo "<style>body {background-color: #eeeeee;}table, th, td {border: 1px solid black;border-collapse: collapse;} td {min-width: 100px; height: 25px; text-align: center; vertical-align: middle;}</style>";
 		echo "<pre>";
 		echo "<a href='/'>main page</a>\n\n";
@@ -60,6 +75,22 @@ function showRoomList(){
 		echo "excluded from rating\n";
 		echo "- rooms with an average tips of more than 1000\n";
 		echo "- donators with an average tips of more than 20000\n\n\n";
+		echo "<table>";
+		foreach($debug as $key => $val){
+			switch($key){
+				case 'Alloc':
+				case 'HeapSys':
+					$val = formatBytes($val);
+				break;
+				
+				case 'Uptime':
+					$val =  get_time_ago($val);
+				default:
+				break;
+			}
+			echo "<tr><td>$key</td> <td>$val</td>";
+		}
+		echo "</table> \n\n";
 		$cb_list = $redis->get('chaturbateList');
 		if($cb_list !== false){
 			$count = [0, 0, 0, 0];
@@ -76,7 +107,7 @@ function showRoomList(){
 				}
 				$count['3'] += $val['num_users'];
 			}
-			echo "<table><tr><td>online more</td><td>25</td><td>50</td><td>100</td></tr><tr><td>rooms</td><td>{$count['2']}</td><td>{$count['1']}</td><td>{$count['0']}</td></tr><tr><td>total rooms</td><td colspan='3'>".count($arr)."</td></tr><tr><td>total online</td><td colspan='3'>{$count['3']}</td></tr></table>\n\n";
+			echo "<table><tr><td>online more</td><td>25</td><td>50</td><td>100</td></tr><tr><td>rooms</td><td>{$count['2']}</td><td>{$count['1']}</td><td>{$count['0']}</td></tr><tr><td>total rooms</td><td colspan='3'>".count($a)."</td></tr><tr><td>total online</td><td colspan='3'>{$count['3']}</td></tr></table>\n\n";
 		}
 		echo "<table><tr><td></td><td>room</td><td>online</td><td>$ income</td><td title='In minutes'>duration</td></tr>";
 		$i=0;
@@ -86,7 +117,7 @@ function showRoomList(){
 			if($val['online'] == 0){
 				$val['online'] = 'new';
 			}			
-			echo "<tr><td>$i</td><td>$key</td><td>{$val['online']}</td> <td> ".toUSD($val['income'])." </td> <td> ".round(($time - $val['start'])/60)." </td> </tr>";
+			echo "<tr><td>$i</td><td>$key</td><td>{$val['online']}</td> <td> ".toUSD($val['income'])." </td> <td> ".round(($time - $val['start'])/60)."</td> </tr>";
 		}
 		echo "</table></pre>";
 		die;
