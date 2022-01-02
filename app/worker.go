@@ -29,8 +29,8 @@ type AnnounceDonate struct {
 }
 
 func countRooms() int {
-	rooms.Lock()
-	defer rooms.Unlock()
+	rooms.RLock()
+	defer rooms.RUnlock()
 	return len(rooms.Name)
 }
 
@@ -44,35 +44,46 @@ func announceCount() {
 	}
 }
 
-func statRoom(room, server string, u url.URL) {
+func statRoom(done chan struct{}, room, server string, u url.URL) {
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
+	defer c.Close()
+	
 	info, ok := getRoomInfo(room)
 	if !ok {
 		fmt.Println("No room in MySQL:", room)
+		
+		//m := &sync.Mutex{}
+		
+		//m.Lock()
+		delete(chWorker, room)
+		//m.Unlock()
+		
 		return
 	}
 	
 	now := time.Now().Unix()
-	addRoom(room, server, now)
+	addRoom(room, server, now) // Lock
 	donID := make(map[string]int64)
 	timeout := now + 60*60
 	for {
-
+		
+		select {
+			case <-done:
+				fmt.Println("Exit room:", room)
+				return
+			default:
+		}
+		
 		_, message, err := c.ReadMessage()
 		if err != nil {
 			fmt.Println(err.Error())
 			break
 		}
-
-		if !checkRoom(room) {
-			fmt.Println("Exit room:", room)
-			break
-		}
-		
+				
 		now = time.Now().Unix()
 		if now > timeout {
 			fmt.Println("Timeout room:", room)
@@ -108,7 +119,7 @@ func statRoom(room, server string, u url.URL) {
 		}
 
 		if input.Method == "onRoomCountUpdate" {
-			updateRoomOnline(room, input.Args[0])
+			updateRoomOnline(room, input.Args[0]) // Lock
 			continue
 		}
 
@@ -127,7 +138,7 @@ func statRoom(room, server string, u url.URL) {
 					donID[donate.From] = getDonId(donate.From)
 				}
 				saveDonate(donID[donate.From], info.Id, donate.Amount, now)
-				updateRoomIncome(room, donate.Amount)
+				updateRoomIncome(room, donate.Amount) // Lock
 
 				if donate.Amount > 99 {
 					msg, err := json.Marshal(AnnounceDonate{Room: room, Donator: donate.From, Amount: donate.Amount})
@@ -144,5 +155,4 @@ func statRoom(room, server string, u url.URL) {
 	if checkRoom(room) {
 		removeRoom(room)
 	}
-	c.Close()
 }

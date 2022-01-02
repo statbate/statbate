@@ -9,7 +9,7 @@ import (
 )
 
 type Rooms struct {
-	sync.Mutex
+	sync.RWMutex
 	Name map[string]*Info
 }
 
@@ -21,6 +21,7 @@ type Info struct {
 	Income int64  `json:"income"`
 }
 
+var chWorker = map[string]chan struct{}{}
 var rooms = &Rooms{Name: make(map[string]*Info)}
 
 func addRoom(room, server string, now int64) {
@@ -57,11 +58,21 @@ func removeRoom(room string) {
 	rooms.Lock()
 	defer rooms.Unlock()
 	delete(rooms.Name, room)
+	
+	//m := &sync.RWMutex{}
+	
+	//m.RLock()
+	close(chWorker[room]) // exit gorutine
+	//m.RUnlock()
+	
+	//m.Lock()
+	delete(chWorker, room)
+	//m.Unlock()
 }
 
 func checkRoom(room string) bool {
-	rooms.Lock()
-	defer rooms.Unlock()
+	rooms.RLock()
+	defer rooms.RUnlock()
 	if _, ok := rooms.Name[room]; ok {
 		return true
 	}
@@ -69,13 +80,14 @@ func checkRoom(room string) bool {
 }
 
 func listRooms() string {
-	rooms.Lock()
-	defer rooms.Unlock()
-	j, err := json.Marshal(rooms.Name)
-	if err != nil {
-		return ""
+	rooms.RLock()
+	defer rooms.RUnlock()
+	t := rooms.Name
+	j, err := json.Marshal(t)
+	if err == nil {
+		return string(j)
 	}
-	return string(j)
+	return ""
 }
 
 func listHandler(w http.ResponseWriter, r *http.Request) {
@@ -89,7 +101,17 @@ func cmdHandler(w http.ResponseWriter, r *http.Request) {
 		server := params["server"][0]
 		if !checkRoom(room) {
 			fmt.Println("Start", room, "server", server)
-			go statRoom(room, server, url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"})
+			
+			done := make(chan struct{})
+			
+			//m := &sync.Mutex{}
+			
+			//m.Lock()
+			chWorker[room] = done
+			//m.Unlock()
+			
+			go statRoom(done, room, server, url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"})
+		
 		}
 	}
 	if len(params["exit"]) > 0 {
