@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+	"net/http"
 )
 
 var uptime = time.Now().Unix()
@@ -46,8 +47,22 @@ func announceCount() {
 	}
 }
 
-func statRoom(done chan struct{}, room, server string, u url.URL) {
-	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+func statRoom(done chan struct{}, room, server, proxy string, u url.URL) {
+	
+	Dialer := *websocket.DefaultDialer
+	
+	if proxy == "1" {
+		Dialer = websocket.Dialer{
+			Proxy: http.ProxyURL(&url.URL{
+			  Scheme: "http", // or "https" depending on your proxy
+			  Host: "ip:port",
+			  Path: "/",
+			}),
+			HandshakeTimeout: 45 * time.Second, // https://pkg.go.dev/github.com/gorilla/websocket
+		}
+	}
+	
+	c, _, err := Dialer.Dial(u.String(), nil)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
@@ -135,7 +150,7 @@ func statRoom(done chan struct{}, room, server string, u url.URL) {
 				fmt.Println(err.Error())
 				continue
 			}
-			if len(donate.From) > 3 {
+			if len(donate.From) > 3 && donate.Amount > 0 {
 				if _, ok := donID[donate.From]; !ok {
 					donID[donate.From] = getDonId(donate.From)
 				}

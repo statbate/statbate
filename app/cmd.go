@@ -108,9 +108,10 @@ func debugHandler(w http.ResponseWriter, r *http.Request) {
 
 func cmdHandler(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
-	if len(params["room"]) > 0 && len(params["server"]) > 0 {
+	if len(params["room"]) > 0 && len(params["server"]) > 0 && len(params["proxy"]) > 0 {
 		room := params["room"][0]
 		server := params["server"][0]
+		proxy := params["proxy"][0]
 		if !checkRoom(room) {
 			fmt.Println("Start", room, "server", server)
 			
@@ -122,7 +123,7 @@ func cmdHandler(w http.ResponseWriter, r *http.Request) {
 			chWorker[room] = done
 			//m.Unlock()
 			
-			go statRoom(done, room, server, url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"})
+			go statRoom(done, room, server, proxy, url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"})
 		
 		}
 	}
