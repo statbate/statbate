@@ -69,11 +69,6 @@ func removeRoom(room string) {
 	delete(rooms.Name, room)
 	
 	//m := &sync.RWMutex{}
-	
-	//m.RLock()
-	close(chWorker[room]) // exit gorutine
-	//m.RUnlock()
-	
 	//m.Lock()
 	delete(chWorker, room)
 	//m.Unlock()
@@ -134,6 +129,12 @@ func cmdHandler(w http.ResponseWriter, r *http.Request) {
 	if len(params["exit"]) > 0 {
 		room := strings.Join(params["exit"], "")
 		if checkRoom(room) {
+			//m := &sync.RWMutex{}
+	
+			//m.RLock()
+			close(chWorker[room]) // exit gorutine
+			//m.RUnlock()
+			
 			removeRoom(room)
 		}
 	}
