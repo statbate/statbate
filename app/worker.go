@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/websocket"
+	"net/http"
 	"net/url"
 	"strconv"
 	"time"
-	"net/http"
 )
 
 var uptime = time.Now().Unix()
@@ -31,10 +31,22 @@ type AnnounceDonate struct {
 	Amount  int64  `json:"amount"`
 }
 
+func mapRooms(ch chan Info) {
+	for {
+		select {
+		case m := <-ch:
+			//fmt.Println("map channel:", len(ch), cap(ch))
+			rooms.Lock()
+			rooms.Map[m.Room] = &Info{m.Room, m.Server, m.Start, m.Last, m.Online, m.Income}
+			rooms.Unlock()
+		}
+	}
+}
+
 func countRooms() int {
 	rooms.RLock()
 	defer rooms.RUnlock()
-	return len(rooms.Name)
+	return len(rooms.Map)
 }
 
 func announceCount() {
@@ -47,60 +59,49 @@ func announceCount() {
 	}
 }
 
-func statRoom(done chan struct{}, room, server, proxy string, u url.URL) {
-	
+func statRoom(ch chan Info, chQuit chan struct{}, room, server string, proxy bool, info *tID, u url.URL) {
+	//fmt.Println("Start", room, "server", server)
+
 	Dialer := *websocket.DefaultDialer
-	
-	if proxy == "1" {
+
+	if proxy {
 		Dialer = websocket.Dialer{
 			Proxy: http.ProxyURL(&url.URL{
-			  Scheme: "http", // or "https" depending on your proxy
-			  Host: "ip:port",
-			  Path: "/",
+				Scheme: "http", // or "https" depending on your proxy
+				Host:   "ip:port",
+				Path:   "/",
 			}),
 			HandshakeTimeout: 45 * time.Second, // https://pkg.go.dev/github.com/gorilla/websocket
 		}
 	}
-	
+
 	c, _, err := Dialer.Dial(u.String(), nil)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 	defer c.Close()
-	
-	info, ok := getRoomInfo(room)
-	if !ok {
-		fmt.Println("No room in MySQL:", room)
-		
-		//m := &sync.Mutex{}
-		
-		//m.Lock()
-		delete(chWorker, room)
-		//m.Unlock()
-		
-		return
-	}
-	
+
 	now := time.Now().Unix()
-	addRoom(room, server, now) // Lock
-	donID := make(map[string]int64)
+	workerData := Info{room, server, now, now, "0", 0}
+	ch <- workerData
 	timeout := now + 60*60
+
 	for {
-		
+
 		select {
-			case <-done:
-				fmt.Println("Exit room:", room)
-				return
-			default:
+		case <-chQuit:
+			fmt.Println("Exit room:", room)
+			return
+		default:
 		}
-		
+
 		_, message, err := c.ReadMessage()
 		if err != nil {
 			fmt.Println(err.Error())
 			break
 		}
-				
+
 		now = time.Now().Unix()
 		if now > timeout {
 			fmt.Println("Timeout room:", room)
@@ -136,7 +137,8 @@ func statRoom(done chan struct{}, room, server, proxy string, u url.URL) {
 		}
 
 		if input.Method == "onRoomCountUpdate" {
-			updateRoomOnline(room, input.Args[0]) // Lock
+			workerData.Online = input.Args[0]
+			ch <- workerData
 			continue
 		}
 
@@ -144,26 +146,23 @@ func statRoom(done chan struct{}, room, server, proxy string, u url.URL) {
 		if input.Method == "onNotify" {
 
 			timeout = now + 60*60
-			updateRoomLast(room, now)
+			workerData.Last = now
+			ch <- workerData
 
 			if err := json.Unmarshal([]byte(input.Args[0]), &donate); err != nil {
 				fmt.Println(err.Error())
 				continue
 			}
 			if len(donate.From) > 3 && donate.Amount > 0 {
-				if _, ok := donID[donate.From]; !ok {
-					donID[donate.From] = getDonId(donate.From)
-				}
-				saveDonate(donID[donate.From], info.Id, donate.Amount, now)
-				updateRoomIncome(room, donate.Amount) // Lock
-
+				save <- saveData{donate.From, info.Id, donate.Amount, now}
+				workerData.Income += donate.Amount
+				ch <- workerData
 				if donate.Amount > 99 {
 					msg, err := json.Marshal(AnnounceDonate{Room: room, Donator: donate.From, Amount: donate.Amount})
 					if err == nil {
 						hub.broadcast <- msg
 					}
 				}
-
 				//fmt.Println(donate.From)
 				//fmt.Println(donate.Amount)
 			}

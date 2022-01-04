@@ -5,16 +5,13 @@ type tID struct {
 }
 
 type saveData struct {
-	rid     int64
-	donator string
-	token   int64
+	From   string
+	Rid    int64
+	Amount int64
+	Now    int64
 }
 
-type Save struct {
-	donate chan *saveData
-}
-
-func saveDonate(did, rid, token, now int64) {	
+func saveDonate(did, rid, token, now int64) {
 	res, _ := Mysql.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)", did, rid, token, now)
 	id, _ := res.LastInsertId()
 
@@ -23,7 +20,7 @@ func saveDonate(did, rid, token, now int64) {
 	tx.Commit()
 }
 
-func getDonId(name string) int64{
+func getDonId(name string) int64 {
 	donator := new(tID)
 	err := Mysql.Get(donator, "SELECT id FROM donator WHERE name=?", name)
 	if err != nil {
@@ -41,4 +38,18 @@ func getRoomInfo(name string) (*tID, bool) {
 		result = false
 	}
 	return room, result
+}
+
+func saveDB(ch chan saveData) {
+	donID := make(map[string]int64)
+	for {
+		select {
+		case m := <-ch:
+			//fmt.Println("Save channel:", len(ch), cap(ch))
+			if _, ok := donID[m.From]; !ok {
+				donID[m.From] = getDonId(m.From)
+			}
+			saveDonate(donID[m.From], m.Rid, m.Amount, m.Now)
+		}
+	}
 }

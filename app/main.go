@@ -31,12 +31,17 @@ func initClickhouse() {
 	Clickhouse = db
 }
 
+var chMap = make(chan Info, 100)
+var save = make(chan saveData, 100)
+
 func main() {
 	initMysql()
 	initClickhouse()
 
 	go hub.run()
+	go mapRooms(chMap)
 	go announceCount()
+	go saveDB(save)
 
 	http.HandleFunc("/ws/", hub.wsHandler)
 	http.HandleFunc("/cmd/", cmdHandler)

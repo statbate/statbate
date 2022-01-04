@@ -4,17 +4,13 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strings"
 	"sync"
-	"runtime"
 )
 
-type Rooms struct {
-	sync.RWMutex
-	Name map[string]*Info
-}
-
 type Info struct {
+	Room   string `json:"room"`
 	Server string `json:"server"`
 	Start  int64  `json:"start"`
 	Last   int64  `json:"last"`
@@ -26,58 +22,42 @@ type Debug struct {
 	Goroutines int
 	Alloc      uint64
 	HeapSys    uint64
-	Uptime	   int64 
+	Uptime     int64
+}
+
+type Worker struct {
+	chQuit chan struct{}
+	ch     chan Info
+}
+
+type Workers struct {
+	sync.RWMutex
+	Map map[string]*Worker
+}
+
+type Rooms struct {
+	sync.RWMutex
+	Map map[string]*Info
 }
 
 var memInfo runtime.MemStats
-var chWorker = map[string]chan struct{}{}
-var rooms = &Rooms{Name: make(map[string]*Info)}
-
-func addRoom(room, server string, now int64) {
-	rooms.Lock()
-	defer rooms.Unlock()
-	rooms.Name[room] = &Info{server, now, now, "0", 0}
-}
-
-func updateRoomLast(room string, now int64) {
-	if checkRoom(room) {
-		rooms.Lock()
-		defer rooms.Unlock()
-		rooms.Name[room].Last = now
-	}
-}
-
-func updateRoomOnline(room string, val string) {
-	if checkRoom(room) {
-		rooms.Lock()
-		defer rooms.Unlock()
-		rooms.Name[room].Online = val
-	}
-}
-
-func updateRoomIncome(room string, val int64) {
-	if checkRoom(room) {
-		rooms.Lock()
-		defer rooms.Unlock()
-		rooms.Name[room].Income += val
-	}
-}
+var rooms = &Rooms{Map: make(map[string]*Info)}
+var chWorker = &Workers{Map: make(map[string]*Worker)}
 
 func removeRoom(room string) {
 	rooms.Lock()
-	defer rooms.Unlock()
-	delete(rooms.Name, room)
-	
-	//m := &sync.RWMutex{}
-	//m.Lock()
-	delete(chWorker, room)
-	//m.Unlock()
+	delete(rooms.Map, room)
+	rooms.Unlock()
+
+	chWorker.Lock()
+	delete(chWorker.Map, room)
+	chWorker.Unlock()
 }
 
 func checkRoom(room string) bool {
-	rooms.RLock()
-	defer rooms.RUnlock()
-	if _, ok := rooms.Name[room]; ok {
+	chWorker.RLock()
+	defer chWorker.RUnlock()
+	if _, ok := chWorker.Map[room]; ok {
 		return true
 	}
 	return false
@@ -86,7 +66,7 @@ func checkRoom(room string) bool {
 func listRooms() string {
 	rooms.RLock()
 	defer rooms.RUnlock()
-	t := rooms.Name
+	t := rooms.Map
 	j, err := json.Marshal(t)
 	if err == nil {
 		return string(j)
@@ -108,34 +88,36 @@ func debugHandler(w http.ResponseWriter, r *http.Request) {
 
 func cmdHandler(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
-	if len(params["room"]) > 0 && len(params["server"]) > 0 && len(params["proxy"]) > 0 {
+	if len(params["room"]) > 0 && len(params["server"]) > 0 {
 		room := params["room"][0]
 		server := params["server"][0]
-		proxy := params["proxy"][0]
 		if !checkRoom(room) {
-			fmt.Println("Start", room, "server", server)
-			
-			done := make(chan struct{})
-			
-			//m := &sync.Mutex{}
-			
-			//m.Lock()
-			chWorker[room] = done
-			//m.Unlock()
-			
-			go statRoom(done, room, server, proxy, url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"})
-		
+
+			info, ok := getRoomInfo(room)
+			if !ok {
+				fmt.Println("No room in MySQL:", room)
+				return
+			}
+
+			ch, chQuit := chMap, make(chan struct{})
+
+			chWorker.Lock()
+			chWorker.Map[room] = &Worker{chQuit: chQuit, ch: ch}
+			chWorker.Unlock()
+
+			proxy := false
+			if len(params["proxy"]) > 0 {
+				proxy = true
+			}
+
+			go statRoom(ch, chQuit, room, server, proxy, info, url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"})
+
 		}
 	}
 	if len(params["exit"]) > 0 {
 		room := strings.Join(params["exit"], "")
 		if checkRoom(room) {
-			//m := &sync.RWMutex{}
-	
-			//m.RLock()
-			close(chWorker[room]) // exit gorutine
-			//m.RUnlock()
-			
+			close(chWorker.Map[room].chQuit) // exit gorutine
 			removeRoom(room)
 		}
 	}
