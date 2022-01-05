@@ -1,5 +1,7 @@
 package main
 
+//import "fmt"
+
 type tID struct {
 	Id int64 `db:"id"`
 }
@@ -40,16 +42,32 @@ func getRoomInfo(name string) (*tID, bool) {
 	return room, result
 }
 
-func saveDB(ch chan saveData) {
-	donID := make(map[string]int64)
+func saveDB(ch chan saveData) {	
+	var id int64
+	var name string
+
+	data := make(map[string]int64)
+
+	rows ,err := Mysql.Query("SELECT * FROM donator")
+	if err == nil {
+		for rows.Next() {
+			err := rows.Scan(&id, &name)
+			if err == nil {
+				data[name] = id
+			}
+		}
+	}
+	
+	//fmt.Println("donators in cache:", len(data))
+	
 	for {
 		select {
 		case m := <-ch:
 			//fmt.Println("Save channel:", len(ch), cap(ch))
-			if _, ok := donID[m.From]; !ok {
-				donID[m.From] = getDonId(m.From)
+			if _, ok := data[m.From]; !ok {
+				data[m.From] = getDonId(m.From)
 			}
-			saveDonate(donID[m.From], m.Rid, m.Amount, m.Now)
+			saveDonate(data[m.From], m.Rid, m.Amount, m.Now)
 		}
 	}
 }

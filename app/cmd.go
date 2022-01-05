@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+//	"time"
 )
 
 type Info struct {
@@ -45,13 +46,27 @@ var rooms = &Rooms{Map: make(map[string]*Info)}
 var chWorker = &Workers{Map: make(map[string]*Worker)}
 
 func removeRoom(room string) {
-	rooms.Lock()
-	delete(rooms.Map, room)
-	rooms.Unlock()
+	if checkRoom(room) {
+		
+		chWorker.Lock()
+		//fmt.Printf("%v remove %v from chWorker.Map \n", time.Now().UnixMilli(), room )
+		delete(chWorker.Map, room)
+		chWorker.Unlock()
+				
+		rooms.Lock()
+		//fmt.Printf("%v remove %v from rooms.Map \n", time.Now().UnixMilli(), room )
+		delete(rooms.Map, room)
+		rooms.Unlock()
+		
 
-	chWorker.Lock()
-	delete(chWorker.Map, room)
-	chWorker.Unlock()
+		//rooms.RLock()
+		//fmt.Printf("%v %v \n", time.Now().UnixMilli(), rooms.Map[room])
+		//rooms.RUnlock()
+		
+		//chWorker.RLock()
+		//fmt.Printf("%v %v \n", time.Now().UnixMilli(), chWorker.Map[room])
+		//chWorker.RUnlock()
+	}
 }
 
 func checkRoom(room string) bool {
@@ -116,9 +131,6 @@ func cmdHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(params["exit"]) > 0 {
 		room := strings.Join(params["exit"], "")
-		if checkRoom(room) {
-			close(chWorker.Map[room].chQuit) // exit gorutine
-			removeRoom(room)
-		}
+		close(chWorker.Map[room].chQuit) // exit gorutine (work and remove from map)
 	}
 }

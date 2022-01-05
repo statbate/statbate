@@ -36,9 +36,12 @@ func mapRooms(ch chan Info) {
 		select {
 		case m := <-ch:
 			//fmt.Println("map channel:", len(ch), cap(ch))
-			rooms.Lock()
-			rooms.Map[m.Room] = &Info{m.Room, m.Server, m.Start, m.Last, m.Online, m.Income}
-			rooms.Unlock()
+			if checkRoom(m.Room) {
+				rooms.Lock()	
+				//fmt.Printf("%v channel add %v in rooms.Map \n", time.Now().UnixMilli(), m.Room )
+				rooms.Map[m.Room] = &Info{m.Room, m.Server, m.Start, m.Last, m.Online, m.Income}
+				rooms.Unlock()
+			}
 		}
 	}
 }
@@ -91,7 +94,9 @@ func statRoom(ch chan Info, chQuit chan struct{}, room, server string, proxy boo
 
 		select {
 		case <-chQuit:
-			fmt.Println("Exit room:", room)
+			//fmt.Println("Exit room:", room)
+			fmt.Println("removeRoom channel", room)
+			removeRoom(room)
 			return
 		default:
 		}
@@ -104,7 +109,9 @@ func statRoom(ch chan Info, chQuit chan struct{}, room, server string, proxy boo
 
 		now = time.Now().Unix()
 		if now > timeout {
+		//if now < timeout {
 			fmt.Println("Timeout room:", room)
+			//fmt.Printf("%v Timeout room %v \n", time.Now().UnixMilli(), room )
 			break
 		}
 
@@ -155,8 +162,10 @@ func statRoom(ch chan Info, chQuit chan struct{}, room, server string, proxy boo
 			}
 			if len(donate.From) > 3 && donate.Amount > 0 {
 				save <- saveData{donate.From, info.Id, donate.Amount, now}
+
 				workerData.Income += donate.Amount
 				ch <- workerData
+
 				if donate.Amount > 99 {
 					msg, err := json.Marshal(AnnounceDonate{Room: room, Donator: donate.From, Amount: donate.Amount})
 					if err == nil {
@@ -168,7 +177,6 @@ func statRoom(ch chan Info, chQuit chan struct{}, room, server string, proxy boo
 			}
 		}
 	}
-	if checkRoom(room) {
-		removeRoom(room)
-	}
+	//fmt.Printf("%v end func removeRoom %v \n", time.Now().UnixMilli(), room )
+	removeRoom(room)
 }
