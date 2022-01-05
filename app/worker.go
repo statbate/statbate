@@ -161,17 +161,11 @@ func statRoom(ch chan Info, chQuit chan struct{}, room, server string, proxy boo
 				continue
 			}
 			if len(donate.From) > 3 && donate.Amount > 0 {
-				save <- saveData{donate.From, info.Id, donate.Amount, now}
+				save <- saveData{room, donate.From, info.Id, donate.Amount, now}
 
 				workerData.Income += donate.Amount
 				ch <- workerData
 
-				if donate.Amount > 99 {
-					msg, err := json.Marshal(AnnounceDonate{Room: room, Donator: donate.From, Amount: donate.Amount})
-					if err == nil {
-						hub.broadcast <- msg
-					}
-				}
 				//fmt.Println(donate.From)
 				//fmt.Println(donate.Amount)
 			}

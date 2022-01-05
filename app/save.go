@@ -7,6 +7,7 @@ type tID struct {
 }
 
 type saveData struct {
+	Room   string
 	From   string
 	Rid    int64
 	Amount int64
@@ -68,6 +69,13 @@ func saveDB(ch chan saveData) {
 				data[m.From] = getDonId(m.From)
 			}
 			saveDonate(data[m.From], m.Rid, m.Amount, m.Now)
+			
+			if m.Amount > 99 {
+				msg, err := json.Marshal(AnnounceDonate{Room: m.Room, Donator: m.From, Amount: m.Amount})
+				if err == nil {
+					hub.broadcast <- msg
+				}
+			}
 		}
 	}
 }
