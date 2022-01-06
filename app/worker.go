@@ -49,31 +49,31 @@ func statRoom(ch chan Info, chQuit chan struct{}, room, server, proxy string, in
 	now := time.Now().Unix()
 	workerData := Info{room, server, proxy, now, now, "0", 0}
 
-	Dialer := *websocket.DefaultDialer
+	go func(local chan Info, room, server, proxy string, info *tID, u url.URL, workerData Info) {
+		
+		Dialer := *websocket.DefaultDialer
 
-	proxyMap := make(map[string]string)
-	proxyMap["fr"] = "ip:port"
-	proxyMap["ca"] = "ip:port"
-
-	if _, ok := proxyMap[proxy]; ok {
-		Dialer = websocket.Dialer{
-			Proxy: http.ProxyURL(&url.URL{
-				Scheme: "http", // or "https" depending on your proxy
-				Host:   proxyMap[proxy],
-				Path:   "/",
-			}),
-			HandshakeTimeout: 45 * time.Second, // https://pkg.go.dev/github.com/gorilla/websocket
+		proxyMap := make(map[string]string)
+		proxyMap["fr"] = "ip:port"
+		proxyMap["ca"] = "ip:port"
+		
+		if _, ok := proxyMap[proxy]; ok {
+			Dialer = websocket.Dialer{
+				Proxy: http.ProxyURL(&url.URL{
+					Scheme: "http", // or "https" depending on your proxy
+					Host:   proxyMap[proxy],
+					Path:   "/",
+				}),
+				HandshakeTimeout: 45 * time.Second, // https://pkg.go.dev/github.com/gorilla/websocket
+			}
 		}
-	}
-
-	c, _, err := Dialer.Dial(u.String(), nil)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	defer c.Close()
-
-	go func(local chan Info, room string, workerData Info, c *websocket.Conn) {
+		
+		c, _, err := Dialer.Dial(u.String(), nil)
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		defer c.Close()
 
 		timeout := time.Now().Unix() + 60*60
 
@@ -153,7 +153,7 @@ func statRoom(ch chan Info, chQuit chan struct{}, room, server, proxy string, in
 				}
 			}
 		}
-	}(local, room, workerData, c)
+	}(local, room, server, proxy, info, u, workerData)
 
 	for {
 		select {
