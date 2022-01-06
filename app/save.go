@@ -43,13 +43,13 @@ func getRoomInfo(name string) (*tID, bool) {
 	return room, result
 }
 
-func saveDB(ch chan saveData) {	
+func saveDB(ch chan saveData) {
 	var id int64
 	var name string
 
 	data := make(map[string]int64)
 
-	rows ,err := Mysql.Query("SELECT * FROM donator")
+	rows, err := Mysql.Query("SELECT * FROM donator")
 	if err == nil {
 		for rows.Next() {
 			err := rows.Scan(&id, &name)
@@ -58,9 +58,9 @@ func saveDB(ch chan saveData) {
 			}
 		}
 	}
-	
+
 	//fmt.Println("donators in cache:", len(data))
-	
+
 	for {
 		select {
 		case m := <-ch:

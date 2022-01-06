@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
-//	"time"
+	//	"time"
 )
 
 type Info struct {
@@ -29,6 +29,7 @@ type Debug struct {
 
 type Worker struct {
 	chQuit chan struct{}
+	ch     chan Info
 }
 
 type Workers struct {
@@ -42,33 +43,15 @@ type Rooms struct {
 }
 
 var memInfo runtime.MemStats
-var rooms = &Rooms{Map: make(map[string]*Info)}
 var chWorker = &Workers{Map: make(map[string]*Worker)}
 
 func removeRoom(room string) {
-	
 	if checkWorker(room) {
 		chWorker.Lock()
 		//fmt.Printf("%v remove %v from chWorker.Map \n", time.Now().UnixMilli(), room )
 		delete(chWorker.Map, room)
 		chWorker.Unlock()
 	}
-	
-	if checkRoom(room) {
-		rooms.Lock()
-		//fmt.Printf("%v remove %v from rooms.Map \n", time.Now().UnixMilli(), room )
-		delete(rooms.Map, room)
-		rooms.Unlock()
-	}
-}
-
-func checkRoom(room string) bool {
-	rooms.RLock()
-	defer rooms.RUnlock()
-	if _, ok := rooms.Map[room]; ok {
-		return true
-	}
-	return false
 }
 
 func checkWorker(room string) bool {
@@ -80,11 +63,23 @@ func checkWorker(room string) bool {
 	return false
 }
 
+func getRoomMap() map[string]*Info {
+	chWorker.RLock()
+	defer chWorker.RUnlock()
+
+	rooms := make(map[string]*Info)
+	for key, _ := range chWorker.Map {
+		chWorker.Map[key].ch <- Info{"", "", "", 0, 0, "", 0}
+		m := <-chWorker.Map[key].ch
+		rooms[key] = &Info{m.Room, m.Server, m.Proxy, m.Start, m.Last, m.Online, m.Income}
+		//fmt.Printf("send %v get %v\n", key, m)
+	}
+	return rooms
+}
+
 func listRooms() string {
-	rooms.RLock()
-	defer rooms.RUnlock()	
-	t := rooms.Map
-	j, err := json.Marshal(t)
+	m := getRoomMap()
+	j, err := json.Marshal(m)
 	if err == nil {
 		return string(j)
 	}
@@ -117,13 +112,14 @@ func cmdHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			ch := make(chan Info)
 			chQuit := make(chan struct{})
 
 			chWorker.Lock()
-			chWorker.Map[room] = &Worker{chQuit: chQuit}
+			chWorker.Map[room] = &Worker{ch: ch, chQuit: chQuit}
 			chWorker.Unlock()
-			
-			go statRoom(chQuit, room, server, proxy, info, url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"})
+
+			go statRoom(ch, chQuit, room, server, proxy, info, url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"})
 
 		}
 	}
