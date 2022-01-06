@@ -65,13 +65,16 @@ func checkWorker(room string) bool {
 
 func getRoomMap() map[string]*Info {
 	chWorker.RLock()
-	defer chWorker.RUnlock()
+	t := chWorker.Map
+	chWorker.RUnlock()
 
 	rooms := make(map[string]*Info)
-	for key, _ := range chWorker.Map {
-		chWorker.Map[key].ch <- Info{"", "", "", 0, 0, "", 0}
-		m := <-chWorker.Map[key].ch
-		rooms[key] = &Info{m.Room, m.Server, m.Proxy, m.Start, m.Last, m.Online, m.Income}
+	for key, _ := range t {
+		if checkWorker(key){
+			chWorker.Map[key].ch <- Info{"", "", "", 0, 0, "", 0}
+			m := <-chWorker.Map[key].ch
+			rooms[key] = &Info{m.Room, m.Server, m.Proxy, m.Start, m.Last, m.Online, m.Income}
+		}
 		//fmt.Printf("send %v get %v\n", key, m)
 	}
 	return rooms
