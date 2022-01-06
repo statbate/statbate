@@ -31,7 +31,6 @@ func initClickhouse() {
 	Clickhouse = db
 }
 
-var chMap = make(chan Info, 100)
 var save = make(chan saveData, 100)
 
 func main() {
@@ -39,7 +38,6 @@ func main() {
 	initClickhouse()
 
 	go hub.run()
-	go mapRooms(chMap)
 	go announceCount()
 	go saveDB(save)
 

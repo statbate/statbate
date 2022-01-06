@@ -68,14 +68,13 @@ func saveDB(ch chan saveData) {
 			if _, ok := data[m.From]; !ok {
 				data[m.From] = getDonId(m.From)
 			}
-			saveDonate(data[m.From], m.Rid, m.Amount, m.Now)
-			
 			if m.Amount > 99 {
 				msg, err := json.Marshal(AnnounceDonate{Room: m.Room, Donator: m.From, Amount: m.Amount})
 				if err == nil {
 					hub.broadcast <- msg
 				}
 			}
+			saveDonate(data[m.From], m.Rid, m.Amount, m.Now)
 		}
 	}
 }
