@@ -11,7 +11,7 @@ import (
 )
 
 type Info struct {
-	Room   string `json:"room"`
+	room   string
 	Server string `json:"server"`
 	Proxy  string `json:"proxy"`
 	Start  int64  `json:"start"`
@@ -29,17 +29,11 @@ type Debug struct {
 
 type Worker struct {
 	chQuit chan struct{}
-	ch     chan Info
 }
 
 type Workers struct {
 	sync.RWMutex
 	Map map[string]*Worker
-}
-
-type Rooms struct {
-	sync.RWMutex
-	Map map[string]*Info
 }
 
 var memInfo runtime.MemStats
@@ -63,30 +57,10 @@ func checkWorker(room string) bool {
 	return false
 }
 
-func getRoomMap() map[string]*Info {
-	chWorker.RLock()
-	t := chWorker.Map
-	chWorker.RUnlock()
-
-	rooms := make(map[string]*Info)
-	for key, _ := range t {
-		if checkWorker(key){
-			chWorker.Map[key].ch <- Info{"", "", "", 0, 0, "", 0}
-			m := <-chWorker.Map[key].ch
-			rooms[key] = &Info{m.Room, m.Server, m.Proxy, m.Start, m.Last, m.Online, m.Income}
-		}
-		//fmt.Printf("send %v get %v\n", key, m)
-	}
-	return rooms
-}
-
 func listRooms() string {
-	m := getRoomMap()
-	j, err := json.Marshal(m)
-	if err == nil {
-		return string(j)
-	}
-	return ""
+	rooms.Json <- ""
+	s := <-rooms.Json
+	return s
 }
 
 func listHandler(w http.ResponseWriter, r *http.Request) {
@@ -115,14 +89,13 @@ func cmdHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			ch := make(chan Info)
 			chQuit := make(chan struct{})
 
 			chWorker.Lock()
-			chWorker.Map[room] = &Worker{ch: ch, chQuit: chQuit}
+			chWorker.Map[room] = &Worker{chQuit: chQuit}
 			chWorker.Unlock()
 
-			go statRoom(ch, chQuit, room, server, proxy, info, url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"})
+			go statRoom(chQuit, room, server, proxy, info, url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"})
 
 		}
 	}

@@ -11,33 +11,32 @@ import (
 	"os"
 )
 
+type Rooms struct {
+	Count chan int
+	Json  chan string
+	Add   chan Info
+	Del   chan string
+}
+
 var hub = newHub()
 var Mysql, Clickhouse *sqlx.DB
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
-func initMysql() {
-	db, err := sqlx.Connect("mysql", "user:passwd@unix(/var/run/mysqld/mysqld.sock)/stat?interpolateParams=true")
-	if err != nil {
-		panic(err)
-	}
-	Mysql = db
-}
-
-func initClickhouse() {
-	db, err := sqlx.Connect("clickhouse", "tcp://127.0.0.1:9000/?database=statbate&compress=true&debug=false")
-	if err != nil {
-		panic(err)
-	}
-	Clickhouse = db
-}
-
 var save = make(chan saveData, 100)
+
+var rooms = &Rooms{
+	Count: make(chan int),
+	Json:  make(chan string),
+	Add:   make(chan Info),
+	Del:   make(chan string),
+}
 
 func main() {
 	initMysql()
 	initClickhouse()
 
 	go hub.run()
+	go mapRooms()
 	go announceCount()
 	go saveDB(save)
 
@@ -55,4 +54,20 @@ func main() {
 	defer unixListener.Close()
 	os.Chmod(SOCK, 0777)
 	log.Fatal(http.Serve(unixListener, nil))
+}
+
+func initMysql() {
+	db, err := sqlx.Connect("mysql", "user:passwd@unix(/var/run/mysqld/mysqld.sock)/stat?interpolateParams=true")
+	if err != nil {
+		panic(err)
+	}
+	Mysql = db
+}
+
+func initClickhouse() {
+	db, err := sqlx.Connect("clickhouse", "tcp://127.0.0.1:9000/?database=statbate&compress=true&debug=false")
+	if err != nil {
+		panic(err)
+	}
+	Clickhouse = db
 }
