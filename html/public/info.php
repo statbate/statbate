@@ -1,12 +1,14 @@
 <?php
 require_once('../private/init.php');
 
-if(empty($_POST['room']) || !ctype_digit($_POST['room'])){
+if(empty($_POST['id']) || !ctype_digit($_POST['id'])){
 	die;
 }
 
-echo json_encode([
-	'table' => cacheResult('getTopDons', ['rid' => $_POST['room']], 3600),
-	'income' => dotFormat(cacheResult('getAllIncome', ['rid' => $_POST['room']], 3600)),
-	'chart' => cacheResult('getModelChartData', ['rid' => $_POST['room']], 3600)
+$arr = ['id' => $_POST['id'], 'type' => $_POST['type']];
+
+echo json_encode([	
+	'table' => cacheResult('getModalTable', $arr, 3600),
+	'amount' => cacheResult('getModalAmount', $arr, 3600),
+	'chart' => cacheResult('getModalCharts', $arr, 3600)
 ]);

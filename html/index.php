@@ -2,20 +2,21 @@
 require_once('/var/www/statbate/root/private/init.php');
 showRoomList();
 $topDon = cacheResult('getTopDons', [], 3600);
+//$topDon = getTopDons();
 $fin = cacheResult('getFinStat', [], 3600, true);
 $track = trackCount();
+$apiCharts = getApiChart();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 	<head>
 		<title>Statbate: Chaturbate Top 100</title>
 		<meta name="description" content="How much do webcam models make? Now you know the answer!" />
-		<meta name="viewport" content="width=device-width, initial-scale=0.7">
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<link rel="stylesheet" href="./css/bootstrap.min.css">
 		<link rel="stylesheet" href="./css/dataTables.bootstrap4.min.css">
 		<link rel="stylesheet" href="./css/metricsgraphics.min.css">
-		<link rel="stylesheet" href="./css/main.css?1004">
+		<link rel="stylesheet" href="./css/main.css?1027">
 		<script src="./js/jquery.js"></script>
 		<script src="./js/d3.min.js"></script>
 		<script src="./js/metricsgraphics.min.js"></script>
@@ -24,7 +25,7 @@ $track = trackCount();
 		<script src="./js/jquery.dataTables.min.js"></script>
 		<script src="./js/dataTables.bootstrap4.min.js"></script>
 		<script src="./js/highcharts.js"></script>
-		<script src="./js/main.js?1005"></script>		
+		<script src="./js/main.js?1027"></script>		
 		<style>
 			.x11 { opacity: 0.5; }
 			.x11:hover { opacity: 1.0; }
@@ -46,21 +47,29 @@ $track = trackCount();
     <span class="navbar-toggler-icon"></span>
   </button>
   <div class="collapse navbar-collapse" id="navbarNav">
+	  
+	  
     <ul class="navbar-nav">
       <li class="nav-item">
-        <a class="nav-link" href="#" data-toggle="modal" data-target="#donModal"><b>best simp</b></span></a>
+        <a class="nav-link" href="/"><b>Chaturbate</b></span></a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#" data-toggle="modal" data-target="#trendsModal">google trends</a>
-      </li>
+        <a class="nav-link" href="#">BongaCams</a>
+      </li>  
+      
       <li class="nav-item">
-        <a class="nav-link" href="#" data-toggle="modal" data-target="#moreStatModal" data-show-more-stat>distribution of income</a>
-      </li>
+        <a class="nav-link" href="#">Stripchat</a>
+      </li>  
       
+      <li class="nav-item">
+        <a class="nav-link" href="#">LiveJasmin</a>
+      </li>  
       
+       <li class="nav-item">
+        <a class="nav-link" href="#">CamSoda</a>
+      </li> 
       
   </div>
-  
   <div class="collapse navbar-collapse justify-content-end">
   <ul class="navbar-nav">
     <li class="nav-item">
@@ -145,11 +154,42 @@ $track = trackCount();
 					<div class="clear"></div>
 					<hr style="margin-top: 10px; margin-bottom: 10px;">	
 					
-					<div id="donTopLink">
-						<div class="x11" style="display: flex; justify-content: center; align-items: center; font-size: 18px; padding-top: 10px; text-shadow: 1px 1px 1px black, 0 0 1em grey;">
-						<b>don`t buy <p style="color:#ff6600; display:inline;">Monero</p> and <p style="color:#f7931a; display:inline;">Bitcoin</p></b>
-						</div>
-					</div>
+					
+					<ul class="nav nav-tabs"> <!-- justify-content-center -->
+  <li class="nav-item">
+    <a class="nav-link active" href="#cams" data-toggle="tab" role="tab" aria-controls="cams" aria-selected="true">Rooms</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#dons" data-toggle="tab" role="tab" aria-controls="dons" aria-selected="false">Donators</a>
+  </li>
+  
+  <li class="nav-item">
+    <a class="nav-link" href="#incomeCharts" data-toggle="tab" role="tab" aria-controls="incomeCharts" aria-selected="false">Income</a>
+  </li>
+  
+   <li class="nav-item">
+    <a class="nav-link" href="#roomsCharts" data-toggle="tab" role="tab" aria-controls="roomsCharts" aria-selected="false">Streamers</a>
+  </li>
+  
+   <li class="nav-item">
+    <a class="nav-link" href="#viewersCharts" data-toggle="tab" role="tab" aria-controls="viewersCharts" aria-selected="false">Viewers</a>
+  </li>
+  
+  <li class="nav-item">
+    <a class="nav-link" href="#trends" data-toggle="tab" role="tab" aria-controls="charts" aria-selected="false">Trends</a>
+  </li>
+  
+</ul>
+<br/>
+
+
+					
+<div class="tab-content">
+  <div role="tabpanel active" class="tab-pane fade active show" id="cams">
+  
+  
+ 
+					
 					
 					<table id="main" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" width="100%" role="grid" aria-describedby="supportList_info" style="width: 100%;">
 						<thead>
@@ -165,7 +205,65 @@ $track = trackCount();
 						<tbody>
 							<?php echo prepareTable(); ?>
 						</tbody>
-					</table>						
+					</table>	
+  
+  </div>
+  
+  
+  <div role="tabpanel" class="tab-pane fade" id="dons">
+  
+				
+					
+					<table id="top100dons" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" width="100%" role="grid" aria-describedby="supportList_info" style="width: 100%;">
+							<thead>
+								<tr>
+									<th></th>
+									<th>donator</th>
+									<th>last</th>
+									<th>rooms</th>
+									<th data-toggle="tooltip" data-placement="right" title="Average tip">avg</th>
+									<th>USD</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php echo $topDon; ?>
+							</tbody>
+						</table>
+  
+  
+  </div>
+  
+  
+  
+  <div role="tabpanel" class="tab-pane fade" id="incomeCharts">
+					<div id="pieStat"></div>
+  </div>
+  
+  
+   <div role="tabpanel" class="tab-pane fade" id="roomsCharts">
+					<div id="pieRooms"></div>
+  </div>
+  
+   <div role="tabpanel" class="tab-pane fade" id="viewersCharts">
+					<div id="pieViewers"></div>
+  </div>
+  
+  
+    <div role="tabpanel" class="tab-pane fade" id="trends">
+  
+					
+
+					
+					<script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/2790_RC04/embed_loader.js"></script> <script type="text/javascript"> trends.embed.renderExploreWidget("TIMESERIES", {"comparisonItem":[<?php echo getGoogleTrends();?>],"category":0,"property":""}, {"exploreQuery":"date=all&geo=DE&q=Chaturbate,Stripchat,BongaCams,LiveJasmin,CamSoda","guestPath":"https://trends.google.com:443/trends/embed/"}); </script>
+
+  
+  
+  </div>
+  
+
+</div>
+					
+									
 				</div>
 			</div>
 			<div style="padding-top: 12px;" class="x11">
@@ -177,36 +275,6 @@ $track = trackCount();
 		<!--<div class="alert alert-dark" role="alert" style="box-shadow: 0 1px 1px 0 rgba(0,0,0,0.14), 0 2px 1px -1px rgba(0,0,0,0.12), 0 1px 3px 0 rgba(0,0,0,0.20); margin-bottom: 12px; font-size: 12.2pt; color: #000000;">
 			<center>test test test</center>
 		</div> -->
-		
-		<div class="modal fade" id="trendsModal" tabindex="-1" role="dialog" aria-hidden="true">
-			<div class="modal-dialog" style="max-width: 770px;">
-				<div class="modal-content">
-					<div class="modal-body">
-						<script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/1937_RC01/embed_loader.js"></script> <script type="text/javascript"> trends.embed.renderExploreWidget("TIMESERIES", {"comparisonItem":[{"keyword":"Chaturbate","geo":"","time":"2011-07-01 <?php echo date("Y-m-d", time()); ?>"},{"keyword":"MyFreeCams","geo":"","time":"2011-07-01 <?php echo date("Y-m-d", time()); ?>"},{"keyword":"Stripchat","geo":"","time":"2011-07-01 <?php echo date("Y-m-d", time()); ?>"},{"keyword":"BongaCams","geo":"","time":"2011-07-01 <?php echo date("Y-m-d", time()); ?>"},{"keyword":"LiveJasmin","geo":"","time":"2011-07-01 <?php echo date("Y-m-d", time()); ?>"}],"category":0,"property":""}, {"exploreQuery":"date=today%205-y&q=Chaturbate,MyFreeCams,Stripchat,BongaCams,LiveJasmin","guestPath":"https://trends.google.com:443/trends/embed/"}); </script> 
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="modal fade" id="donModal" tabindex="-1" role="dialog" aria-hidden="true">
-			<div class="modal-dialog" style="max-width: 400px;">
-				<div class="modal-content">
-					<div class="modal-body">
-						<table class="table table-striped DonTable">
-							<thead>
-								<tr>
-									<th></th>
-									<th>USD</th>
-									<th data-toggle="tooltip" data-placement="right" title="Average tip">AVG</th>
-								</tr>
-							</thead>
-							<tbody>
-								<?php echo $topDon; ?>
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</div>
-		</div>
 		
 		<div class="modal fade" id="donRoomModal" tabindex="-1" role="dialog" aria-hidden="true">
 			<div class="modal-dialog" style="max-width: 400px; min-height: 680px;">
@@ -231,16 +299,6 @@ $track = trackCount();
 			</div>
 		</div>
 		
-		<div class="modal fade" id="moreStatModal" tabindex="-1" role="dialog" aria-hidden="true">
-			<div class="modal-dialog" style="max-width: 770px;">
-				<div class="modal-content">
-					<div class="modal-body">		
-						<div id="pieStat"></div>
-					</div>
-				</div>
-			</div>
-		</div>
-		
 		<script>		
 			Highcharts.chart('pieStat', {
 				chart: {
@@ -253,7 +311,7 @@ $track = trackCount();
 					enabled: false
 				},
 				title: {
-					text: 'Distribution of income for the current month'
+					text: 'Income distribution for the current month'
 				},
 				tooltip: {
 					pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
@@ -278,6 +336,84 @@ $track = trackCount();
 					name: 'Income',
 					colorByPoint: true,
 					data: <?php echo getPieStat(); ?>
+				}]
+			});
+			
+			Highcharts.chart('pieRooms', {
+				chart: {
+					plotBackgroundColor: null,
+					plotBorderWidth: null,
+					plotShadow: false,
+					type: 'pie'
+				},
+				credits: {
+					enabled: false
+				},
+				title: {
+					text: 'Rooms distribution'
+				},
+				tooltip: {
+					pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+				},
+				accessibility: {
+					point: {
+						valueSuffix: '%'
+					}
+				},
+				plotOptions: {
+					pie: {
+						colors: ["#434348", "#7cb5ec", "#90ed7d", "#f7a35c", "#8085e9", "#f15c80", "#e4d354", "#2b908f", "#f45b5b", "#91e8e1"],
+						allowPointSelect: true,
+						cursor: 'pointer',
+						dataLabels: {
+							enabled: true,
+							format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+						}
+					}
+				},
+				series: [{
+					name: 'Income',
+					colorByPoint: true,
+					data: <?php echo $apiCharts[0]; ?>
+				}]
+			});
+			
+			Highcharts.chart('pieViewers', {
+				chart: {
+					plotBackgroundColor: null,
+					plotBorderWidth: null,
+					plotShadow: false,
+					type: 'pie'
+				},
+				credits: {
+					enabled: false
+				},
+				title: {
+					text: 'Viewers distribution'
+				},
+				tooltip: {
+					pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+				},
+				accessibility: {
+					point: {
+						valueSuffix: '%'
+					}
+				},
+				plotOptions: {
+					pie: {
+						colors: ["#434348", "#7cb5ec", "#90ed7d", "#f7a35c", "#8085e9", "#f15c80", "#e4d354", "#2b908f", "#f45b5b", "#91e8e1"],
+						allowPointSelect: true,
+						cursor: 'pointer',
+						dataLabels: {
+							enabled: true,
+							format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+						}
+					}
+				},
+				series: [{
+					name: 'Income',
+					colorByPoint: true,
+					data: <?php echo $apiCharts[1]; ?>
 				}]
 			});
 		</script>

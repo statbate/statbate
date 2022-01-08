@@ -73,8 +73,8 @@ function showRoomList(){
 		echo "- room name or nickname\n";
 		echo "- chat log\n\n";
 		echo "excluded from rating\n";
-		echo "- rooms with an average tips of more than 1000\n";
-		echo "- donators with an average tips of more than 20000\n\n\n";
+		echo "- rooms with an average tips of more than 50$\n";
+		echo "- donators with an average tips of more than 1000$\n\n\n";
 		echo "<table>";
 		foreach($debug as $key => $val){
 			switch($key){
@@ -109,15 +109,15 @@ function showRoomList(){
 			}
 			echo "<table><tr><td>online more</td><td>25</td><td>50</td><td>100</td></tr><tr><td>rooms</td><td>{$count['2']}</td><td>{$count['1']}</td><td>{$count['0']}</td></tr><tr><td>total rooms</td><td colspan='3'>".count($a)."</td></tr><tr><td>total online</td><td colspan='3'>{$count['3']}</td></tr></table>\n\n";
 		}
-		echo "<table><tr><td></td><td>room</td><td>online</td><td>$ income</td><td title='In minutes'>duration</td></tr>";
+		echo "<table><tr><td></td><td>room</td> <td>proxy</td> <td>online</td><td>$ income</td><td title='In minutes'>duration</td></tr>";
 		$i=0;
 		$time = time();
 		foreach($arr as $key => $val){
 			$i++;
 			if($val['online'] == 0){
 				$val['online'] = 'new';
-			}			
-			echo "<tr><td>$i</td><td>$key</td><td>{$val['online']}</td> <td> ".toUSD($val['income'])." </td> <td> ".round(($time - $val['start'])/60)."</td> </tr>";
+			}
+			echo "<tr><td>$i</td><td>$key</td> <td>{$val['proxy']}</td> <td>{$val['online']}</td>  <td> ".toUSD($val['income'])." </td> <td> ".round(($time - $val['start'])/60)."</td> </tr>";
 		}
 		echo "</table></pre>";
 		die;
@@ -146,4 +146,41 @@ function get_time_ago($time){
 function createUrl($name){
 	$name = strip_tags($name);
 	return "<a href='https://chaturbate.com/{$name}' target='_blank' rel='nofollow'>{$name}</a>";
+}
+
+function getGoogleTrends(){
+	$s = "";
+	$time = "2020-01-01 ".date("Y-m-d", time());
+	$arr = ["Chaturbate", "Stripchat", "BongaCams", "LiveJasmin", "CamSoda"];
+	foreach($arr as $val){
+		$s .= "{\"keyword\":\"$val\",\"geo\":\"\",\"time\":\"$time\"},";
+	}
+	return $s;
+}
+
+function getApiChart(){
+	global $redis;
+	$json = $redis->get('chaturbateList');
+	if($json === false){
+		return;
+	}
+	
+	$arr = json_decode($json, true);
+	
+	$gender = ['m' => 'Male', 'f' => 'Female', 's' => 'Trans', 'c' => 'Couple'];
+	$data = ['Male' => [0, 0], 'Female' => [0, 0], 'Trans' => [0, 0], 'Couple' => [0, 0]];
+	
+	foreach($arr as $val){
+		$key = $gender[$val['gender']];
+		$data[$key][0]++; 
+		$data[$key][1] += $val['num_users'];
+	}
+	
+	$a = $b = [];
+	
+	foreach($data as $k => $v){
+		$a[] = ['name' => $k, 'y' => $v[0]];
+		$b[] = ['name' => $k, 'y' => $v[1]];
+	}
+	return [json_encode($a), json_encode($b)];
 }

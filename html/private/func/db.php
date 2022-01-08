@@ -7,9 +7,13 @@ function getFinStat(){ // cache done
 	return ['total' => toUSD($row['0']), 'avg' => toUSD($row['1'], 2), 'count' => $row['2']];
 }
 
-function getModelChartData($a){ // cache done
+function getModalCharts($a){ // cache done
 	global $clickhouse; $arr = [];
-	$query = $clickhouse->query("SELECT FROM_UNIXTIME(time, '%Y-%m-%d') as ndate, SUM(token) as total FROM stat WHERE `rid` = {$a['rid']} AND `time` > toUInt64(toDateTime(DATE_SUB((DATE_SUB(NOW(), INTERVAL 1 MONTH)), INTERVAL 1 DAY))) GROUP BY ndate ORDER BY ndate DESC");
+	$c = 'did';
+	if($a['type'] == 'income'){
+		$c = 'rid';
+	}
+	$query = $clickhouse->query("SELECT FROM_UNIXTIME(time, '%Y-%m-%d') as ndate, SUM(token) as total FROM stat WHERE $c = {$a['id']} AND `time` > toUInt64(toDateTime(DATE_SUB((DATE_SUB(NOW(), INTERVAL 1 MONTH)), INTERVAL 1 DAY))) GROUP BY ndate ORDER BY ndate DESC");
 	if($query->rowCount() == 0){
 		return false;
 	}
@@ -20,19 +24,18 @@ function getModelChartData($a){ // cache done
 	return json_encode($arr, JSON_NUMERIC_CHECK);
 }
 
-function getTopDons($room){ // cache done
-	global $clickhouse;
-	$result = ''; $a = ''; $b = '';
-	$tmpl = '<tr><td>{URL}</td><td>{TOTAL}</td><td>{AVG}</td></tr>';
-	if(!empty($room['rid'])){
-		$a = "rid = {$room['rid']} AND"; 
-	}else{
-		$b = "HAVING avg < 2000"; // 100 USD
+function getModalTable($room) {
+	global $clickhouse; $result = '';
+	$c1 = 'rid'; $c2 = 'did';
+	if($room['type'] == 'income'){
+		$c1 = 'did'; $c2 = 'rid';
 	}
-	$query = $clickhouse->query("SELECT did, SUM(token) as total, AVG(token) as avg FROM stat WHERE $a time > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month))) GROUP BY did $b ORDER BY total DESC LIMIT 20");
+	$tmpl = '<tr><td>{URL}</td><td>{TOTAL}</td><td>{AVG}</td></tr>';
+	$query = $clickhouse->query("SELECT $c1, SUM(token) as total, AVG(token) as avg FROM stat WHERE $c2 = {$room['id']} AND time > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month))) GROUP BY $c1 ORDER BY total DESC LIMIT 20");
 	$row =  $query->fetchAll();
+	
 	foreach($row as $val) {
-		$tr = str_replace('{URL}', createUrl(cacheResult('getDonName', ['id' => $val['did']], 86000)), $tmpl);
+		$tr = str_replace('{URL}', createUrl(cacheResult('getDonName', ['id' => $val[$c1]], 86000)), $tmpl);
 		$tr = str_replace('{TOTAL}', toUSD($val['total']), $tr);
 		$tr = str_replace('{AVG}', toUSD($val['avg'], 2), $tr);
 		$result .= $tr;
@@ -40,15 +43,57 @@ function getTopDons($room){ // cache done
 	return $result;
 }
 
-function getAllIncome($arr){ // cache done
+function getTopDons(){ // cache done
+	global $clickhouse; $result = ''; 
+	$tmpl = '<tr><td>{ID}</td><td>{URL}</td><td>{LAST}</td><td>{COUNT}</td><td>{AVG}</td><td>{TOTAL}</td></tr>';
+	$query = $clickhouse->query("SELECT did, COUNT(DISTINCT rid) as count, MAX(time) as max, SUM(token) as total, AVG(token) as avg FROM stat WHERE time > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month))) GROUP BY did HAVING avg < 2000 ORDER BY total DESC LIMIT 100");
+	$row =  $query->fetchAll();
+	
+	$i = 0;
+	
+	$arr = [];
+	
+	
+	foreach($row as $val) {
+		$i++;
+		
+		$name = cacheResult('getDonName', ['id' => $val['did']], 86000);
+		$tr = str_replace('{ID}', $i, $tmpl);
+		$tr = str_replace('{URL}', createUrl($name), $tr);
+		$tr = str_replace('{LAST}', get_time_ago($val['max']), $tr);
+		$tr = str_replace('{COUNT}', $val['count'], $tr);
+		$tr = str_replace('{AVG}', toUSD($val['avg'], 2), $tr);
+		$tr = str_replace('{TOTAL}', "<a href='#' data-modal-info data-modal-id={$val['did']} data-modal-type=spend data-modal-name=$name>".toUSD($val['total'])."</a>", $tr);
+		$result .= $tr;
+		
+		//$arr[] = $val['did']; 
+		
+	}	
+	
+	return $result;
+}
+
+function getModalAmount($arr){ // cache done
 	global $clickhouse;
-	$query = $clickhouse->query("SELECT SUM(token) as total FROM stat WHERE rid = {$arr['rid']}");
+	$c = 'did';
+	if($arr['type'] == 'income'){
+		$c = 'rid';
+	}
+	$query = $clickhouse->query("SELECT SUM(token) as total FROM stat WHERE $c = {$arr['id']}");
 	return toUSD($query->fetch()['0']);
 }
 
 function getDonName($arr){ // cache done
 	global $db;
 	$select = $db->prepare('SELECT `name` FROM `donator` WHERE `id` = :id');
+	$select->bindParam(':id', $arr['id']);
+	$select->execute();
+	return $select->fetch()['name'];
+}
+
+function getRoomName($arr){ // cache done
+	global $db;
+	$select = $db->prepare('SELECT `name` FROM `room` WHERE `id` = :id');
 	$select->bindParam(':id', $arr['id']);
 	$select->execute();
 	return $select->fetch()['name'];
@@ -92,7 +137,7 @@ function prepareTable(){ // cache done
 	$i = 0; $stat = ''; $list = [];
 	$gender = ['boy', 'girl', 'trans', 'couple'];
 	$data = cacheResult('getTop', [], 600, true);
-	$online = json_decode(cacheResult('getList', [], 180), true);
+	$online = json_decode(cacheResult('getList', [], 180), true);	
 	$tmpl = '<tr><td>{ID}</td><td>{URL}</td><td>{GENDER}</td><td>{LAST}</td><td>{FANS}</td><td>{USD}</td></tr>';
 	foreach($data as $key => $val){
 		$i++;
@@ -100,6 +145,7 @@ function prepareTable(){ // cache done
 		$val['token'] = toUSD($val['token']);
 		$val['last'] = get_time_ago($val['last']);
 		if(array_key_exists($val['name'], $online)){
+			//$val['last'] = ' <font color="green">'.$online[$val['name']]['online'].'</font>';
 			$val['last'] = '<font color="green">online</font>';
 		}
 		$tr = str_replace('{ID}', $i, $tmpl);
@@ -107,7 +153,7 @@ function prepareTable(){ // cache done
 		$tr = str_replace('{GENDER}', $gender[$val['gender']], $tr);
 		$tr = str_replace('{LAST}', $val['last'], $tr);
 		$tr = str_replace('{FANS}', $val['fans'], $tr);
-		$tr = str_replace('{USD}', "<a href=\"#\" data-show-room-stat=$key data-room-name=".strip_tags($val['name']).">{$val['token']}</a>", $tr);
+		$tr = str_replace('{USD}', "<a href=\"#\" data-modal-info data-modal-id=$key data-modal-type=income data-modal-name=".strip_tags($val['name']).">{$val['token']}</a>", $tr);
 		$stat .= $tr;
 	}
 	return $stat;
