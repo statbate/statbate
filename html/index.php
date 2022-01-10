@@ -25,7 +25,7 @@ $apiCharts = getApiChart();
 		<script src="./js/jquery.dataTables.min.js"></script>
 		<script src="./js/dataTables.bootstrap4.min.js"></script>
 		<script src="./js/highcharts.js"></script>
-		<script src="./js/main.js?1027"></script>		
+		<script src="./js/main.js?1028"></script>		
 		<style>
 			.x11 { opacity: 0.5; }
 			.x11:hover { opacity: 1.0; }
@@ -91,7 +91,7 @@ $apiCharts = getApiChart();
 								var hcData = <?php echo getCharts(); ?>;
 								var data = [];
 								for (var i = 0; i < hcData.length; i++) {
-									hcData[i] = hcData[i].slice(1, hcData[i].length); // remove first day
+									//hcData[i] = hcData[i].slice(1, hcData[i].length); // remove first day
 									data[i] = MG.convert.date(hcData[i], 'date');
 								};
 								MG.data_graphic({
@@ -221,8 +221,8 @@ $apiCharts = getApiChart();
 									<th>donator</th>
 									<th>last</th>
 									<th>rooms</th>
-									<th data-toggle="tooltip" data-placement="right" title="Average tip">avg</th>
-									<th>USD</th>
+									<th data-toggle="tooltip" data-placement="top" title="Average tip">avg</th>
+									<th data-toggle="tooltip" data-placement="top" title="Spend per month">USD</th>
 								</tr>
 							</thead>
 							<tbody>

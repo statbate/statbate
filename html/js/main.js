@@ -56,9 +56,9 @@ $(document).on("click", "[data-modal-info]", function(e) {
 		
 		if(data.chart.length != 0){
 			xx11 = JSON.parse(data.chart);
-			if(xx11.length > 28){
-				xx11.pop();
-			}
+			//if(xx11.length > 28){
+			//	xx11.pop();
+			//}
 			var xx22 = MG.convert.date(xx11, 'date');
 			MG.data_graphic({
 				data: xx22,
