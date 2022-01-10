@@ -22,7 +22,5 @@ CREATE TABLE `stat` (
   `rid` int(11) NOT NULL,
   `token` int(11) NOT NULL,
   `time` int(11) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `rid` (`rid`),
-  KEY `time` (`time`)
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=binary ROW_FORMAT=DYNAMIC;
