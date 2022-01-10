@@ -125,7 +125,7 @@ function showRoomList(){
 }
 // https://www.w3schools.in/php-script/time-ago-function/
 function get_time_ago($time){
-    $time_difference = time() - $time;
+    $time_difference = time() - (int) $time;
     if($time_difference < 1) { return '1 second'; }
     $condition = [ 12 * 30 * 24 * 60 * 60 =>  'year',
                 30 * 24 * 60 * 60       =>  'month',

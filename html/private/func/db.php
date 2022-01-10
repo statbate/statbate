@@ -2,7 +2,7 @@
 
 function getFinStat(){ // cache done
 	global $clickhouse;
-	$query = $clickhouse->query("SELECT SUM(token), AVG(token), count(DISTINCT rid) FROM stat WHERE time > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month)))");
+	$query = $clickhouse->query("SELECT SUM(token), AVG(token), count(DISTINCT rid) FROM stat WHERE time > toDate(DATE_SUB(NOW(), INTERVAL 1 month))");
 	$row =  $query->fetch();
 	return ['total' => toUSD($row['0']), 'avg' => toUSD($row['1'], 2), 'count' => $row['2']];
 }
@@ -13,7 +13,7 @@ function getModalCharts($a){ // cache done
 	if($a['type'] == 'income'){
 		$c = 'rid';
 	}
-	$query = $clickhouse->query("SELECT FROM_UNIXTIME(time, '%Y-%m-%d') as ndate, SUM(token) as total FROM stat WHERE $c = {$a['id']} AND `time` > toUInt64(toDateTime(DATE_SUB((DATE_SUB(NOW(), INTERVAL 1 MONTH)), INTERVAL 1 DAY))) GROUP BY ndate ORDER BY ndate DESC");
+	$query = $clickhouse->query("SELECT FROM_UNIXTIME(time, '%Y-%m-%d') as ndate, SUM(token) as total FROM stat WHERE $c = {$a['id']} AND `time` > toDate(DATE_SUB((DATE_SUB(NOW(), INTERVAL 1 MONTH)), INTERVAL 1 DAY)) GROUP BY ndate ORDER BY ndate DESC");
 	if($query->rowCount() == 0){
 		return false;
 	}
@@ -31,7 +31,7 @@ function getModalTable($room) {
 		$c1 = 'did'; $c2 = 'rid';
 	}
 	$tmpl = '<tr><td>{URL}</td><td>{TOTAL}</td><td>{AVG}</td></tr>';
-	$query = $clickhouse->query("SELECT $c1, SUM(token) as total, AVG(token) as avg FROM stat WHERE $c2 = {$room['id']} AND time > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month))) GROUP BY $c1 ORDER BY total DESC LIMIT 20");
+	$query = $clickhouse->query("SELECT $c1, SUM(token) as total, AVG(token) as avg FROM stat WHERE $c2 = {$room['id']} AND time > toDate(DATE_SUB(NOW(), INTERVAL 1 month)) GROUP BY $c1 ORDER BY total DESC LIMIT 20");
 	$row =  $query->fetchAll();
 	
 	foreach($row as $val) {
@@ -46,7 +46,7 @@ function getModalTable($room) {
 function getTopDons(){ // cache done
 	global $clickhouse; $result = ''; 
 	$tmpl = '<tr><td>{ID}</td><td>{URL}</td><td>{LAST}</td><td>{COUNT}</td><td>{AVG}</td><td>{TOTAL}</td></tr>';
-	$query = $clickhouse->query("SELECT did, COUNT(DISTINCT rid) as count, MAX(time) as max, SUM(token) as total, AVG(token) as avg FROM stat WHERE time > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month))) GROUP BY did HAVING avg < 20000 ORDER BY total DESC LIMIT 100");
+	$query = $clickhouse->query("SELECT did, COUNT(DISTINCT rid) as count, MAX(time) as max, SUM(token) as total, AVG(token) as avg FROM stat WHERE time > toDate(DATE_SUB(NOW(), INTERVAL 1 month)) GROUP BY did HAVING avg < 20000 ORDER BY total DESC LIMIT 100");
 	$row =  $query->fetchAll();
 	
 	$i = 0;
@@ -117,7 +117,7 @@ function getRoomInfo($arr){ // cache done
 function getTop(){ // cache done
 	global $db, $clickhouse;
 	$data = [];
-	$query = $clickhouse->query("SELECT rid, SUM(token) as total FROM stat WHERE time > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month))) AND did not in (SELECT did FROM stat WHERE time > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month))) GROUP BY did HAVING AVG(token) > 20000) GROUP BY rid HAVING AVG(token) < 1000 ORDER BY total DESC LIMIT 100");
+	$query = $clickhouse->query("SELECT rid, SUM(token) as total FROM stat WHERE time > toDate(DATE_SUB(NOW(), INTERVAL 1 month)) AND did not in (SELECT did FROM stat WHERE time > toDate(DATE_SUB(NOW(), INTERVAL 1 month)) GROUP BY did HAVING AVG(token) > 20000) GROUP BY rid HAVING AVG(token) < 1000 ORDER BY total DESC LIMIT 100");
 	$row =  $query->fetchAll();
 	foreach($row as $val) {
 		$data[$val['rid']]['token'] = $val['total'];
@@ -125,7 +125,7 @@ function getTop(){ // cache done
 	$in = implode(', ', array_column($row, 'rid'));
 	$query = $db->query("SELECT `id`, `name`, `gender`, `fans`, `last` FROM `room` WHERE `id` IN ($in)");
 	while($row = $query->fetch()){
-		$data[$row['id']]['name'] = $row['name'];
+		@$data[$row['id']]['name'] = $row['name'];
 		$data[$row['id']]['last'] = $row['last'];
 		$data[$row['id']]['gender'] = $row['gender'];
 		$data[$row['id']]['fans'] = round($row['fans']/1000);
@@ -162,7 +162,7 @@ function prepareTable(){ // cache done
 function genderIncome(){ // cache done
 	global $clickhouse;
 	$arr = [];
-	$query = $clickhouse->query("SELECT room.gender, SUM(token) as total, FROM_UNIXTIME(time, '%Y-%m-%d') as ndate FROM `stat` LEFT JOIN `room` ON stat.rid = room.id WHERE time > toUInt64(toDateTime(DATE_SUB((DATE_SUB(NOW(), INTERVAL 1 MONTH)), INTERVAL 1 DAY))) GROUP by `gender`, ndate ORDER BY ndate ASC");
+	$query = $clickhouse->query("SELECT room.gender, SUM(token) as total, FROM_UNIXTIME(time, '%Y-%m-%d') as ndate FROM `stat` LEFT JOIN `room` ON stat.rid = room.id WHERE time > toDate(DATE_SUB((DATE_SUB(NOW(), INTERVAL 1 MONTH)), INTERVAL 1 DAY)) GROUP by `gender`, ndate ORDER BY ndate ASC");
 	while($row = $query->fetch()){
 		@$arr[$row['gender']][$row['ndate']] = ['value' => toUSD($row['total'])];
 		@$arr['4'][$row['ndate']]['value'] += toUSD($row['total']);
