@@ -46,7 +46,7 @@ function getModalTable($room) {
 function getTopDons(){ // cache done
 	global $clickhouse; $result = ''; 
 	$tmpl = '<tr><td>{ID}</td><td>{URL}</td><td>{LAST}</td><td>{COUNT}</td><td>{AVG}</td><td>{TOTAL}</td></tr>';
-	$query = $clickhouse->query("SELECT did, COUNT(DISTINCT rid) as count, MAX(time) as max, SUM(token) as total, AVG(token) as avg FROM stat WHERE time > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month))) GROUP BY did HAVING avg < 2000 ORDER BY total DESC LIMIT 100");
+	$query = $clickhouse->query("SELECT did, COUNT(DISTINCT rid) as count, MAX(time) as max, SUM(token) as total, AVG(token) as avg FROM stat WHERE time > toUInt64(toDateTime(DATE_SUB(NOW(), INTERVAL 1 month))) GROUP BY did HAVING avg < 20000 ORDER BY total DESC LIMIT 100");
 	$row =  $query->fetchAll();
 	
 	$i = 0;
