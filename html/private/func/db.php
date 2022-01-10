@@ -55,7 +55,7 @@ function getTopDons(){ // cache done
 		$i++;
 		$d = 'today';
 		if($val['max'] != $today){
-			$d = get_time_ago($val['max']);
+			$d = get_time_ago(strtotime($val['max']));
 		}
 		$name = cacheResult('getDonName', ['id' => $val['did']], 86000);
 		$tr = str_replace('{ID}', $i, $tmpl);
