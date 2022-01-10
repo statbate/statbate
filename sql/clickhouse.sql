@@ -14,8 +14,8 @@ CREATE TABLE stat
 	rid   UInt32,
 	token UInt32,
 	time  Date,
-	INDEX a did TYPE set(0) GRANULARITY 1,
-	INDEX b rid TYPE set(0) GRANULARITY 1
+	INDEX a did TYPE bloom_filter() GRANULARITY 1,
+	INDEX b rid TYPE bloom_filter() GRANULARITY 1
 ) 
 ENGINE = MergeTree()
 PARTITION BY toYYYYMMDD(time)
