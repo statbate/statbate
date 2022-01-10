@@ -48,26 +48,23 @@ function getTopDons(){ // cache done
 	$tmpl = '<tr><td>{ID}</td><td>{URL}</td><td>{LAST}</td><td>{COUNT}</td><td>{AVG}</td><td>{TOTAL}</td></tr>';
 	$query = $clickhouse->query("SELECT did, COUNT(DISTINCT rid) as count, MAX(time) as max, SUM(token) as total, AVG(token) as avg FROM stat WHERE time > toDate(DATE_SUB(NOW(), INTERVAL 1 month)) GROUP BY did HAVING avg < 20000 ORDER BY total DESC LIMIT 100");
 	$row =  $query->fetchAll();
-	
 	$i = 0;
-	
 	$arr = [];
-	
-	
+	$today = date('Y-m-d', now());
 	foreach($row as $val) {
 		$i++;
-		
+		$d = 'today';
+		if($val['max'] != $today){
+			$d = get_time_ago($val['max']);
+		}
 		$name = cacheResult('getDonName', ['id' => $val['did']], 86000);
 		$tr = str_replace('{ID}', $i, $tmpl);
 		$tr = str_replace('{URL}', createUrl($name), $tr);
-		$tr = str_replace('{LAST}', get_time_ago($val['max']), $tr);
+		$tr = str_replace('{LAST}', $d, $tr);
 		$tr = str_replace('{COUNT}', $val['count'], $tr);
 		$tr = str_replace('{AVG}', toUSD($val['avg'], 2), $tr);
 		$tr = str_replace('{TOTAL}', "<a href='#' data-modal-info data-modal-id={$val['did']} data-modal-type=spend data-modal-name=$name>".toUSD($val['total'])."</a>", $tr);
 		$result .= $tr;
-		
-		//$arr[] = $val['did']; 
-		
 	}	
 	
 	return $result;
