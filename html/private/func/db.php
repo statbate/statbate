@@ -13,7 +13,7 @@ function getModalCharts($a){ // cache done
 	if($a['type'] == 'income'){
 		$c = 'rid';
 	}
-	$query = $clickhouse->query("SELECT FROM_UNIXTIME(time, '%Y-%m-%d') as ndate, SUM(token) as total FROM stat WHERE $c = {$a['id']} AND `time` > today() - toIntervalMonth(1) - toIntervalDay(1) GROUP BY ndate ORDER BY ndate DESC");
+	$query = $clickhouse->query("SELECT time as ndate, SUM(token) as total FROM stat WHERE $c = {$a['id']} AND `time` > today() - toIntervalMonth(1) - toIntervalDay(1) GROUP BY ndate ORDER BY ndate DESC");
 	if($query->rowCount() == 0){
 		return false;
 	}
@@ -159,7 +159,7 @@ function prepareTable(){ // cache done
 function genderIncome(){ // cache done
 	global $clickhouse;
 	$arr = [];
-	$query = $clickhouse->query("SELECT room.gender, SUM(token) as total, FROM_UNIXTIME(time, '%Y-%m-%d') as ndate FROM `stat` LEFT JOIN `room` ON stat.rid = room.id WHERE time > today() - toIntervalMonth(1) - toIntervalDay(1) GROUP by `gender`, ndate ORDER BY ndate ASC");
+	$query = $clickhouse->query("SELECT room.gender, SUM(token) as total, time as ndate FROM `stat` LEFT JOIN `room` ON stat.rid = room.id WHERE time > today() - toIntervalMonth(1) - toIntervalDay(1) GROUP by `gender`, ndate ORDER BY ndate ASC");
 	while($row = $query->fetch()){
 		@$arr[$row['gender']][$row['ndate']] = ['value' => toUSD($row['total'])];
 		@$arr['4'][$row['ndate']]['value'] += toUSD($row['total']);
