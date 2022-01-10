@@ -48,10 +48,7 @@ func mapRooms() {
 			rooms.Json <- s
 
 		case <-rooms.Count:
-			msg, err := json.Marshal(AnnounceCount{Count: len(data)})
-			if err == nil {
-				hub.broadcast <- msg
-			}
+			rooms.Count <- len(data)
 
 		case key := <-rooms.Del:
 			delete(data, key)
@@ -64,6 +61,11 @@ func announceCount() {
 	for {
 		time.Sleep(30 * time.Second)
 		rooms.Count <- 0
+		l := <-	rooms.Count
+		msg, err := json.Marshal(AnnounceCount{Count: l})
+		if err == nil {
+			hub.broadcast <- msg
+		}
 	}
 }
 

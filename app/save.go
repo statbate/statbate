@@ -15,12 +15,11 @@ type saveData struct {
 }
 
 func saveDonate(did, rid, token, now int64) {
-	res, _ := Mysql.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)", did, rid, token, now)
-	id, _ := res.LastInsertId()
-
-	tx, _ := Clickhouse.Begin()
-	tx.Exec("INSERT INTO stat VALUES (?, ?, ?, ?, ?)", id, did, rid, token, now)
-	tx.Commit()
+	_, err := Mysql.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)", did, rid, token, now); if err == nil {
+		tx, _ := Clickhouse.Begin()
+		tx.Exec("INSERT INTO stat VALUES (?, ?, ?, ?)", did, rid, token, now)
+		tx.Commit()
+	}
 }
 
 func getDonId(name string) int64 {
@@ -43,7 +42,7 @@ func getRoomInfo(name string) (*tID, bool) {
 	return room, result
 }
 
-func saveDB(ch chan saveData) {
+func saveDB() {
 	var id int64
 	var name string
 
@@ -63,8 +62,8 @@ func saveDB(ch chan saveData) {
 
 	for {
 		select {
-		case m := <-ch:
-			//fmt.Println("Save channel:", len(ch), cap(ch))
+		case m := <-save:
+			//fmt.Println("Save channel:", len(save), cap(save))
 			if _, ok := data[m.From]; !ok {
 				data[m.From] = getDonId(m.From)
 			}

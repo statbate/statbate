@@ -38,7 +38,7 @@ func main() {
 	go hub.run()
 	go mapRooms()
 	go announceCount()
-	go saveDB(save)
+	go saveDB()
 
 	http.HandleFunc("/ws/", hub.wsHandler)
 	http.HandleFunc("/cmd/", cmdHandler)
