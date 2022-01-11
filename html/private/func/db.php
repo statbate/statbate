@@ -26,16 +26,16 @@ function getModalCharts($a){ // cache done
 
 function getModalTable($room) {
 	global $clickhouse; $result = '';
-	$c1 = 'rid'; $c2 = 'did';
+	$c1 = 'rid'; $c2 = 'did'; $c3 = 'getRoomName';
 	if($room['type'] == 'income'){
-		$c1 = 'did'; $c2 = 'rid';
+		$c1 = 'did'; $c2 = 'rid'; $c3 = 'getDonName';
 	}
 	$tmpl = '<tr><td>{URL}</td><td>{TOTAL}</td><td>{AVG}</td></tr>';
 	$query = $clickhouse->query("SELECT $c1, SUM(token) as total, AVG(token) as avg FROM stat WHERE $c2 = {$room['id']} AND time > today() - toIntervalMonth(1) GROUP BY $c1 ORDER BY total DESC LIMIT 20");
 	$row =  $query->fetchAll();
 	
 	foreach($row as $val) {
-		$tr = str_replace('{URL}', createUrl(cacheResult('getDonName', ['id' => $val[$c1]], 86000)), $tmpl);
+		$tr = str_replace('{URL}', createUrl(cacheResult($c3, ['id' => $val[$c1]], 86000)), $tmpl);
 		$tr = str_replace('{TOTAL}', toUSD($val['total']), $tr);
 		$tr = str_replace('{AVG}', toUSD($val['avg'], 2), $tr);
 		$result .= $tr;
