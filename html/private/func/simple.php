@@ -55,26 +55,49 @@ function formatBytes($size, $precision = 2){
     return round(pow(1024, $base - floor($base)), $precision) .' '. $suffixes[floor($base)];
 }
 
-function showRoomList(){
+function getCbArr(){
 	global $redis;
+	$cb_list = $redis->get('chaturbateList');
+	if($cb_list !== false){
+		return json_decode($cb_list, true);
+	}
+	return false; 
+}
+
+function getCbList(){
+	$a = getCbArr();
+	if(!$a){
+		return [];
+	}
+	$list = [];
+	foreach($a as $key => $val){
+		$list[] = $val['username'];
+	}
+	return $list;
+}
+
+function showRoomList(){
 	if(isset($_GET['list'])){
 		$arr = json_decode(cacheResult('getList', [], 30), true);
 		$debug = json_decode(cacheResult('getDebug', [], 30), true);
-		
 		uasort($arr, function($a, $b){
 			return $a['online'] < $b['online'];
 		});
 		echo "<title>tracking ".count($arr)." rooms</title>";
 		//echo "<meta http-equiv='refresh' content='60'>";
-		echo "<style>body {background-color: #eeeeee;}table, th, td {border: 1px solid black;border-collapse: collapse;} td {min-width: 100px; height: 25px; text-align: center; vertical-align: middle;}</style>";
+		echo "<style>{body background-color: #eeeeee;}table, th, td {border: 1px solid black;border-collapse: collapse;} td {min-width: 100px; height: 25px; text-align: center; vertical-align: middle;} a { color: #333; text-decoration: none;} a:hover { color: #333; text-decoration: underline;} a:active { color: #333;} </style>";
 		echo "<pre>";
-		echo "<a href='/'>main page</a>\n\n";
+		echo "<a href='/' style='text-decoration: underline; color: darkgreen;'>main page</a>\n\n";
 		echo "statbate.com сollects data from open sources\n";
 		echo "- room name or nickname\n";
 		echo "- chat log\n\n";
 		echo "excluded from rating\n";
 		echo "- rooms with an average tips of more than 50$\n";
-		echo "- donators with an average tips of more than 1000$\n\n\n";
+		echo "- donators with an average tips of more than 1000$\n\n";
+		echo "This is a technical page. We use it for debugging\n";
+		echo "Also for you it is proof that the statistics are trust\n\n";
+		echo "We keep logs for six hours\n";
+		echo "Click on the name of the room to view\n\n\n";		
 		echo "<table>";
 		foreach($debug as $key => $val){
 			switch($key){
@@ -91,10 +114,9 @@ function showRoomList(){
 			echo "<tr><td>$key</td> <td>$val</td>";
 		}
 		echo "</table> \n\n";
-		$cb_list = $redis->get('chaturbateList');
-		if($cb_list !== false){
+		$a = getCbArr();
+		if($a){
 			$count = [0, 0, 0, 0];
-			$a = json_decode($cb_list, true);
 			foreach($a as $val){
 				if($val['num_users'] > 100){
 					$count['0']++;
@@ -109,7 +131,7 @@ function showRoomList(){
 			}
 			echo "<table><tr><td>online more</td><td>25</td><td>50</td><td>100</td></tr><tr><td>rooms</td><td>{$count['2']}</td><td>{$count['1']}</td><td>{$count['0']}</td></tr><tr><td>total rooms</td><td colspan='3'>".count($a)."</td></tr><tr><td>total online</td><td colspan='3'>{$count['3']}</td></tr></table>\n\n";
 		}
-		echo "<table><tr><td></td><td>room</td> <td>proxy</td> <td>online</td><td>$ income</td><td title='In minutes'>duration</td></tr>";
+		echo "<table><tr><td></td><td>room</td> <td>proxy</td> <td>online</td><td>$ income</td><td title='In minutes'>duration</td> </tr>";
 		$i=0;
 		$time = time();
 		foreach($arr as $key => $val){
@@ -117,7 +139,18 @@ function showRoomList(){
 			if($val['online'] == 0){
 				$val['online'] = 'new';
 			}
-			echo "<tr><td>$i</td><td>$key</td> <td>{$val['proxy']}</td> <td>{$val['online']}</td>  <td> ".toUSD($val['income'])." </td> <td> ".round(($time - $val['start'])/60)."</td> </tr>";
+
+
+			$val['last'] = $time-$val['last'];
+
+			$td = '';
+			if($val['last'] > 600) {
+				$td = "<td style='background: #ff9800;'>{$val['last']}</td>";
+			}
+			
+			$key = "<a href='https://statbate.com/public/log.php?name=$key' target='_blank'>$key</a>";
+			
+			echo "<tr><td>$i</td><td>$key</td> <td>{$val['proxy']}</td> <td>{$val['online']}</td>  <td> ".toUSD($val['income'])." </td> <td> ".round(($time - $val['start'])/60)."</td> $td </tr>";
 		}
 		echo "</table></pre>";
 		die;

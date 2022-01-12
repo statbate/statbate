@@ -266,11 +266,22 @@ $apiCharts = getApiChart();
 									
 				</div>
 			</div>
-			<div style="padding-top: 12px;" class="x11">
+
+
+			
+			<!--<div style="padding-top: 12px;" class="x11">
 				<center><font size="2"><strong>How much do webcam models make?</strong> To answer this question, we collect data from open sources.</font></center>
-			</div>
+			</div> -->
 			
 		</div>
+
+<div class="alert alert-success" role="alert">
+	<center>
+  <font color="black">Follow twitter <a href="https://twitter.com/statbate">@statbate</a> and send letters to statbate@gmail.com<br/><br/>
+
+  statbate.com is under active development. Possibly unstable and bugs.</font>
+  </center>
+</div>
 		
 		<!--<div class="alert alert-dark" role="alert" style="box-shadow: 0 1px 1px 0 rgba(0,0,0,0.14), 0 2px 1px -1px rgba(0,0,0,0.12), 0 1px 3px 0 rgba(0,0,0,0.20); margin-bottom: 12px; font-size: 12.2pt; color: #000000;">
 			<center>test test test</center>

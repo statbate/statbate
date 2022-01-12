@@ -131,6 +131,7 @@ function getTop(){ // cache done
 }
 
 function prepareTable(){ // cache done
+	$arr = getCbList();
 	$i = 0; $stat = ''; $list = [];
 	$gender = ['boy', 'girl', 'trans', 'couple'];
 	$data = cacheResult('getTop', [], 600, true);
@@ -140,11 +141,18 @@ function prepareTable(){ // cache done
 		$i++;
 		$list[] = $val['name'];
 		$val['token'] = toUSD($val['token']);
-		$val['last'] = get_time_ago($val['last']);
-		if(array_key_exists($val['name'], $online)){
-			//$val['last'] = ' <font color="green">'.$online[$val['name']]['online'].'</font>';
+		if(in_array($val['name'], $arr)){
 			$val['last'] = '<font color="green">online</font>';
+		}elseif(array_key_exists($val['name'], $online) && $online[$val['name']]['last'] > time()-60*10){
+			$val['last'] = '<font color="green">online</font>';
+		}else{
+			$val['last'] = get_time_ago($val['last']);
 		}
+
+		if($val['fans'] == 0){
+			$val['fans'] = '';
+		}
+		
 		$tr = str_replace('{ID}', $i, $tmpl);
 		$tr = str_replace('{URL}', createUrl($val['name']), $tr);
 		$tr = str_replace('{GENDER}', $gender[$val['gender']], $tr);
@@ -158,15 +166,21 @@ function prepareTable(){ // cache done
 
 function genderIncome(){ // cache done
 	global $clickhouse;
-	$arr = [];
+	$arr = []; $t = [];
 	$query = $clickhouse->query("SELECT room.gender, SUM(token) as total, time as ndate FROM `stat` LEFT JOIN `room` ON stat.rid = room.id WHERE time > today() - toIntervalMonth(1) GROUP by `gender`, ndate ORDER BY ndate ASC");
 	while($row = $query->fetch()){
-		@$arr[$row['gender']][$row['ndate']] = ['value' => toUSD($row['total'])];
-		@$arr['4'][$row['ndate']]['value'] += toUSD($row['total']);
-		if($row['gender'] != 1){
-			@$arr['5'][$row['ndate']]['value'] += toUSD($row['total']);
+		$arr[$row['gender']][$row['ndate']] = toUSD($row['total']);
+	}
+	foreach($arr as $key => $val){
+		foreach($val as $k => $v){
+			@$t['4'][$k] += $v; // All
+			if($key != 1){
+				@$t['5'][$k] += $v; // Other
+			}
 		}
 	}
+	$arr['4'] = $t['4'];
+	$arr['5'] = $t['5'];
 	ksort($arr);
 	return $arr;
 }
@@ -179,7 +193,7 @@ function getCharts(){ // cache done
 			continue;
 		}
 		foreach($val as $k => $v){
-			$data[$key][] = ['date' => $k, 'value' => $v['value']];
+			$data[$key][] = ['date' => $k, 'value' => $v];
 		}
 	}
 	$data = array_values($data);
@@ -196,7 +210,7 @@ function getPieStat(){
 			continue;
 		}
 		foreach($val as $k => $v){
-			@$x[$key] += $v['value'];
+			@$x[$key] += $v;
 		}
 	}
 	foreach($x as $k => $v){
