@@ -77,6 +77,7 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 	proxyMap := make(map[string]string)
 	proxyMap["fr"] = "ip:port"
 	proxyMap["ca"] = "ip:port"
+	proxyMap["fi"] = "ip:port"
 
 	if _, ok := proxyMap[proxy]; ok {
 		Dialer = websocket.Dialer{
@@ -99,7 +100,7 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 	now := time.Now().Unix()
 	workerData := Info{room, server, proxy, now, now, "0", 0}
 
-	timeout := time.Now().Unix() + 60*60
+	timeout := time.Now().Unix() + 60*10
 
 	for {
 
@@ -126,6 +127,7 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 		}
 
 		m := string(message)
+		slog <- saveLog{info.Id, now, m}
 
 		if m == "o" {
 			c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"connect\",\"data\":{\"user\":\"__anonymous__777\",\"password\":\"anonymous\",\"room\":\"`+room+`\",\"room_password\":\"12345\"}}"]`))
@@ -153,17 +155,34 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 			continue
 		}
 
+		if input.Method == "onRoomMsg" {
+			timeout = now + 60*15
+			workerData.Last = now
+			rooms.Add <- workerData
+		}
+
 		if input.Method == "onRoomCountUpdate" {
+			online, err := strconv.Atoi(input.Args[0]); if err == nil{
+				if online < 25 {
+					fmt.Println("few viewers room:", room)
+					rooms.Del <- room
+					return
+				}
+			}
 			workerData.Online = input.Args[0]
 			rooms.Add <- workerData
 			continue
 		}
 
+		if input.Method == "onPersonallyKicked" {
+			fmt.Println("onPersonallyKicked room:", room)
+			rooms.Del <- room
+			return
+		}
+
 		donate := Donate{}
 		if input.Method == "onNotify" {
-
-			timeout = now + 60*60
-
+			timeout = now + 60*15
 			workerData.Last = now
 			rooms.Add <- workerData
 

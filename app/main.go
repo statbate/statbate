@@ -23,6 +23,7 @@ var Mysql, Clickhouse *sqlx.DB
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 var save = make(chan saveData, 100)
+var slog = make(chan saveLog,  100)
 
 var rooms = &Rooms{
 	Count: make(chan int),
@@ -39,6 +40,7 @@ func main() {
 	go mapRooms()
 	go announceCount()
 	go saveDB()
+	go saveLogs()
 
 	http.HandleFunc("/ws/", hub.wsHandler)
 	http.HandleFunc("/cmd/", cmdHandler)

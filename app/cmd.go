@@ -102,7 +102,8 @@ func cmdHandler(w http.ResponseWriter, r *http.Request) {
 	if len(params["exit"]) > 0 {
 		room := strings.Join(params["exit"], "")
 		if checkWorker(room) {
-			close(chWorker.Map[room].chQuit) // exit gorutine (work and remove from map)
+			close(chWorker.Map[room].chQuit) // exit gorutine
+			removeRoom(room)
 		}
 	}
 }
