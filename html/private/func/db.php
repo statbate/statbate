@@ -111,10 +111,15 @@ function getRoomInfo($arr){ // cache done
 	return ['id' => $id, 'name' => $arr['name'], 'gender' => 0, 'last' => 0];		
 }
 
-function getTop(){ // cache done
+function getTop($arr){ // cache done
 	global $db, $clickhouse;
 	$data = [];
-	$query = $clickhouse->query("SELECT rid, SUM(token) as total FROM stat WHERE time > today() - toIntervalMonth(1) AND did not in (SELECT did FROM stat WHERE time > today() - toIntervalMonth(1) GROUP BY did HAVING AVG(token) > 20000) GROUP BY rid HAVING AVG(token) < 1000 ORDER BY total DESC LIMIT 100");
+	$gender = $arr['0'];
+	if($gender === 'all'){
+		$query = $clickhouse->query("SELECT rid, SUM(token) as total FROM stat WHERE time > today() - toIntervalMonth(1) AND did not in (SELECT did FROM stat WHERE time > today() - toIntervalMonth(1) GROUP BY did HAVING AVG(token) > 20000) GROUP BY rid HAVING AVG(token) < 1000 ORDER BY total DESC LIMIT 100");
+	}else{
+		$query = $clickhouse->query("SELECT rid, SUM(token) as total FROM stat LEFT JOIN room ON stat.rid = room.id WHERE gender = $gender AND time > today() - toIntervalMonth(1) AND did not in (SELECT did FROM stat WHERE time > today() - toIntervalMonth(1) GROUP BY did HAVING AVG(token) > 20000) GROUP BY rid, gender HAVING AVG(token) < 1000 ORDER BY total DESC LIMIT 100");
+	}
 	$row =  $query->fetchAll();
 	foreach($row as $val) {
 		$data[$val['rid']]['token'] = $val['total'];
@@ -130,12 +135,11 @@ function getTop(){ // cache done
 	return $data;
 }
 
-function prepareTable(){ // cache done
+function prepareTable($g){ // cache done
 	$arr = getCbList();
 	$i = 0; $stat = ''; $list = [];
 	$gender = ['boy', 'girl', 'trans', 'couple'];
-	$data = cacheResult('getTop', [], 600, true);
-	$online = json_decode(cacheResult('getList', [], 180), true);	
+	$data = cacheResult('getTop', [$g], 600, true);
 	$tmpl = '<tr><td>{ID}</td><td>{URL}</td><td>{GENDER}</td><td>{LAST}</td><td>{FANS}</td><td>{USD}</td></tr>';
 	foreach($data as $key => $val){
 		$i++;
@@ -143,7 +147,7 @@ function prepareTable(){ // cache done
 		$val['token'] = toUSD($val['token']);
 		if(in_array($val['name'], $arr)){
 			$val['last'] = '<font color="green">online</font>';
-		}elseif(array_key_exists($val['name'], $online) && $online[$val['name']]['last'] > time()-60*10){
+		}elseif($val['last'] > time()-60*5){
 			$val['last'] = '<font color="green">online</font>';
 		}else{
 			$val['last'] = get_time_ago($val['last']);
