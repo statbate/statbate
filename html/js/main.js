@@ -19,6 +19,54 @@ $(document).ready(function() {
 });
 
 $(document).ready(function() {
+    var table = $("#couple_table").DataTable({
+		"bAutoWidth": false,
+		"iDisplayLength": 10,
+		order: [[5, "desc"]],
+		"aoColumns": [
+			{"orderable": false, "searchable": false,  "sWidth": "5%" }, 
+			{ "orderable": false, "sWidth": "35%" }, 
+			{ "orderable": false, "searchable": false, "sWidth": "15%" }, 
+			{ "orderable": false, "sWidth": "15%" },
+			{ "searchable": false, "sWidth": "15%" }, 
+			{ "searchable": false, "sWidth": "15%" }, 
+		],
+	});
+});
+
+$(document).ready(function() {
+    var table = $("#boys_table").DataTable({
+		"bAutoWidth": false,
+		"iDisplayLength": 10,
+		order: [[5, "desc"]],
+		"aoColumns": [
+			{"orderable": false, "searchable": false,  "sWidth": "5%" }, 
+			{ "orderable": false, "sWidth": "35%" }, 
+			{ "orderable": false, "searchable": false, "sWidth": "15%" }, 
+			{ "orderable": false, "sWidth": "15%" },
+			{ "searchable": false, "sWidth": "15%" }, 
+			{ "searchable": false, "sWidth": "15%" }, 
+		],
+	});
+});
+
+$(document).ready(function() {
+    var table = $("#trans_table").DataTable({
+		"bAutoWidth": false,
+		"iDisplayLength": 10,
+		order: [[5, "desc"]],
+		"aoColumns": [
+			{"orderable": false, "searchable": false,  "sWidth": "5%" }, 
+			{ "orderable": false, "sWidth": "35%" }, 
+			{ "orderable": false, "searchable": false, "sWidth": "15%" }, 
+			{ "orderable": false, "sWidth": "15%" },
+			{ "searchable": false, "sWidth": "15%" }, 
+			{ "searchable": false, "sWidth": "15%" }, 
+		],
+	});
+});
+
+$(document).ready(function() {
     var table = $("#top100dons").DataTable({
 		"bAutoWidth": false,
 		"iDisplayLength": 10,

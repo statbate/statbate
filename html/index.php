@@ -1,5 +1,6 @@
 <?php
 require_once('/var/www/statbate/root/private/init.php');
+logDayUsers();
 showRoomList();
 $topDon = cacheResult('getTopDons', [], 3600);
 //$topDon = getTopDons();
@@ -25,7 +26,7 @@ $apiCharts = getApiChart();
 		<script src="./js/jquery.dataTables.min.js"></script>
 		<script src="./js/dataTables.bootstrap4.min.js"></script>
 		<script src="./js/highcharts.js"></script>
-		<script src="./js/main.js?1028"></script>		
+		<script src="./js/main.js?1039"></script>		
 		<style>
 			.x11 { opacity: 0.5; }
 			.x11:hover { opacity: 1.0; }
@@ -42,7 +43,7 @@ $apiCharts = getApiChart();
 	<body>
 		<div class="content-box">			
 			<nav class="navbar navbar-expand-lg navbar-expand navbar-light">
-  <a class="navbar-brand" href="/">Statbate.com</a>
+  <a class="navbar-brand" href="/">$tatbate.com</a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
@@ -155,12 +156,25 @@ $apiCharts = getApiChart();
 					<hr style="margin-top: 10px; margin-bottom: 10px;">	
 					
 					
-					<ul class="nav nav-tabs"> <!-- justify-content-center -->
+					<ul class="nav nav-tabs "> <!-- justify-content-center -->
   <li class="nav-item">
     <a class="nav-link active" href="#cams" data-toggle="tab" role="tab" aria-controls="cams" aria-selected="true">Rooms</a>
   </li>
   <li class="nav-item">
     <a class="nav-link" href="#dons" data-toggle="tab" role="tab" aria-controls="dons" aria-selected="false">Donators</a>
+  </li>
+
+
+<li class="nav-item">
+    <a class="nav-link" href="#boys" data-toggle="tab" role="tab" aria-controls="charts" aria-selected="false">Boys</a>
+  </li>
+
+ <li class="nav-item">
+    <a class="nav-link" href="#trans" data-toggle="tab" role="tab" aria-controls="charts" aria-selected="false">Trans</a>
+  </li>
+
+  <li class="nav-item">
+    <a class="nav-link" href="#couple" data-toggle="tab" role="tab" aria-controls="charts" aria-selected="false">Couple</a>
   </li>
   
   <li class="nav-item">
@@ -173,10 +187,6 @@ $apiCharts = getApiChart();
   
    <li class="nav-item">
     <a class="nav-link" href="#viewersCharts" data-toggle="tab" role="tab" aria-controls="viewersCharts" aria-selected="false">Viewers</a>
-  </li>
-  
-  <li class="nav-item">
-    <a class="nav-link" href="#trends" data-toggle="tab" role="tab" aria-controls="charts" aria-selected="false">Trends</a>
   </li>
   
 </ul>
@@ -203,7 +213,7 @@ $apiCharts = getApiChart();
 							</tr>
 						</thead>
 						<tbody>
-							<?php echo prepareTable(); ?>
+							<?php echo prepareTable('all'); ?>
 						</tbody>
 					</table>	
   
@@ -247,15 +257,75 @@ $apiCharts = getApiChart();
    <div role="tabpanel" class="tab-pane fade" id="viewersCharts">
 					<div id="pieViewers"></div>
   </div>
-  
-  
-    <div role="tabpanel" class="tab-pane fade" id="trends">
+
+
+
+<div role="tabpanel" class="tab-pane fade" id="couple">
   
 					
-
+	<table id="couple_table" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" width="100%" role="grid" aria-describedby="supportList_info" style="width: 100%;">
+						<thead>
+							<tr>
+								<th style="width:1px;"></th>
+								<th>room</th>
+								<th style="width:1px;">gender</th>
+								<th data-toggle="tooltip" data-placement="top" title="Use search online">last</th>
+								<th data-toggle="tooltip" data-placement="top" title="In thousands">fans</th>
+								<th data-toggle="tooltip" data-placement="top" title="Income per month">USD</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php echo prepareTable(3); ?>
+						</tbody>
+					</table>	
 					
-					<script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/2790_RC04/embed_loader.js"></script> <script type="text/javascript"> trends.embed.renderExploreWidget("TIMESERIES", {"comparisonItem":[<?php echo getGoogleTrends();?>],"category":0,"property":""}, {"exploreQuery":"date=all&geo=DE&q=Chaturbate,Stripchat,BongaCams,LiveJasmin,CamSoda","guestPath":"https://trends.google.com:443/trends/embed/"}); </script>
+  
+  
+  </div>
 
+<div role="tabpanel" class="tab-pane fade" id="boys">
+  
+					
+	<table id="boys_table" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" width="100%" role="grid" aria-describedby="supportList_info" style="width: 100%;">
+						<thead>
+							<tr>
+								<th style="width:1px;"></th>
+								<th>room</th>
+								<th style="width:1px;">gender</th>
+								<th data-toggle="tooltip" data-placement="top" title="Use search online">last</th>
+								<th data-toggle="tooltip" data-placement="top" title="In thousands">fans</th>
+								<th data-toggle="tooltip" data-placement="top" title="Income per month">USD</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php echo prepareTable(0); ?>
+						</tbody>
+					</table>	
+					
+  
+  
+  </div>
+  
+  
+    <div role="tabpanel" class="tab-pane fade" id="trans">
+  
+					
+	<table id="trans_table" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" width="100%" role="grid" aria-describedby="supportList_info" style="width: 100%;">
+						<thead>
+							<tr>
+								<th style="width:1px;"></th>
+								<th>room</th>
+								<th style="width:1px;">gender</th>
+								<th data-toggle="tooltip" data-placement="top" title="Use search online">last</th>
+								<th data-toggle="tooltip" data-placement="top" title="In thousands">fans</th>
+								<th data-toggle="tooltip" data-placement="top" title="Income per month">USD</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php echo prepareTable(2); ?>
+						</tbody>
+					</table>	
+					
   
   
   </div>
@@ -268,6 +338,18 @@ $apiCharts = getApiChart();
 			</div>
 
 
+
+<div style="padding-top: 12px; padding-bottom: 17px;" >
+			<div style="float: right;" class="x11">
+				statbate@gmail.com
+			</div>
+			<div style="float: left;" class="x11">
+				twitter <a href="https://twitter.com/statbate" target="_blank" rel="nofollow">@statbate</a>
+			</div>
+		</div>
+
+
+		
 			
 			<!--<div style="padding-top: 12px;" class="x11">
 				<center><font size="2"><strong>How much do webcam models make?</strong> To answer this question, we collect data from open sources.</font></center>
@@ -275,13 +357,15 @@ $apiCharts = getApiChart();
 			
 		</div>
 
-<div class="alert alert-success" role="alert">
+		
+
+<!--<div class="alert alert-success" role="alert">
 	<center>
-  <font color="black">Follow twitter <a href="https://twitter.com/statbate">@statbate</a> and send letters to statbate@gmail.com<br/><br/>
+  <font color="black">
 
   statbate.com is under active development. Possibly unstable and bugs.</font>
   </center>
-</div>
+</div> -->
 		
 		<!--<div class="alert alert-dark" role="alert" style="box-shadow: 0 1px 1px 0 rgba(0,0,0,0.14), 0 2px 1px -1px rgba(0,0,0,0.12), 0 1px 3px 0 rgba(0,0,0,0.20); margin-bottom: 12px; font-size: 12.2pt; color: #000000;">
 			<center>test test test</center>
