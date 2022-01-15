@@ -33,18 +33,18 @@ function getModalTable($room) {
 	$tmpl = '<tr><td>{URL}</td><td>{TOTAL}</td><td>{AVG}</td></tr>';
 	$query = $clickhouse->query("SELECT $c1, SUM(token) as total, AVG(token) as avg FROM stat WHERE $c2 = {$room['id']} AND time > today() - toIntervalMonth(1) GROUP BY $c1 ORDER BY total DESC LIMIT 20");
 	$row =  $query->fetchAll();
-
+	
 	foreach($row as $val) {
 		$tr = str_replace('{URL}', createUrl(cacheResult($c3, ['id' => $val[$c1]], 86000)), $tmpl);
 		$tr = str_replace('{TOTAL}', toUSD($val['total']), $tr);
 		$tr = str_replace('{AVG}', toUSD($val['avg'], 2), $tr);
 		$result .= $tr;
-	}
+	}	
 	return $result;
 }
 
 function getTopDons(){ // cache done
-	global $clickhouse; $result = '';
+	global $clickhouse; $result = ''; 
 	$tmpl = '<tr><td class="d-none d-sm-table-cell">{ID}</td><td>{URL}</td><td class="d-none d-sm-table-cell">{LAST}</td><td class="d-none d-sm-table-cell">{COUNT}</td><td>{AVG}</td><td>{TOTAL}</td></tr>';
 	$query = $clickhouse->query("SELECT did, COUNT(DISTINCT rid) as count, MAX(time) as max, SUM(token) as total, AVG(token) as avg FROM stat WHERE time > today() - toIntervalMonth(1) GROUP BY did HAVING avg < 20000 ORDER BY total DESC LIMIT 100");
 	$row =  $query->fetchAll();
@@ -65,8 +65,8 @@ function getTopDons(){ // cache done
 		$tr = str_replace('{AVG}', toUSD($val['avg'], 2), $tr);
 		$tr = str_replace('{TOTAL}', "<a href='#' data-modal-info data-modal-id={$val['did']} data-modal-type=spend data-modal-name=$name>".toUSD($val['total'])."</a>", $tr);
 		$result .= $tr;
-	}
-
+	}	
+	
 	return $result;
 }
 
@@ -108,13 +108,13 @@ function getRoomInfo($arr){ // cache done
 	$query->bindParam(':name', $arr['name']);
 	$query->execute();
 	$id = $db->lastInsertId();
-	return ['id' => $id, 'name' => $arr['name'], 'gender' => 0, 'last' => 0];
+	return ['id' => $id, 'name' => $arr['name'], 'gender' => 0, 'last' => 0];		
 }
 
 function getTop($arr){ // cache done
 	global $db, $clickhouse;
 	$data = [];
-	$gender = $arr['0'] ?? 'all';
+	$gender = $arr['0'];
 	if($gender === 'all'){
 		$query = $clickhouse->query("SELECT rid, SUM(token) as total FROM stat WHERE time > today() - toIntervalMonth(1) AND did not in (SELECT did FROM stat WHERE time > today() - toIntervalMonth(1) GROUP BY did HAVING AVG(token) > 20000) GROUP BY rid HAVING AVG(token) < 1000 ORDER BY total DESC LIMIT 100");
 	}else{
@@ -123,7 +123,7 @@ function getTop($arr){ // cache done
 	$row =  $query->fetchAll();
 	foreach($row as $val) {
 		$data[$val['rid']]['token'] = $val['total'];
-	}
+	}		
 	$in = implode(', ', array_column($row, 'rid'));
 	$query = $db->query("SELECT `id`, `name`, `gender`, `fans`, `last` FROM `room` WHERE `id` IN ($in)");
 	while($row = $query->fetch()){
@@ -135,19 +135,21 @@ function getTop($arr){ // cache done
 	return $data;
 }
 
-function prepareTable($g='all'){ // cache done
+function prepareTable($g){ // cache done
 	$arr = getCbList();
 	$i = 0; $stat = ''; $list = [];
 	$gender = ['boy', 'girl', 'trans', 'couple'];
 	$data = cacheResult('getTop', [$g], 600, true);
+
 	$tmpl = '<tr>
-<td class="d-none d-sm-table-cell">{ID}</td>
-<td>{URL}</td>
-<td class="d-none d-sm-table-cell">{GENDER}</td>
-<td>{LAST}</td>
-<td class="d-none d-sm-table-cell">{FANS}</td>
-<td>{USD}</td>
-</tr>';
+	<td class="d-none d-sm-table-cell">{ID}</td>
+	<td>{URL}</td>
+	<td class="d-none d-sm-table-cell">{GENDER}</td>
+	<td>{LAST}</td>
+	<td class="d-none d-sm-table-cell">{FANS}</td>
+	<td>{USD}</td>
+	</tr>';
+
 	foreach($data as $key => $val){
 		$i++;
 		$list[] = $val['name'];
@@ -163,7 +165,7 @@ function prepareTable($g='all'){ // cache done
 		if($val['fans'] == 0){
 			$val['fans'] = '';
 		}
-
+		
 		$tr = str_replace('{ID}', $i, $tmpl);
 		$tr = str_replace('{URL}', createUrl($val['name']), $tr);
 		$tr = str_replace('{GENDER}', $gender[$val['gender']], $tr);

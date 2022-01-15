@@ -83,21 +83,29 @@ function showRoomList(){
 		uasort($arr, function($a, $b){
 			return $a['online'] < $b['online'];
 		});
+		
+		$users = getStatUsers();
+		
 		echo "<title>tracking ".count($arr)." rooms</title>";
 		//echo "<meta http-equiv='refresh' content='60'>";
 		echo "<style>{body background-color: #eeeeee;}table, th, td {border: 1px solid black;border-collapse: collapse;} td {min-width: 100px; height: 25px; text-align: center; vertical-align: middle;} a { color: #333; text-decoration: none;} a:hover { color: #333; text-decoration: underline;} a:active { color: #333;} </style>";
 		echo "<pre>";
-		echo "<a href='/' style='text-decoration: underline; color: darkgreen;'>main page</a>\n\n";
+		echo "<a href='/' style='text-decoration: underline; color: darkgreen;'>main page</a>\n\n";	
 		echo "statbate.com сollects data from open sources\n";
 		echo "- room name or nickname\n";
 		echo "- chat log\n\n";
 		echo "excluded from rating\n";
 		echo "- rooms with an average tips of more than 50$\n";
 		echo "- donators with an average tips of more than 1000$\n\n";
+
+		echo "Tracks rooms where online more than 50 viewers\n";
+		echo "Stop if the online becomes below 25\n\n";
+		
 		echo "This is a technical page. We use it for debugging\n";
 		echo "Also for you it is proof that the statistics are trust\n\n";
 		echo "We keep logs for six hours\n";
-		echo "Click on the name of the room to view\n\n\n";		
+		echo "Click on the name of the room to view\n\n";
+		echo "Today we have {$users['0']} uniq users and {$users['1']} hits\n\n";		
 		echo "<table>";
 		foreach($debug as $key => $val){
 			switch($key){
@@ -216,4 +224,36 @@ function getApiChart(){
 		$b[] = ['name' => $k, 'y' => $v[1]];
 	}
 	return [json_encode($a), json_encode($b)];
+}
+
+function logDayUsers(){
+	global $redis;
+	$hash = sha1($_SERVER['REMOTE_ADDR']);
+	$key = 'statbateUsers'.date("Ymd", time());
+	$json = $redis->get($key);
+	if($json === false){
+		$arr[$hash] = 1;
+		$result = json_encode($arr);
+		$redis->setex($key, 86400, $result);
+		die;
+	}
+	$arr = json_decode($json, true);
+	if(!empty($arr[$hash])){
+		$arr[$hash]++;
+	}else{
+		$arr[$hash] = 1;
+	}
+	$result = json_encode($arr);
+	$redis->setex($key, 86400, $result);
+}
+
+function getStatUsers(){
+	global $redis;
+	$key = 'statbateUsers'.date("Ymd", time());
+	$json = $redis->get($key);
+	if($json === false){
+		return [0, 0];
+	}
+	$arr = json_decode($json, true);
+	return [count($arr), array_sum($arr)];
 }
