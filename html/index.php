@@ -148,12 +148,12 @@ $apiCharts = getApiChart();
                         <hr style="margin-top: 6px; margin-bottom: 10px;">
 
                         <div class="row d-flex">
-                            <div class="col-md-8 col-xs-12 order-1 order-md-0 pt-2 pt-sm-0">
+                            <div class="col-md-7 col-xs-12 order-1 order-md-0 pt-2 pt-sm-0">
                                 <div class="wslog">
                                     <div class="wstext"></div>
                                 </div>
                             </div>
-                            <div class="col-md-4 col-xs-12 order-0 order-md-1">
+                            <div class="col-md-5 col-xs-12 order-0 order-md-1">
                                 <table class="table table-curved table-bordered"
                                        style="margin-bottom: 0px; margin-top: 0px;">
                                     <tr>
