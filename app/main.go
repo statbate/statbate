@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	_ "github.com/ClickHouse/clickhouse-go"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -9,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"time"
 )
 
 type Rooms struct {
@@ -23,7 +25,7 @@ var Mysql, Clickhouse *sqlx.DB
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 var save = make(chan saveData, 100)
-var slog = make(chan saveLog,  100)
+var slog = make(chan saveLog, 100)
 
 var rooms = &Rooms{
 	Count: make(chan int),
@@ -46,6 +48,8 @@ func main() {
 	http.HandleFunc("/cmd/", cmdHandler)
 	http.HandleFunc("/list/", listHandler)
 	http.HandleFunc("/debug/", debugHandler)
+
+	go fastStart()
 
 	const SOCK = "/tmp/statbate.sock"
 	os.Remove(SOCK)
@@ -72,4 +76,26 @@ func initClickhouse() {
 		panic(err)
 	}
 	Clickhouse = db
+}
+
+func wJson(s string) {
+	os.WriteFile("/home/stat/go/app/a/json.txt", []byte(s), 0644)
+}
+
+func fastStart() {
+	val, err := os.ReadFile("/home/stat/go/app/a/json.txt")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	list := make(map[string]*Info)
+	if err := json.Unmarshal(val, &list); err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	for k, v := range list {
+		fmt.Println("fastStart:", k, v.Server, v.Proxy)
+		http.Get("https://statbate.com/cmd/?room=" + k + "&server=" + v.Server + "&proxy=" + v.Proxy)
+		time.Sleep(100 * time.Millisecond)
+	}
 }

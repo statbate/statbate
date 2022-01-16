@@ -61,7 +61,7 @@ func announceCount() {
 	for {
 		time.Sleep(30 * time.Second)
 		rooms.Count <- 0
-		l := <-	rooms.Count
+		l := <-rooms.Count
 		msg, err := json.Marshal(AnnounceCount{Count: l})
 		if err == nil {
 			hub.broadcast <- msg
@@ -100,7 +100,7 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 	now := time.Now().Unix()
 	workerData := Info{room, server, proxy, now, now, "0", 0}
 
-	timeout := time.Now().Unix() + 60*10
+	timeout := now
 
 	for {
 
@@ -120,7 +120,8 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 		}
 
 		now = time.Now().Unix()
-		if now > timeout {
+
+		if now > workerData.Last+60*15 || now > timeout+60*60*2 {
 			fmt.Println("Timeout room:", room)
 			rooms.Del <- room
 			return
@@ -156,13 +157,13 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 		}
 
 		if input.Method == "onRoomMsg" {
-			timeout = now + 60*15
 			workerData.Last = now
 			rooms.Add <- workerData
 		}
 
 		if input.Method == "onRoomCountUpdate" {
-			online, err := strconv.Atoi(input.Args[0]); if err == nil{
+			online, err := strconv.Atoi(input.Args[0])
+			if err == nil {
 				if online < 25 {
 					fmt.Println("few viewers room:", room)
 					rooms.Del <- room
@@ -182,10 +183,8 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 
 		donate := Donate{}
 		if input.Method == "onNotify" {
-			timeout = now + 60*15
 			workerData.Last = now
 			rooms.Add <- workerData
-
 			if err := json.Unmarshal([]byte(input.Args[0]), &donate); err != nil {
 				fmt.Println(err.Error())
 				continue
@@ -195,6 +194,8 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 
 				workerData.Income += donate.Amount
 				rooms.Add <- workerData
+
+				timeout = now
 
 				//fmt.Println(donate.From)
 				//fmt.Println(donate.Amount)

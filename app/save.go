@@ -15,16 +15,17 @@ type saveData struct {
 }
 
 type saveLog struct {
-	Rid    int64
-	Now    int64
-	Mes    string
+	Rid int64
+	Now int64
+	Mes string
 }
 
 func saveDonate(did, rid, token, now int64) {
-	Mysql.Exec("UPDATE `room` SET `last` = ? WHERE `id` = ?", now, rid);
-	_, err := Mysql.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)", did, rid, token, now); if err == nil {
+	Mysql.Exec("UPDATE `room` SET `last` = ? WHERE `id` = ?", now, rid)
+	_, err := Mysql.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)", did, rid, token, now)
+	if err == nil {
 		tx, err := Clickhouse.Begin()
-		if err == nil{
+		if err == nil {
 			tx.Exec("INSERT INTO stat VALUES (?, ?, ?, ?)", did, rid, token, now)
 			tx.Commit()
 		}
@@ -91,7 +92,7 @@ func saveLogs() {
 	for {
 		select {
 		case m := <-slog:
-			Mysql.Exec("INSERT INTO `logs` (`rid`, `time`, `mes`) VALUES (?, ?, ?)", m.Rid, m.Now, m.Mes);
+			Mysql.Exec("INSERT INTO `logs` (`rid`, `time`, `mes`) VALUES (?, ?, ?)", m.Rid, m.Now, m.Mes)
 		}
 	}
 }

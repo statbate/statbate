@@ -60,6 +60,7 @@ func checkWorker(room string) bool {
 func listRooms() string {
 	rooms.Json <- ""
 	s := <-rooms.Json
+	wJson(s)
 	return s
 }
 
