@@ -1,8 +1,13 @@
 $(function () {
 	$('[data-toggle="tooltip"]').tooltip()
 })
+const isTabletOrDesktop = screen.width >= 568;
 
 $(document).ready(function() {
+
+	$.extend( $.fn.DataTable.ext.classes, {
+		sWrapper: "dataTables_wrapper dt-bootstrap4",
+	} );
 
 	$('.select-tab').on('shown.bs.tab', 'a', function(e) {
 		console.log(e.target);
@@ -14,6 +19,7 @@ $(document).ready(function() {
 
     var table = $("#main").DataTable({
 		"bAutoWidth": false,
+		"bInfo": isTabletOrDesktop,
 		"iDisplayLength": 10,
 		order: [[5, "desc"]],
 		"aoColumns": [
@@ -30,6 +36,7 @@ $(document).ready(function() {
 $(document).ready(function() {
 	var table = $("#couple_table").DataTable({
 		"bAutoWidth": false,
+		"bInfo": isTabletOrDesktop,
 		"iDisplayLength": 10,
 		order: [[5, "desc"]],
 		"aoColumns": [
@@ -46,6 +53,7 @@ $(document).ready(function() {
 $(document).ready(function() {
 	var table = $("#boys_table").DataTable({
 		"bAutoWidth": false,
+		"bInfo": isTabletOrDesktop,
 		"iDisplayLength": 10,
 		order: [[5, "desc"]],
 		"aoColumns": [
@@ -62,6 +70,7 @@ $(document).ready(function() {
 $(document).ready(function() {
 	var table = $("#trans_table").DataTable({
 		"bAutoWidth": false,
+		"bInfo": isTabletOrDesktop,
 		"iDisplayLength": 10,
 		order: [[5, "desc"]],
 		"aoColumns": [
@@ -78,6 +87,7 @@ $(document).ready(function() {
 $(document).ready(function() {
     var table = $("#top100dons").DataTable({
 		"bAutoWidth": false,
+		"bInfo": isTabletOrDesktop,
 		"iDisplayLength": 10,
 		order: [[5, "desc"]],
 		"aoColumns": [
@@ -145,7 +155,13 @@ function printWsText(text){
 	xMin = (date.getMinutes() < 10 ? '0' : '') + date.getMinutes()
 	xSec = (date.getSeconds() < 10 ? '0' : '') + date.getSeconds()
 	time = date.getHours() + ":" + xMin + ":" + xSec;
-	$(".wstext").append('<div class="message">[' + time + '] ' + text + '</div>');
+
+	let message = text;
+	if(isTabletOrDesktop) {
+		message = '[' + time + '] ' + message;
+	}
+
+	$(".wstext").append(`<div class="message">${message}</div>`);
 	msg = $('.wstext .message');
 	if (msg.length > 8) {
 		msg.first().remove();
@@ -160,7 +176,7 @@ function bStat() {
             sock.send('h')
             setTimeout(wsPing, 60000);
         }, 60000);
-        $(".wstext").prepend('<div class="message text-center">------------------------------------ last big tips ------------------------------------</div>');
+        $(".wstext").prepend('<div class="message text-center">---------------- last big tips ----------------</div>');
     };
     sock.onmessage = function(evt) {
 		j = JSON.parse(evt.data);
