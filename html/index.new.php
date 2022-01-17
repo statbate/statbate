@@ -65,14 +65,14 @@ $apiCharts = getApiChart();
 <div class="">
     <div class="container">
         <div class="row">
-            <div class="col col-md-8 offset-md-2">
+            <div class="col col-lg-10 offset-lg-1">
 
                 <nav class="navbar navbar-expand-lg navbar-light navbar-light">
                     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
                             aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
-                    <a id="trackCount" class="nav-link d-md-none" href="/?list">track <?php echo $track; ?> rooms</a>
+                    <a id="trackCount" class="nav-link d-lg-none" href="/?list">track <?php echo $track; ?> rooms</a>
 
                     <div class="collapse navbar-collapse" id="navbarNav">
                         <a class="navbar-brand" href="/">$tatbate.com</a>
@@ -97,14 +97,14 @@ $apiCharts = getApiChart();
                             </li>
 
                         </ul>
-                        <a id="trackCount" class="nav-link d-none d-md-inline-block"
+                        <a id="trackCount" class="nav-link d-none d-md-inline-flex align-content-end"
                            href="/?list">track <?php echo $track; ?> rooms</a>
                     </div>
                 </nav>
             </div>
         </div>
         <div class="row">
-            <div class="col col-md-8 offset-md-2">
+            <div class="col col-lg-10 offset-lg-1">
 
                 <div class="content-info">
                     <div class="content-text">
@@ -432,14 +432,12 @@ $apiCharts = getApiChart();
                 </div>
             </div>
 
-            <div style="padding-top: 12px; padding-bottom: 17px;" >
-			<div style="float: right;" class="x11">
-				statbate@gmail.com
-			</div>
-			<div style="float: left;" class="x11">
-				twitter <a href="https://twitter.com/statbate" target="_blank" rel="nofollow">@statbate</a>
-			</div>
-		</div>
+            </div>
+
+            <div class="row py-3 px-2">
+                <div class="col-6 col-lg-5 offset-lg-1 text-muted">twitter <a href="https://twitter.com/statbate" target="_blank" rel="nofollow" class="text-muted">@statbate</a></div>
+                <div class="col-6 col-lg-5 text-right"><a class="text-muted" href="mailto:statbate@gmail.com">statbate@gmail.com</a></div>
+            </div>
             <!--<div style="padding-top: 12px;" class="x11">
                 <center><font size="2"><strong>How much do webcam models make?</strong> To answer this question, we collect data from open sources.</font></center>
             </div> -->
