@@ -1,6 +1,7 @@
 package main
 
 //import "fmt"
+import "time"
 
 type tID struct {
 	Id int64 `db:"id"`
@@ -18,18 +19,6 @@ type saveLog struct {
 	Rid int64
 	Now int64
 	Mes string
-}
-
-func saveDonate(did, rid, token, now int64) {
-	Mysql.Exec("UPDATE `room` SET `last` = ? WHERE `id` = ?", now, rid)
-	_, err := Mysql.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)", did, rid, token, now)
-	if err == nil {
-		tx, err := Clickhouse.Begin()
-		if err == nil {
-			tx.Exec("INSERT INTO stat VALUES (?, ?, ?, ?)", did, rid, token, now)
-			tx.Commit()
-		}
-	}
 }
 
 func getDonId(name string) int64 {
@@ -68,8 +57,11 @@ func saveDB() {
 		}
 	}
 
-	//fmt.Println("donators in cache:", len(data))
+	//fmt.Println("donators in cache:", len(data
 
+	last := time.Now().Unix()
+	bulk := make(map[int]saveData)
+	
 	for {
 		select {
 		case m := <-save:
@@ -83,7 +75,27 @@ func saveDB() {
 					hub.broadcast <- msg
 				}
 			}
-			saveDonate(data[m.From], m.Rid, m.Amount, m.Now)
+
+			Mysql.Exec("UPDATE `room` SET `last` = ? WHERE `id` = ?", m.Now, m.Rid)
+			Mysql.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)", data[m.From], m.Rid, m.Amount, m.Now)
+
+			num := len(bulk)
+			
+			bulk[num] = m
+			
+			now := time.Now().Unix()
+
+			if(num >= 999 || now >= last+10){
+				tx, err := Clickhouse.Begin()
+				if err == nil {
+					for _, v := range bulk {
+						tx.Exec("INSERT INTO stat VALUES (?, ?, ?, ?)", data[v.From], v.Rid, v.Amount, v.Now)
+					}
+					tx.Commit()
+				}
+				last = now
+				bulk = make(map[int]saveData)
+			}
 		}
 	}
 }

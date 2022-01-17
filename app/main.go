@@ -79,11 +79,11 @@ func initClickhouse() {
 }
 
 func wJson(s string) {
-	os.WriteFile("/home/stat/go/app/a/json.txt", []byte(s), 0644)
+	os.WriteFile("/tmp/fastStart.txt", []byte(s), 0644)
 }
 
 func fastStart() {
-	val, err := os.ReadFile("/home/stat/go/app/a/json.txt")
+	val, err := os.ReadFile("/tmp/fastStart.txt")
 	if err != nil {
 		fmt.Println(err)
 		return

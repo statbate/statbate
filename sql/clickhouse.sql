@@ -23,10 +23,10 @@ ORDER BY (time, rid, did)
 PRIMARY KEY (time)
 SETTINGS index_granularity = 8192;
 
-CREATE TABLE stat_buffer (
-	did   UInt32,
-	rid   UInt32,
-	token UInt32,
-	time  Date
-)  
-ENGINE = Buffer('statbate', 'stat', 16, 5, 30, 1000, 10000, 1000000, 10000000);
+#CREATE TABLE stat_buffer (
+#	did   UInt32,
+#	rid   UInt32,
+#	token UInt32,
+#	time  Date
+#)  
+#ENGINE = Buffer('statbate', 'stat', 16, 5, 30, 1000, 10000, 1000000, 10000000);
