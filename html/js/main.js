@@ -1,14 +1,30 @@
 $(function () {
 	$('[data-toggle="tooltip"]').tooltip()
-})
-const isTabletOrDesktop = screen.width >= 568;
 
-$(document).ready(function() {
 
 	$.extend( $.fn.DataTable.ext.classes, {
 		sWrapper: "dataTables_wrapper dt-bootstrap4",
+		// sFilter: "",
+		sLength: "",
 	} );
+})
+const isTabletOrDesktop = screen.width >= 568;
+let dataTableOptions = {
+	bAutoWidth: false,
+	oLanguage: {
+		sLengthMenu: "_MENU_",
+		sSearch: "",
+		sSearchPlaceholder: "Search",
+	},
+	bInfo: isTabletOrDesktop,
+	pagingType: isTabletOrDesktop ? 'simple_numbers':'numbers',
+	iDisplayLength: 10,
+	order: [[5, "desc"]],
 
+	dom:"<'row'<'col-6'l><'col-6'f>><'row'<'col-sm-12'tr>><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
+};
+
+$(document).ready(function() {
 	$('.select-tab').on('shown.bs.tab', 'a', function(e) {
 		console.log(e.target);
 		$('.select-tab .dropdown-toggle').text($(this).text());
@@ -18,11 +34,8 @@ $(document).ready(function() {
 	})
 
     var table = $("#main").DataTable({
-		"bAutoWidth": false,
-		"bInfo": isTabletOrDesktop,
-		"iDisplayLength": 10,
-		order: [[5, "desc"]],
-		"aoColumns": [
+		...dataTableOptions,
+		aoColumns: [
 			{"orderable": false, "searchable": false,  "sWidth": "5%" },
 			{ "orderable": false, "sWidth": "35%" },
 			{ "orderable": false, "searchable": false, "sWidth": "15%" },
@@ -35,10 +48,7 @@ $(document).ready(function() {
 
 $(document).ready(function() {
 	var table = $("#couple_table").DataTable({
-		"bAutoWidth": false,
-		"bInfo": isTabletOrDesktop,
-		"iDisplayLength": 10,
-		order: [[5, "desc"]],
+		...dataTableOptions,
 		"aoColumns": [
 			{"orderable": false, "searchable": false,  "sWidth": "5%" },
 			{ "orderable": false, "sWidth": "35%" },
@@ -52,10 +62,7 @@ $(document).ready(function() {
 
 $(document).ready(function() {
 	var table = $("#boys_table").DataTable({
-		"bAutoWidth": false,
-		"bInfo": isTabletOrDesktop,
-		"iDisplayLength": 10,
-		order: [[5, "desc"]],
+		...dataTableOptions,
 		"aoColumns": [
 			{"orderable": false, "searchable": false,  "sWidth": "5%" },
 			{ "orderable": false, "sWidth": "35%" },
@@ -69,10 +76,7 @@ $(document).ready(function() {
 
 $(document).ready(function() {
 	var table = $("#trans_table").DataTable({
-		"bAutoWidth": false,
-		"bInfo": isTabletOrDesktop,
-		"iDisplayLength": 10,
-		order: [[5, "desc"]],
+		...dataTableOptions,
 		"aoColumns": [
 			{"orderable": false, "searchable": false,  "sWidth": "5%" },
 			{ "orderable": false, "sWidth": "35%" },
@@ -86,10 +90,7 @@ $(document).ready(function() {
 
 $(document).ready(function() {
     var table = $("#top100dons").DataTable({
-		"bAutoWidth": false,
-		"bInfo": isTabletOrDesktop,
-		"iDisplayLength": 10,
-		order: [[5, "desc"]],
+		...dataTableOptions,
 		"aoColumns": [
 			{ "orderable": false, "searchable": false, "sWidth": "5%" },
 			{ "orderable": false, "sWidth": "35%" },

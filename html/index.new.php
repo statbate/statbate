@@ -97,7 +97,7 @@ $apiCharts = getApiChart();
                             </li>
 
                         </ul>
-                        <a id="trackCount" class="nav-link d-none d-md-inline-flex align-content-end"
+                        <a id="trackCount" class="nav-link d-none d-md-inline-block"
                            href="/?list">track <?php echo $track; ?> rooms</a>
                     </div>
                 </nav>
@@ -434,7 +434,7 @@ $apiCharts = getApiChart();
 
             </div>
 
-            <div class="row py-3 px-2">
+            <div class="row py-3 px-2 d-none d-md-flex">
                 <div class="col-6 col-lg-5 offset-lg-1 text-muted">twitter <a href="https://twitter.com/statbate" target="_blank" rel="nofollow" class="text-muted">@statbate</a></div>
                 <div class="col-6 col-lg-5 text-right"><a class="text-muted" href="mailto:statbate@gmail.com">statbate@gmail.com</a></div>
             </div>
@@ -496,13 +496,15 @@ $apiCharts = getApiChart();
             },
             plotOptions: {
                 pie: {
+                    size: screen.width >= 568 ? null:'80%',
                     colors: ["#434348", "#7cb5ec", "#90ed7d", "#f7a35c", "#8085e9", "#f15c80", "#e4d354", "#2b908f", "#f45b5b", "#91e8e1"],
                     allowPointSelect: true,
                     cursor: 'pointer',
                     dataLabels: {
                         enabled: true,
-                        format: '<b>{point.name}</b>: {point.percentage:.1f} %'
-                    }
+                        format: screen.width >= 568 ? '<b>{point.name}</b>: {point.percentage:.1f} %':'{point.percentage:.1f} %'
+                    },
+                    showInLegend: screen.width < 568
                 }
             },
             series: [{
@@ -535,13 +537,15 @@ $apiCharts = getApiChart();
             },
             plotOptions: {
                 pie: {
+                    size: screen.width >= 568 ? null:'80%',
                     colors: ["#434348", "#7cb5ec", "#90ed7d", "#f7a35c", "#8085e9", "#f15c80", "#e4d354", "#2b908f", "#f45b5b", "#91e8e1"],
                     allowPointSelect: true,
                     cursor: 'pointer',
                     dataLabels: {
                         enabled: true,
-                        format: '<b>{point.name}</b>: {point.percentage:.1f} %'
-                    }
+                        format: screen.width >= 568 ? '<b>{point.name}</b>: {point.percentage:.1f} %':'{point.percentage:.1f} %'
+                    },
+                    showInLegend: screen.width < 568
                 }
             },
             series: [{
@@ -574,13 +578,15 @@ $apiCharts = getApiChart();
             },
             plotOptions: {
                 pie: {
+                    size: screen.width >= 568 ? null:'80%',
                     colors: ["#434348", "#7cb5ec", "#90ed7d", "#f7a35c", "#8085e9", "#f15c80", "#e4d354", "#2b908f", "#f45b5b", "#91e8e1"],
                     allowPointSelect: true,
                     cursor: 'pointer',
                     dataLabels: {
                         enabled: true,
-                        format: '<b>{point.name}</b>: {point.percentage:.1f} %'
-                    }
+                        format: screen.width >= 568 ? '<b>{point.name}</b>: {point.percentage:.1f} %':'{point.percentage:.1f} %'
+                    },
+                    showInLegend: screen.width < 568
                 }
             },
             series: [{
