@@ -36,7 +36,7 @@ function toUSD($v){
 	if($x < 10){
 		return round($x, 2);
 	}
-	return round($x); 
+	return round($x);
 }
 
 function trackCount(){
@@ -61,7 +61,7 @@ function getCbArr(){
 	if($cb_list !== false){
 		return json_decode($cb_list, true);
 	}
-	return false; 
+	return false;
 }
 
 function getCbList(){
@@ -83,14 +83,15 @@ function showRoomList(){
 		uasort($arr, function($a, $b){
 			return $a['online'] < $b['online'];
 		});
-		
+
 		$users = getStatUsers();
-		
+		$clicks = getStatUsers('clickUsers');
+
 		echo "<title>tracking ".count($arr)." rooms</title>";
 		//echo "<meta http-equiv='refresh' content='60'>";
 		echo "<style>{body background-color: #eeeeee;}table, th, td {border: 1px solid black;border-collapse: collapse;} td {min-width: 100px; height: 25px; text-align: center; vertical-align: middle;} a { color: #333; text-decoration: none;} a:hover { color: #333; text-decoration: underline;} a:active { color: #333;} </style>";
 		echo "<pre>";
-		echo "<a href='/' style='text-decoration: underline; color: darkgreen;'>main page</a>\n\n";	
+		echo "<a href='/' style='text-decoration: underline; color: darkgreen;'>main page</a>\n\n";
 		echo "statbate.com сollects data from open sources\n";
 		echo "- room name or nickname\n";
 		echo "- chat log\n\n";
@@ -100,12 +101,13 @@ function showRoomList(){
 
 		echo "Tracks rooms where online more than 50 viewers\n";
 		echo "Stop if the online becomes below 25\n\n";
-		
+
 		echo "This is a technical page. We use it for debugging\n";
 		echo "Also for you it is proof that the statistics are trust\n\n";
 		echo "We keep logs for six hours\n";
 		echo "Click on the name of the room to view\n\n";
-		echo "Today we have {$users['0']} uniq users and {$users['1']} hits\n\n";		
+		echo "Today we have {$users['0']} uniq users and {$users['1']} hits\n\n";
+		echo "{$clicks['0']} uniq users followed links {$clicks['1']} times\n\n";
 		echo "<table>";
 		foreach($debug as $key => $val){
 			switch($key){
@@ -113,7 +115,7 @@ function showRoomList(){
 				case 'HeapSys':
 					$val = formatBytes($val);
 				break;
-				
+
 				case 'Uptime':
 					$val =  get_time_ago($val);
 				default:
@@ -155,9 +157,9 @@ function showRoomList(){
 			if($val['last'] > 600) {
 				$td = "<td style='background: #ff9800;'>{$val['last']}</td>";
 			}
-			
+
 			$key = "<a href='https://statbate.com/public/log.php?name=$key' target='_blank'>$key</a>";
-			
+
 			echo "<tr><td>$i</td><td>$key</td> <td>{$val['proxy']}</td> <td>{$val['online']}</td>  <td> ".toUSD($val['income'])." </td> <td> ".round(($time - $val['start'])/60)."</td> $td </tr>";
 		}
 		echo "</table></pre>";
@@ -169,11 +171,11 @@ function get_time_ago($time){
     $time_difference = time() - $time;
     if($time_difference < 1) { return '1 second'; }
     $condition = [ 12 * 30 * 24 * 60 * 60 =>  'year',
-                30 * 24 * 60 * 60       =>  'month',
+                30 * 24 * 60 * 60       =>  'mth',
                 24 * 60 * 60            =>  'day',
-                60 * 60                 =>  'hour',
-                60                      =>  'minute',
-                1                       =>  'second'
+                60 * 60                 =>  'hr',
+                60                      =>  'min',
+                1                       =>  'sec'
     ];
     foreach($condition as $secs => $str){
         $d = $time_difference/$secs;
@@ -186,7 +188,7 @@ function get_time_ago($time){
 
 function createUrl($name){
 	$name = strip_tags($name);
-	return "<a href='https://chaturbate.com/{$name}' target='_blank' rel='nofollow'>{$name}</a>";
+	return "<a href='/l/{$name}' target='_blank' rel='nofollow'>{$name}</a>";
 }
 
 function getGoogleTrends(){
@@ -202,23 +204,28 @@ function getGoogleTrends(){
 function getApiChart(){
 	global $redis;
 	$json = $redis->get('chaturbateList');
-	if($json === false){
-		return;
-	}
-	
+//	if($json === false){
+//		return;
+//	}
+
 	$arr = json_decode($json, true);
-	
+
 	$gender = ['m' => 'Male', 'f' => 'Female', 's' => 'Trans', 'c' => 'Couple'];
 	$data = ['Male' => [0, 0], 'Female' => [0, 0], 'Trans' => [0, 0], 'Couple' => [0, 0]];
-	
+
 	foreach($arr as $val){
+
+		if(!array_key_exists($val['gender'], $gender)){
+			continue;
+		}
+		
 		$key = $gender[$val['gender']];
-		$data[$key][0]++; 
+		$data[$key][0]++;
 		$data[$key][1] += $val['num_users'];
 	}
-	
+
 	$a = $b = [];
-	
+
 	foreach($data as $k => $v){
 		$a[] = ['name' => $k, 'y' => $v[0]];
 		$b[] = ['name' => $k, 'y' => $v[1]];
@@ -226,10 +233,10 @@ function getApiChart(){
 	return [json_encode($a), json_encode($b)];
 }
 
-function logDayUsers(){
+function logUsers($s = 'statbateUsers'){ 
 	global $redis;
 	$hash = sha1($_SERVER['REMOTE_ADDR']);
-	$key = 'statbateUsers'.date("Ymd", time());
+	$key = $s.date("Ymd", time());
 	$json = $redis->get($key);
 	if($json === false){
 		$arr[$hash] = 1;
@@ -247,9 +254,9 @@ function logDayUsers(){
 	$redis->setex($key, 86400, $result);
 }
 
-function getStatUsers(){
+function getStatUsers($s = 'statbateUsers'){
 	global $redis;
-	$key = 'statbateUsers'.date("Ymd", time());
+	$key = $s.date("Ymd", time());
 	$json = $redis->get($key);
 	if($json === false){
 		return [0, 0];

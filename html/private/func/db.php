@@ -177,10 +177,10 @@ function prepareTable($g){ // cache done
 	return $stat;
 }
 
-function genderIncome(){ // cache done
+function genderIncome($a){ // cache done
 	global $clickhouse;
 	$arr = []; $t = [];
-	$query = $clickhouse->query("SELECT room.gender, SUM(token) as total, time as ndate FROM `stat` LEFT JOIN `room` ON stat.rid = room.id WHERE time > today() - toIntervalMonth(1) GROUP by `gender`, ndate ORDER BY ndate ASC");
+	$query = $clickhouse->query("SELECT room.gender, SUM(token) as total, time as ndate FROM `stat` LEFT JOIN `room` ON stat.rid = room.id WHERE time > today() - toIntervalMonth({$a[0]}) GROUP by `gender`, ndate ORDER BY ndate ASC");
 	while($row = $query->fetch()){
 		$arr[$row['gender']][$row['ndate']] = toUSD($row['total']);
 	}
@@ -200,7 +200,7 @@ function genderIncome(){ // cache done
 
 function getCharts(){ // cache done
 	$data = [];
-	$arr = cacheResult('genderIncome', [], 900, true);
+	$arr = cacheResult('genderIncome', [2], 900, true);
 	foreach($arr as $key => $val){
 		if($key == 0 || $key == 2 || $key == 3){
 			continue;
@@ -217,7 +217,7 @@ function getCharts(){ // cache done
 function getPieStat(){
 	$r = []; $x = [];
 	$names = ['Boys', 'Girls', 'Trans', 'Couple'];
-	$arr = cacheResult('genderIncome', [], 900, true);
+	$arr = cacheResult('genderIncome', [1], 900, true);
 	foreach($arr as $key => $val){
 		if($key == 4 || $key == 5){
 			continue;

@@ -10,7 +10,7 @@ function getLog($name){
 		die('Empty log');
 	}
 	$id = $query->fetch()['id'];
-	$query = $db->prepare("SELECT * FROM `logs` WHERE `rid` = :id ORDER BY `id` DESC");
+	$query = $db->prepare("SELECT `time`, `mes` FROM `logs` WHERE `rid` = :id AND `date` = current_date ORDER BY `id` DESC");
 	$query->bindParam(':id', $id);
 	$query->execute();
 	if($query->rowCount() == 0){

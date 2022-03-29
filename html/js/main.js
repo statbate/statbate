@@ -5,23 +5,28 @@ $(function () {
 	$.extend( $.fn.DataTable.ext.classes, {
 		sWrapper: "dataTables_wrapper dt-bootstrap4",
 		// sFilter: "",
-		sLength: "",
+		sLength: isTabletOrDesktop ? "dataTables_length":'',
 	} );
 })
-const isTabletOrDesktop = screen.width >= 568;
+let isTabletOrDesktop = screen.width >= 568;
+if(navigator.userAgent.toLocaleLowerCase().indexOf('iphone') !== -1) {
+	isTabletOrDesktop = false
+}
+console.log('isTabletOrDesktop', isTabletOrDesktop, screen)
 let dataTableOptions = {
 	bAutoWidth: false,
 	oLanguage: {
-		sLengthMenu: "_MENU_",
+		sLengthMenu: isTabletOrDesktop ? "Show _MENU_ entries":"_MENU_",
 		sSearch: "",
 		sSearchPlaceholder: "Search",
 	},
 	bInfo: isTabletOrDesktop,
+	paging: isTabletOrDesktop,
 	pagingType: isTabletOrDesktop ? 'simple_numbers':'numbers',
-	iDisplayLength: 10,
+	iDisplayLength: isTabletOrDesktop ? 10:100,
 	order: [[5, "desc"]],
 
-	dom:"<'row'<'col-6'l><'col-6'f>><'row'<'col-sm-12'tr>><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
+	dom: isTabletOrDesktop ? "<'row'<'col-6'l><'col-6'f>><'row'<'col-sm-12'tr>><'row'<'col-sm-12 col-md-5 d-none d-sm-block'i><'col-sm-12 col-md-7 col-12'p>>":"<'row'<'col-12'f>><'row'<'col-sm-12'tr>><'row'<'col-sm-12 col-md-5 d-none d-sm-block'i><'col-sm-12 col-md-7 col-12'p>>"
 };
 
 $(document).ready(function() {
@@ -119,10 +124,11 @@ $(document).on("click", "[data-modal-info]", function(e) {
 		}
 
 		if(data.amount.length != 0){
-			$("#allIncome").html("<hr/><center><b>All time "+type+": "+data.amount+" USD</b></center><hr/>");
+			$("#allIncome").html(isTabletOrDesktop ? '<hr />':'');
+			$("#allIncome").append("<center><b>All time "+type+": "+data.amount+" USD</b></center><hr/>");
 		}
 
-		if(data.chart.length != 0){
+		if(data.chart.length != 0 && isTabletOrDesktop){
 			xx11 = JSON.parse(data.chart);
 			//if(xx11.length > 28){
 			//	xx11.pop();
@@ -162,10 +168,10 @@ function printWsText(text){
 		message = '[' + time + '] ' + message;
 	}
 
-	$(".wstext").append(`<div class="message">${message}</div>`);
+	$(".wstext").prepend(`<div class="message">${message}</div>`);
 	msg = $('.wstext .message');
 	if (msg.length > 8) {
-		msg.first().remove();
+		msg.last().remove();
 	}
 }
 
@@ -177,12 +183,12 @@ function bStat() {
             sock.send('h')
             setTimeout(wsPing, 60000);
         }, 60000);
-        $(".wstext").prepend('<div class="message text-center">---------------- last big tips ----------------</div>');
+        $(".wstext").prepend('<div class="message text-center">----------------------------------- last big tips -----------------------------------</div>');
     };
     sock.onmessage = function(evt) {
 		j = JSON.parse(evt.data);
 		if(j.count){
-			$("#trackCount").text("track "+j.count+" rooms");
+			$(".trackCount").text("track "+j.count+" rooms");
 			return;
 		}
         text = "<a href='https://chaturbate.com/"+j.donator+"' rel='nofollow' target='_blank'>"+j.donator+"</a> send "+j.amount+" tokens to <a href='https://chaturbate.com/"+j.room+"' rel='nofollow' target='_blank'>"+j.room+"</a>";

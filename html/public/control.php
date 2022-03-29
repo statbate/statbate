@@ -3,6 +3,11 @@ require_once('/var/www/statbate/root/private/init.php');
 
 function updateFollowers($id, $num){
 	global $db;
+
+	if($num == 1){
+		return;
+	}
+	
 	$query = $db->prepare("UPDATE `room` SET `fans` = :fans WHERE `id` = :id");
 	$query->bindParam(':id', $id);
 	$query->bindParam(':fans', $num);

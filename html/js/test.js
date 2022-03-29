@@ -1,108 +1,103 @@
 $(function () {
 	$('[data-toggle="tooltip"]').tooltip()
+
+
+	$.extend( $.fn.DataTable.ext.classes, {
+		sWrapper: "dataTables_wrapper dt-bootstrap4",
+		// sFilter: "",
+		sLength: "",
+	} );
 })
+const isTabletOrDesktop = screen.width >= 568;
+let dataTableOptions = {
+	bAutoWidth: false,
+	oLanguage: {
+		sLengthMenu: "_MENU_",
+		sSearch: "",
+		sSearchPlaceholder: "Search",
+	},
+	bInfo: isTabletOrDesktop,
+	pagingType: isTabletOrDesktop ? 'simple_numbers':'numbers',
+	iDisplayLength: 10,
+	order: [[5, "desc"]],
+
+	dom:"<'row'<'col-6'l><'col-6'f>><'row'<'col-sm-12'tr>><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
+};
 
 $(document).ready(function() {
+	$('.select-tab').on('shown.bs.tab', 'a', function(e) {
+		console.log(e.target);
+		$('.select-tab .dropdown-toggle').text($(this).text());
+		if (e.target) {
+			$(e.target).removeClass('active');
+		}
+	})
+
     var table = $("#main").DataTable({
-		oLanguage: {
-			//sLengthMenu: "_MENU_",
-			sSearch: "",
-			sSearchPlaceholder: "Search",
-		},
-		"bAutoWidth": false,
-		"iDisplayLength": 10,
-		order: [[5, "desc"]],
-		"aoColumns": [
-			{"orderable": false, "searchable": false,  "sWidth": "5%" }, 
-			{ "orderable": false, "sWidth": "35%" }, 
-			{ "orderable": false, "searchable": false, "sWidth": "15%" }, 
+		...dataTableOptions,
+		aoColumns: [
+			{"orderable": false, "searchable": false,  "sWidth": "5%" },
+			{ "orderable": false, "sWidth": "35%" },
+			{ "orderable": false, "searchable": false, "sWidth": "15%" },
 			{ "orderable": false, "sWidth": "15%" },
-			{ "searchable": false, "sWidth": "15%" }, 
-			{ "searchable": false, "sWidth": "15%" }, 
+			{ "searchable": false, "sWidth": "15%" },
+			{ "searchable": false, "sWidth": "15%" },
 		],
 	});
 });
 
 $(document).ready(function() {
-    var table = $("#couple_table").DataTable({
-		oLanguage: {
-			//sLengthMenu: "_MENU_",
-			sSearch: "",
-			sSearchPlaceholder: "Search",
-		},
-		"bAutoWidth": false,
-		"iDisplayLength": 10,
-		order: [[5, "desc"]],
+	var table = $("#couple_table").DataTable({
+		...dataTableOptions,
 		"aoColumns": [
-			{"orderable": false, "searchable": false,  "sWidth": "5%" }, 
-			{ "orderable": false, "sWidth": "35%" }, 
-			{ "orderable": false, "searchable": false, "sWidth": "15%" }, 
+			{"orderable": false, "searchable": false,  "sWidth": "5%" },
+			{ "orderable": false, "sWidth": "35%" },
+			{ "orderable": false, "searchable": false, "sWidth": "15%" },
 			{ "orderable": false, "sWidth": "15%" },
-			{ "searchable": false, "sWidth": "15%" }, 
-			{ "searchable": false, "sWidth": "15%" }, 
+			{ "searchable": false, "sWidth": "15%" },
+			{ "searchable": false, "sWidth": "15%" },
 		],
 	});
 });
 
 $(document).ready(function() {
-    var table = $("#boys_table").DataTable({
-		oLanguage: {
-			//sLengthMenu: "_MENU_",
-			sSearch: "",
-			sSearchPlaceholder: "Search",
-		},
-		"bAutoWidth": false,
-		"iDisplayLength": 10,
-		order: [[5, "desc"]],
+	var table = $("#boys_table").DataTable({
+		...dataTableOptions,
 		"aoColumns": [
-			{"orderable": false, "searchable": false,  "sWidth": "5%" }, 
-			{ "orderable": false, "sWidth": "35%" }, 
-			{ "orderable": false, "searchable": false, "sWidth": "15%" }, 
+			{"orderable": false, "searchable": false,  "sWidth": "5%" },
+			{ "orderable": false, "sWidth": "35%" },
+			{ "orderable": false, "searchable": false, "sWidth": "15%" },
 			{ "orderable": false, "sWidth": "15%" },
-			{ "searchable": false, "sWidth": "15%" }, 
-			{ "searchable": false, "sWidth": "15%" }, 
+			{ "searchable": false, "sWidth": "15%" },
+			{ "searchable": false, "sWidth": "15%" },
 		],
 	});
 });
 
 $(document).ready(function() {
-    var table = $("#trans_table").DataTable({
-		oLanguage: {
-			//sLengthMenu: "_MENU_",
-			sSearch: "",
-			sSearchPlaceholder: "Search",
-		},
-		"bAutoWidth": false,
-		"iDisplayLength": 10,
-		order: [[5, "desc"]],
+	var table = $("#trans_table").DataTable({
+		...dataTableOptions,
 		"aoColumns": [
-			{"orderable": false, "searchable": false,  "sWidth": "5%" }, 
-			{ "orderable": false, "sWidth": "35%" }, 
-			{ "orderable": false, "searchable": false, "sWidth": "15%" }, 
+			{"orderable": false, "searchable": false,  "sWidth": "5%" },
+			{ "orderable": false, "sWidth": "35%" },
+			{ "orderable": false, "searchable": false, "sWidth": "15%" },
 			{ "orderable": false, "sWidth": "15%" },
-			{ "searchable": false, "sWidth": "15%" }, 
-			{ "searchable": false, "sWidth": "15%" }, 
+			{ "searchable": false, "sWidth": "15%" },
+			{ "searchable": false, "sWidth": "15%" },
 		],
 	});
 });
 
 $(document).ready(function() {
     var table = $("#top100dons").DataTable({
-		oLanguage: {
-			//sLengthMenu: "_MENU_",
-			sSearch: "",
-			sSearchPlaceholder: "Search",
-		},
-		"bAutoWidth": false,
-		"iDisplayLength": 10,
-		order: [[5, "desc"]],
+		...dataTableOptions,
 		"aoColumns": [
-			{ "orderable": false, "searchable": false, "sWidth": "5%" }, 
-			{ "orderable": false, "sWidth": "35%" }, 
-			{ "orderable": false, "searchable": false,"sWidth": "15%" }, 
+			{ "orderable": false, "searchable": false, "sWidth": "5%" },
+			{ "orderable": false, "sWidth": "35%" },
+			{ "orderable": false, "searchable": false,"sWidth": "15%" },
 			{ "searchable": false, "sWidth": "15%" },
-			{ "searchable": false, "sWidth": "15%" }, 
-			{ "searchable": false, "sWidth": "15%" }, 
+			{ "searchable": false, "sWidth": "15%" },
+			{ "searchable": false, "sWidth": "15%" },
 		],
 	});
 });
@@ -110,23 +105,23 @@ $(document).ready(function() {
 $(document).on("click", "[data-modal-info]", function(e) {
 	$(this).blur();
 	e.preventDefault();
-	
+
 	var id = $(this).data('modal-id');
 	var name = $(this).data('modal-name');
 	var type = $(this).data('modal-type');
 
-	$.post("//"+document.domain+"/public/info.php", {'type': type, 'id': id}, function(json){
+	$.post("/public/info.php", {'type': type, 'id': id}, function(json){
 		data = JSON.parse(json);
 		if(data.table.length != 0){
 			$("#donRoomTable tr:first th:first").html(name);
 			$("#donRoomTable tbody").html(data.table);
 			$('#donRoomModal').modal('show');
 		}
-		
+
 		if(data.amount.length != 0){
 			$("#allIncome").html("<hr/><center><b>All time "+type+": "+data.amount+" USD</b></center><hr/>");
 		}
-		
+
 		if(data.chart.length != 0){
 			xx11 = JSON.parse(data.chart);
 			//if(xx11.length > 28){
@@ -149,7 +144,7 @@ $(document).on("click", "[data-modal-info]", function(e) {
 				x_axis: false,
 			});
 		}
-		
+
 	});
 });
 
@@ -161,10 +156,16 @@ function printWsText(text){
 	xMin = (date.getMinutes() < 10 ? '0' : '') + date.getMinutes()
 	xSec = (date.getSeconds() < 10 ? '0' : '') + date.getSeconds()
 	time = date.getHours() + ":" + xMin + ":" + xSec;
-	$(".wstext").prepend('<div class="message">[' + time + '] ' + text + '</div>');
+
+	let message = text;
+	if(isTabletOrDesktop) {
+		message = '[' + time + '] ' + message;
+	}
+
+	$(".wstext").append(`<div class="message">${message}</div>`);
 	msg = $('.wstext .message');
 	if (msg.length > 8) {
-		msg.last().remove();
+		msg.first().remove();
 	}
 }
 
@@ -176,7 +177,7 @@ function bStat() {
             sock.send('h')
             setTimeout(wsPing, 60000);
         }, 60000);
-        $(".wstext").prepend('<div class="message"><center>------------------------------------ last big tips ------------------------------------</center></div>');
+        $(".wstext").prepend('<div class="message text-center">---------------- last big tips ----------------</div>');
     };
     sock.onmessage = function(evt) {
 		j = JSON.parse(evt.data);
