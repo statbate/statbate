@@ -32,11 +32,6 @@ func statRoom(room, server string, u url.URL) {
 			break 
 		}
 		
-		//if !checkRoom(room) { 
-		//	fmt.Println("Exit room:", room)
-		//	break
-		//}
-		
 		if time.Now().Unix() > timeout { 
 			fmt.Println("Timeout room:", room)
 			break 
@@ -71,8 +66,7 @@ func statRoom(room, server string, u url.URL) {
 		}
 		
 		if(input.Method == "onRoomCountUpdate"){
-			//updateRoomOnline(room, input.Args)
-			fmt.Println(input.Args[0])
+			fmt.Println(input.Args[0], "online")
 			continue;
 		}
 
@@ -80,22 +74,15 @@ func statRoom(room, server string, u url.URL) {
 		if(input.Method == "onNotify"){
 			
 			timeout = time.Now().Unix() + 60*60
-			//updateRoomLast(room)
 			
 			if err := json.Unmarshal([]byte(input.Args[0]), &donate); err != nil {
 				fmt.Println(err.Error())
 				continue;
 			}
 			if(len(donate.From) > 3){
-				//sendPost(room, donate.From, donate.Amount)
-				//updateRoomIncome(room, amount)
-				//fmt.Println(donate.From)
-				//fmt.Println(donate.Amount)
+				fmt.Println(donate.From, " send ", donate.Amount, "tokens")
 			}
 		}
 	}
-	//if checkRoom(room) {
-	//	removeRoom(room)
-	//}
 	c.Close()
 }
