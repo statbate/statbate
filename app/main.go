@@ -1,16 +1,19 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	_ "github.com/ClickHouse/clickhouse-go"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
-	jsoniter "github.com/json-iterator/go"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"time"
+
+	_ "github.com/ClickHouse/clickhouse-go"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
+	jsoniter "github.com/json-iterator/go"
+	_ "modernc.org/sqlite"
 )
 
 type Rooms struct {
@@ -20,12 +23,17 @@ type Rooms struct {
 	Del   chan string
 }
 
-var hub = newHub()
-var Mysql, Clickhouse *sqlx.DB
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
+var (
+	hub             = newHub()
+	Sql, Clickhouse *sqlx.DB
+	json            = jsoniter.ConfigCompatibleWithStandardLibrary
+	sqlDriver       = flag.String("sqldriver", "mysql", "sql driver (mysql/sqlite)")
+)
 
-var save = make(chan saveData, 100)
-var slog = make(chan saveLog, 100)
+var (
+	save = make(chan saveData, 100)
+	slog = make(chan saveLog, 100)
+)
 
 var rooms = &Rooms{
 	Count: make(chan int),
@@ -35,7 +43,9 @@ var rooms = &Rooms{
 }
 
 func main() {
-	initMysql()
+	flag.Parse()
+
+	initSql()
 	initClickhouse()
 
 	go hub.run()
@@ -52,34 +62,48 @@ func main() {
 	go fastStart()
 
 	const SOCK = "/tmp/statbate.sock"
-	os.Remove(SOCK)
+	if err := os.Remove(SOCK); err != nil {
+		log.Fatal("remove failed: ", err)
+	}
 	unixListener, err := net.Listen("unix", SOCK)
 	if err != nil {
 		log.Fatal("Listen (UNIX socket): ", err)
 	}
 	defer unixListener.Close()
-	os.Chmod(SOCK, 0777)
+	if err = os.Chmod(SOCK, 0o777); err != nil {
+		log.Fatal("chmod failed: ", err)
+	}
 	log.Fatal(http.Serve(unixListener, nil))
 }
 
-func initMysql() {
-	db, err := sqlx.Connect("mysql", "user:passwd@unix(/var/run/mysqld/mysqld.sock)/stat?interpolateParams=true")
-	if err != nil {
-		panic(err)
+func initSql() {
+	var db *sqlx.DB
+	var err error
+
+	switch *sqlDriver {
+	case "sqlite":
+		db, err = sqlx.Connect("sqlite", "database.sqlite")
+	case "mysql":
+		db, err = sqlx.Connect("mysql", "user:passwd@unix(/var/run/mysqld/mysqld.sock)/stat?interpolateParams=true")
 	}
-	Mysql = db
+	if err != nil {
+		log.Fatal("initSql err: ", err.Error())
+	}
+	Sql = db
 }
 
 func initClickhouse() {
 	db, err := sqlx.Connect("clickhouse", "tcp://127.0.0.1:9000/?database=statbate&compress=true&debug=false")
 	if err != nil {
-		panic(err)
+		log.Fatal("initClickhouse err: ", err.Error())
 	}
 	Clickhouse = db
 }
 
 func wJson(s string) {
-	os.WriteFile("/tmp/fastStart.txt", []byte(s), 0644)
+	if err := os.WriteFile("/tmp/fastStart.txt", []byte(s), 0o644); err != nil {
+		log.Fatal("write file err: ", err.Error())
+	}
 }
 
 func fastStart() {

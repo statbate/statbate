@@ -14,9 +14,9 @@ type Info struct {
 	room   string
 	Server string `json:"server"`
 	Proxy  string `json:"proxy"`
+	Online string `json:"online"`
 	Start  int64  `json:"start"`
 	Last   int64  `json:"last"`
-	Online string `json:"online"`
 	Income int64  `json:"income"`
 }
 
@@ -36,13 +36,15 @@ type Workers struct {
 	Map map[string]*Worker
 }
 
-var memInfo runtime.MemStats
-var chWorker = &Workers{Map: make(map[string]*Worker)}
+var (
+	memInfo  runtime.MemStats
+	chWorker = &Workers{Map: make(map[string]*Worker)}
+)
 
 func removeRoom(room string) {
 	if checkWorker(room) {
 		chWorker.Lock()
-		//fmt.Printf("%v remove %v from chWorker.Map \n", time.Now().UnixMilli(), room )
+		// fmt.Printf("%v remove %v from chWorker.Map \n", time.Now().UnixMilli(), room )
 		delete(chWorker.Map, room)
 		chWorker.Unlock()
 	}
@@ -64,19 +66,19 @@ func listRooms() string {
 	return s
 }
 
-func listHandler(w http.ResponseWriter, r *http.Request) {
+func listHandler(w http.ResponseWriter, _ *http.Request) {
 	fmt.Fprint(w, listRooms())
 }
 
-func debugHandler(w http.ResponseWriter, r *http.Request) {
+func debugHandler(w http.ResponseWriter, _ *http.Request) {
 	runtime.ReadMemStats(&memInfo)
-	j, err := json.Marshal(Debug{runtime.NumGoroutine(), memInfo.Alloc, memInfo.HeapSys, uptime})
+	buf, err := json.Marshal(Debug{runtime.NumGoroutine(), memInfo.Alloc, memInfo.HeapSys, uptime})
 	if err == nil {
-		fmt.Fprint(w, string(j))
+		fmt.Fprint(w, buf)
 	}
 }
 
-func cmdHandler(w http.ResponseWriter, r *http.Request) {
+func cmdHandler(_ http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	if len(params["room"]) > 0 && len(params["server"]) > 0 && len(params["proxy"]) > 0 {
 		room := params["room"][0]

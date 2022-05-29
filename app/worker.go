@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/gorilla/websocket"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 var uptime = time.Now().Unix()
@@ -32,7 +33,6 @@ type AnnounceDonate struct {
 }
 
 func mapRooms() {
-
 	data := make(map[string]*Info)
 
 	for {
@@ -98,7 +98,7 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 	defer c.Close()
 
 	now := time.Now().Unix()
-	workerData := Info{room, server, proxy, now, now, "0", 0}
+	workerData := Info{room: room, Server: server, Proxy: proxy, Start: now, Last: now, Online: "0", Income: 0}
 
 	timeout := now
 
@@ -131,12 +131,14 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 		slog <- saveLog{info.Id, now, m}
 
 		if m == "o" {
-			c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"connect\",\"data\":{\"user\":\"__anonymous__777\",\"password\":\"anonymous\",\"room\":\"`+room+`\",\"room_password\":\"12345\"}}"]`))
+			err = c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"connect\",\"data\":{\"user\":\"__anonymous__777\",\"password\":\"anonymous\",\"room\":\"`+room+`\",\"room_password\":\"12345\"}}"]`))
+			logError(err)
 			continue
 		}
 
 		if m == "h" {
-			c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"updateRoomCount\",\"data\":{\"model_name\":\"`+room+`\",\"private_room\":\"false\"}}"]`))
+			err = c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"updateRoomCount\",\"data\":{\"model_name\":\"`+room+`\",\"private_room\":\"false\"}}"]`))
+			logError(err)
 			continue
 		}
 
@@ -147,12 +149,13 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 
 		input := Input{}
 		if err := json.Unmarshal([]byte(m), &input); err != nil {
-			fmt.Println(err.Error())
+			logError(err)
 			continue
 		}
 
 		if input.Method == "onAuthResponse" {
-			c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"joinRoom\",\"data\":{\"room\":\"`+room+`\"}}"]`))
+			err = c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"joinRoom\",\"data\":{\"room\":\"`+room+`\"}}"]`))
+			logError(err)
 			continue
 		}
 
@@ -186,7 +189,7 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 			workerData.Last = now
 			rooms.Add <- workerData
 			if err := json.Unmarshal([]byte(input.Args[0]), &donate); err != nil {
-				fmt.Println(err.Error())
+				logError(err)
 				continue
 			}
 			if len(donate.From) > 3 && donate.Amount > 0 {
@@ -197,8 +200,8 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 
 				timeout = now
 
-				//fmt.Println(donate.From)
-				//fmt.Println(donate.Amount)
+				// fmt.Println(donate.From)
+				// fmt.Println(donate.Amount)
 			}
 		}
 	}
