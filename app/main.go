@@ -119,7 +119,8 @@ func fastStart() {
 	}
 	for k, v := range list {
 		fmt.Println("fastStart:", k, v.Server, v.Proxy)
-		http.Get("https://statbate.com/cmd/?room=" + k + "&server=" + v.Server + "&proxy=" + v.Proxy)
+		_, err = http.Get("https://statbate.com/cmd/?room=" + k + "&server=" + v.Server + "&proxy=" + v.Proxy)
+		logError(err)
 		time.Sleep(100 * time.Millisecond)
 	}
 }
