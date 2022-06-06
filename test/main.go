@@ -11,12 +11,12 @@ import (
 )
 
 var servers = map[string]string{
-	"bongacams":  "wss://%s.bcccdn.com/websocket",
+	"bongacams":  "https://bongacams.com",
 	"chaturbate": "https://chaturbate.com",
 }
 
 func getServers() string {
-	res := make([]string, len(servers))
+	res := make([]string, 0, len(servers))
 	for k := range servers {
 		res = append(res, k)
 	}
@@ -25,6 +25,7 @@ func getServers() string {
 
 var (
 	roomFlag   = flag.String("room", "all", "room on server to track")
+	chatFlag   = flag.String("chat", "", "chat server")
 	serverFlag = flag.String("server", "", "server to track")
 )
 
@@ -39,23 +40,34 @@ func main() {
 		log.Fatalf("unknown server specified: %v", *serverFlag)
 	}
 
-	wss, err := getWSS(*serverFlag, *roomFlag)
-	if err != nil {
-		log.Fatalf("failed to get wss addr: %v", err)
+	switch *serverFlag {
+	case "chaturbate":
+		wss, err := getWSSChaturbate(*serverFlag, *roomFlag)
+		if err != nil {
+			log.Fatalf("failed to get wss addr: %v", err)
+		}
+		statRoomChaturbate(*roomFlag, *serverFlag, wss)
+	case "bongacams":
+		wss, err := getWSSBongacams(*serverFlag, *roomFlag)
+		if err != nil {
+			log.Fatalf("failed to get wss addr: %v", err)
+		}
+		statRoomBongocams(*chatFlag, *roomFlag, wss)
 	}
-
-	u := url.URL{Scheme: "wss", Host: wss, Path: "/ws/555/kmdqiune/websocket"}
-
-	statRoom(*roomFlag, *serverFlag, u)
 }
 
 // get wss addr
-func getWSS(server string, room string) (string, error) {
+func getWSSBongacams(server string, room string) (*url.URL, error) {
+	return url.Parse("wss://" + room + ".bcccdn.com/websocket")
+}
+
+// get wss addr
+func getWSSChaturbate(server string, room string) (*url.URL, error) {
 	var wss string
-	addr := servers[*serverFlag]
+	addr := servers[server]
 	rsp, err := http.Get(addr + "/" + room + "/")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer rsp.Body.Close()
 
@@ -95,10 +107,10 @@ func getWSS(server string, room string) (string, error) {
 
 	node, err := html.Parse(rsp.Body)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	parse(node)
 
-	return wss, nil
+	return url.Parse("wss://" + wss + "/ws/555/kmdqiune/websocket")
 }
