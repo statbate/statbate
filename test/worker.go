@@ -120,7 +120,7 @@ func statRoomBongocams(chat string, room string, u *url.URL) {
 				continue
 			}
 
-			fmt.Printf("msg %s", message)
+			//	fmt.Printf("msg %s", message)
 
 			switch m.Type {
 			case "ServerMessageEvent:ROOM_CLOSE":
