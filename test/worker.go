@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -90,18 +91,18 @@ func statRoomBongocams(chat string, room string, u *url.URL) {
 	}
 
 	timeout := time.Now().Unix() + 60*60
-
+	var pid int64
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
-			if err = c.WriteMessage(websocket.TextMessage, []byte(`{"id":26,"name":"ping"}`)); err != nil {
+			pid++
+			if err = c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"id":%d,"name":"ping"}`, pid))); err != nil {
 				logError(err)
 				return
 			}
 		default:
-
 			_, message, err := c.ReadMessage()
 			if err != nil {
 				logError(err)
@@ -114,26 +115,38 @@ func statRoomBongocams(chat string, room string, u *url.URL) {
 			}
 
 			m := &ServerResponse{}
-
-			if err = json.Unmarshal(message, m); err != nil {
-				logError(err)
-				continue
-			}
-
-			//	fmt.Printf("msg %s", message)
-
-			switch m.Type {
-			case "ServerMessageEvent:ROOM_CLOSE":
-				err = c.Close()
-				logError(err)
-				return
-			case "ServerMessageEvent:INCOMING_TIP":
-				d := &DonateResponse{}
-				if err = json.Unmarshal(m.Body, d); err != nil {
+			if err = json.Unmarshal(message, m); err == nil {
+				switch m.Type {
+				case "ServerMessageEvent:PERFORMER_STATUS_CHANGE":
+					if bytes.Contains(m.Body, []byte(`offile`)) {
+						err = c.Close()
+						logError(err)
+						return
+					}
+				case "ServerMessageEvent:ROOM_CLOSE":
+					err = c.Close()
 					logError(err)
 					return
+				case "ServerMessageEvent:INCOMING_TIP":
+					d := &DonateResponse{}
+					if err = json.Unmarshal(m.Body, d); err != nil {
+						c.Close()
+						logError(err)
+						return
+					}
+					fmt.Println(d.F.Username, " send ", d.A, "tokens")
 				}
-				fmt.Println(d.F.Username, " send ", d.A, "tokens")
+			} else {
+				status := make(map[string]interface{})
+				if err = json.Unmarshal(message, &status); err == nil {
+					if fmt.Sprintf("%d", status["id"]) == fmt.Sprintf("%d", pid) && status["error"] == nil {
+						continue
+					} else {
+						fmt.Printf("unknown message received: %v", status)
+						c.Close()
+						return
+					}
+				}
 			}
 		}
 	}
