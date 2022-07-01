@@ -25,6 +25,7 @@ type Debug struct {
 	Alloc      uint64
 	HeapSys    uint64
 	Uptime     int64
+	Process    []string
 }
 
 type Worker struct {
@@ -69,8 +70,18 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func debugHandler(w http.ResponseWriter, r *http.Request) {
+
+	chWorker.Lock()
+	tmp := chWorker.Map
+	chWorker.Unlock()
+
+	x := []string{}
+	for k, _ := range tmp {
+		x = append(x, k)
+	}
+
 	runtime.ReadMemStats(&memInfo)
-	j, err := json.Marshal(Debug{runtime.NumGoroutine(), memInfo.Alloc, memInfo.HeapSys, uptime})
+	j, err := json.Marshal(Debug{runtime.NumGoroutine(), memInfo.Alloc, memInfo.HeapSys, uptime, x})
 	if err == nil {
 		fmt.Fprint(w, string(j))
 	}
@@ -88,23 +99,24 @@ func cmdHandler(w http.ResponseWriter, r *http.Request) {
 		room := params["room"][0]
 		server := params["server"][0]
 		proxy := params["proxy"][0]
-		if !checkWorker(room) {
-
-			info, ok := getRoomInfo(room)
-			if !ok {
-				fmt.Println("No room in MySQL:", room)
-				return
-			}
-
-			chQuit := make(chan struct{})
-
-			chWorker.Lock()
-			chWorker.Map[room] = &Worker{chQuit: chQuit}
-			chWorker.Unlock()
-
-			go statRoom(chQuit, room, server, proxy, info, url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"})
-
+		if checkWorker(room) {
+			fmt.Println("Already track:", room)
+			return
 		}
+
+		info, ok := getRoomInfo(room)
+		if !ok {
+			fmt.Println("No room in MySQL:", room)
+			return
+		}
+
+		chQuit := make(chan struct{})
+
+		chWorker.Lock()
+		chWorker.Map[room] = &Worker{chQuit: chQuit}
+		chWorker.Unlock()
+
+		go statRoom(chQuit, room, server, proxy, info, url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"})
 	}
 	if len(params["exit"]) > 0 {
 		room := strings.Join(params["exit"], "")

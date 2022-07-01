@@ -126,12 +126,20 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 		slog <- saveLog{info.Id, now, m}
 
 		if m == "o" {
-			c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"connect\",\"data\":{\"user\":\"__anonymous__777\",\"password\":\"anonymous\",\"room\":\"`+room+`\",\"room_password\":\"12345\"}}"]`))
+			if err = c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"connect\",\"data\":{\"user\":\"__anonymous__777\",\"password\":\"anonymous\",\"room\":\"`+room+`\",\"room_password\":\"12345\"}}"]`)); err != nil {
+				fmt.Println(err.Error())
+				rooms.Del <- room
+				return
+			}
 			continue
 		}
 
 		if m == "h" {
-			c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"updateRoomCount\",\"data\":{\"model_name\":\"`+room+`\",\"private_room\":\"false\"}}"]`))
+			if err = c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"updateRoomCount\",\"data\":{\"model_name\":\"`+room+`\",\"private_room\":\"false\"}}"]`)); err != nil {
+				fmt.Println(err.Error())
+				rooms.Del <- room
+				return
+			}
 			continue
 		}
 
@@ -147,13 +155,18 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 		}
 
 		if input.Method == "onAuthResponse" {
-			c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"joinRoom\",\"data\":{\"room\":\"`+room+`\"}}"]`))
+			if err = c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"joinRoom\",\"data\":{\"room\":\"`+room+`\"}}"]`)); err != nil {
+				fmt.Println(err.Error())
+				rooms.Del <- room
+				return
+			}
 			continue
 		}
 
 		if input.Method == "onRoomMsg" {
 			workerData.Last = now
 			rooms.Add <- workerData
+			continue
 		}
 
 		if input.Method == "onRoomCountUpdate" {
