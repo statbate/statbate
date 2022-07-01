@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	_ "github.com/ClickHouse/clickhouse-go"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -10,7 +9,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"time"
 )
 
 type Rooms struct {
@@ -44,14 +42,12 @@ func main() {
 	go saveDB()
 	go saveLogs()
 
-	http.HandleFunc("/ws/", hub.wsHandler)
-	http.HandleFunc("/cmd/", cmdHandler)
-	http.HandleFunc("/list/", listHandler)
-	http.HandleFunc("/debug/", debugHandler)
+	http.HandleFunc("/bongacams/ws/", hub.wsHandler)
+	http.HandleFunc("/bongacams/cmd/", cmdHandler)
+	http.HandleFunc("/bongacams/list/", listHandler)
+	http.HandleFunc("/bongacams/debug/", debugHandler)
 
-	go fastStart()
-
-	const SOCK = "/tmp/statbate.sock"
+	const SOCK = "/tmp/bongacams.sock"
 	os.Remove(SOCK)
 	unixListener, err := net.Listen("unix", SOCK)
 	if err != nil {
@@ -63,7 +59,7 @@ func main() {
 }
 
 func initMysql() {
-	db, err := sqlx.Connect("mysql", "user:passwd@unix(/var/run/mysqld/mysqld.sock)/stat?interpolateParams=true")
+	db, err := sqlx.Connect("mysql", "u:p@unix(/var/run/mysqld/mysqld.sock)/bongacams?interpolateParams=true")
 	if err != nil {
 		panic(err)
 	}
@@ -71,31 +67,9 @@ func initMysql() {
 }
 
 func initClickhouse() {
-	db, err := sqlx.Connect("clickhouse", "tcp://127.0.0.1:9000/?database=statbate&compress=true&debug=false")
+	db, err := sqlx.Connect("clickhouse", "tcp://127.0.0.1:9000/bongacams?compress=true&debug=false")
 	if err != nil {
 		panic(err)
 	}
 	Clickhouse = db
-}
-
-func wJson(s string) {
-	os.WriteFile("/tmp/fastStart.txt", []byte(s), 0644)
-}
-
-func fastStart() {
-	val, err := os.ReadFile("/tmp/fastStart.txt")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	list := make(map[string]*Info)
-	if err := json.Unmarshal(val, &list); err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-	for k, v := range list {
-		fmt.Println("fastStart:", k, v.Server, v.Proxy)
-		http.Get("https://statbate.com/cmd/?room=" + k + "&server=" + v.Server + "&proxy=" + v.Proxy)
-		time.Sleep(100 * time.Millisecond)
-	}
 }

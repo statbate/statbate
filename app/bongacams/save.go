@@ -85,16 +85,26 @@ func saveDB() {
 			now := time.Now().Unix()
 
 			if(num >= 999 || now >= last+10){
-				txm, mErr := Mysql.Begin()
-				txc, cErr := Clickhouse.Begin()
-				if mErr == nil && cErr == nil {
+				tx, err := Mysql.Begin()
+				if err == nil {
 					for _, v := range bulk {
-						txm.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)", data[v.From], v.Rid, v.Amount, v.Now)
-						txc.Exec("INSERT INTO stat VALUES (?, ?, ?, ?)", data[v.From], v.Rid, v.Amount, v.Now)
+						tx.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)", data[v.From], v.Rid, v.Amount, v.Now)
 					}
-					txc.Commit()
-					txm.Commit()
 				}
+				tx.Commit()
+				
+				tx, err = Clickhouse.Begin()
+				if err == nil {
+					st, _ := tx.Prepare("INSERT INTO stat VALUES (?, ?, ?, ?)")
+					//fmt.Println("G:", err)					
+					for _, v := range bulk {
+						st.Exec(uint32(data[v.From]), uint32(v.Rid), uint32(v.Amount), time.Unix(v.Now, 0))
+						//fmt.Println("B:", aaa, sss)
+					}
+					tx.Commit();
+					st.Close()
+				}
+				
 				last = now
 				bulk = make(map[int]saveData)
 			}

@@ -75,8 +75,7 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 	Dialer := *websocket.DefaultDialer
 
 	proxyMap := make(map[string]string)
-	proxyMap["fr"] = "ip:port"
-	proxyMap["ca"] = "ip:port"
+	proxyMap["us"] = "ip:port"
 	proxyMap["fi"] = "ip:port"
 
 	if _, ok := proxyMap[proxy]; ok {
@@ -164,7 +163,7 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 		if input.Method == "onRoomCountUpdate" {
 			online, err := strconv.Atoi(input.Args[0])
 			if err == nil {
-				if online < 25 {
+				if online < 10 {
 					fmt.Println("few viewers room:", room)
 					rooms.Del <- room
 					return
