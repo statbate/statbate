@@ -35,6 +35,8 @@ var rooms = &Rooms{
 }
 
 func main() {
+	startConfig()
+
 	initMysql()
 	initClickhouse()
 
@@ -63,7 +65,7 @@ func main() {
 }
 
 func initMysql() {
-	db, err := sqlx.Connect("mysql", "u:p@unix(/var/run/mysqld/mysqld.sock)/chaturbate?interpolateParams=true")
+	db, err := sqlx.Connect("mysql", conf.Conn["mysql"])
 	if err != nil {
 		panic(err)
 	}
@@ -71,7 +73,7 @@ func initMysql() {
 }
 
 func initClickhouse() {
-	db, err := sqlx.Connect("clickhouse", "tcp://127.0.0.1:9000/statbate?compress=true&debug=false")
+	db, err := sqlx.Connect("clickhouse", conf.Conn["click"])
 	if err != nil {
 		panic(err)
 	}

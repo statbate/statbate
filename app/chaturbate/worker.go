@@ -74,15 +74,11 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 
 	Dialer := *websocket.DefaultDialer
 
-	proxyMap := make(map[string]string)
-	proxyMap["us"] = "ip:port"
-	proxyMap["fi"] = "ip:port"
-
-	if _, ok := proxyMap[proxy]; ok {
+	if _, ok := conf.Proxy[proxy]; ok {
 		Dialer = websocket.Dialer{
 			Proxy: http.ProxyURL(&url.URL{
 				Scheme: "http", // or "https" depending on your proxy
-				Host:   proxyMap[proxy],
+				Host:   conf.Proxy[proxy],
 				Path:   "/",
 			}),
 			HandshakeTimeout: 45 * time.Second, // https://pkg.go.dev/github.com/gorilla/websocket

@@ -77,16 +77,12 @@ func debugHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func cmdHandler(w http.ResponseWriter, r *http.Request) {
-	wList := map[string]bool {
-		"::1": true,
-		"127.0.0.1": true,
-	}
-	
-	if !wList[r.Header.Get("X-REAL-IP")] {
+
+	if !conf.List[r.Header.Get("X-REAL-IP")] {
 		fmt.Fprint(w, "403")
 		return
 	}
-	
+
 	params := r.URL.Query()
 	if len(params["room"]) > 0 && len(params["server"]) > 0 && len(params["proxy"]) > 0 {
 		room := params["room"][0]
