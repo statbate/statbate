@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-	_ "github.com/ClickHouse/clickhouse-go"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
-	jsoniter "github.com/json-iterator/go"
-	"log"
 	"net"
 	"net/http"
 	"os"
 	"time"
+
+	_ "github.com/ClickHouse/clickhouse-go"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
+	jsoniter "github.com/json-iterator/go"
 )
 
 type Rooms struct {
@@ -20,12 +20,16 @@ type Rooms struct {
 	Del   chan string
 }
 
-var hub = newHub()
-var Mysql, Clickhouse *sqlx.DB
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
+var (
+	hub               = newHub()
+	Mysql, Clickhouse *sqlx.DB
+	json              = jsoniter.ConfigCompatibleWithStandardLibrary
+)
 
-var save = make(chan saveData, 100)
-var slog = make(chan saveLog, 100)
+var (
+	save = make(chan saveData, 100)
+	slog = make(chan saveLog, 100)
+)
 
 var rooms = &Rooms{
 	Count: make(chan int),
@@ -54,20 +58,36 @@ func main() {
 	go fastStart()
 
 	const SOCK = "/tmp/statbate.sock"
-	os.Remove(SOCK)
+	if err := os.Remove(SOCK); err != nil {
+		logErrorf("socket err: %v", err)
+		return
+	}
 	unixListener, err := net.Listen("unix", SOCK)
 	if err != nil {
-		log.Fatal("Listen (UNIX socket): ", err)
+		logErrorf("socket err: %v", err)
+		return
 	}
-	defer unixListener.Close()
-	os.Chmod(SOCK, 0777)
-	log.Fatal(http.Serve(unixListener, nil))
+	defer func() {
+		if err = unixListener.Close(); err != nil {
+			logErrorf("socker err: %v", err)
+			return
+		}
+	}()
+
+	if err = os.Chmod(SOCK, os.FileMode((0o777))); err != nil {
+		logErrorf("socket err: %v", err)
+		return
+	}
+	if err = http.Serve(unixListener, nil); err != nil {
+		logErrorf("socket err: %v", err)
+		return
+	}
 }
 
 func initMysql() {
 	db, err := sqlx.Connect("mysql", conf.Conn["mysql"])
 	if err != nil {
-		panic(err)
+		logFatalf("database mysql err: %v", err)
 	}
 	Mysql = db
 }
@@ -75,29 +95,34 @@ func initMysql() {
 func initClickhouse() {
 	db, err := sqlx.Connect("clickhouse", conf.Conn["click"])
 	if err != nil {
-		panic(err)
+		logFatalf("database clickhouse err: %v", err)
 	}
 	Clickhouse = db
 }
 
 func wJson(s string) {
-	os.WriteFile("/tmp/fastStart.txt", []byte(s), 0644)
+	if err := os.WriteFile("/tmp/fastStart.txt", []byte(s), os.FileMode(0o644)); err != nil {
+		logErrorf("fs err: %v", err)
+	}
 }
 
 func fastStart() {
 	val, err := os.ReadFile("/tmp/fastStart.txt")
 	if err != nil {
-		fmt.Println(err)
+		logErrorf("fs err: %v", err)
 		return
 	}
 	list := make(map[string]*Info)
 	if err := json.Unmarshal(val, &list); err != nil {
-		fmt.Println(err.Error())
+		logErrorf("json err: %v", err)
 		return
 	}
 	for k, v := range list {
 		fmt.Println("fastStart:", k, v.Server, v.Proxy)
-		http.Get("https://statbate.com/cmd/?room=" + k + "&server=" + v.Server + "&proxy=" + v.Proxy)
+		rsp, err := http.Get("https://statbate.com/cmd/?room=" + k + "&server=" + v.Server + "&proxy=" + v.Proxy)
+		if err != nil || rsp.StatusCode >= 400 {
+			logErrorf("http err: %v", err)
+		}
 		time.Sleep(100 * time.Millisecond)
 	}
 }

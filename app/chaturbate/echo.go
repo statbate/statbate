@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/gorilla/websocket"
 	"net/http"
+
+	"github.com/gorilla/websocket"
 	//"fmt"
 )
 
@@ -39,7 +40,7 @@ func (h *Hub) run() {
 				close(client.send)
 			}
 		case message := <-h.broadcast:
-			//fmt.Println("map channel:", len(h.broadcast), cap(h.broadcast))
+			// fmt.Println("map channel:", len(h.broadcast), cap(h.broadcast))
 			for client := range h.clients {
 				select {
 				case client.send <- message:
@@ -53,16 +54,26 @@ func (h *Hub) run() {
 }
 
 func (c *Client) writePump() {
+	defer func() {
+		if err := c.conn.Close(); err != nil {
+			logErrorf("socket err: %v", err)
+		}
+	}()
+
 	for {
 		message, ok := <-c.send
 		if !ok {
 			// The hub closed the channel.
-			c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+			if err := c.conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
+				logErrorf("websocket err: %v", err)
+			}
 			return
 		}
-		c.conn.WriteMessage(1, message)
+		if err := c.conn.WriteMessage(1, message); err != nil {
+			logErrorf("websocket err: %v", err)
+			return
+		}
 	}
-	c.conn.Close()
 }
 
 func (c *Client) readPump() {
