@@ -185,6 +185,8 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 					fmt.Println("few viewers room:", room)
 					return
 				}
+			} else {
+				logErrorf("atoi err: %v", err)
 			}
 			workerData.Online = input.Args[0]
 			rooms.Add <- workerData
