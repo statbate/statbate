@@ -1,7 +1,10 @@
 package main
 
-//import "fmt"
-import "time"
+// import "fmt"
+import (
+	"database/sql"
+	"time"
+)
 
 type tID struct {
 	Id int64 `db:"id"`
@@ -16,19 +19,24 @@ type saveData struct {
 }
 
 type saveLog struct {
+	Mes string
 	Rid int64
 	Now int64
-	Mes string
 }
 
-func getDonId(name string) int64 {
+func getDonId(name string) (int64, bool) {
 	donator := new(tID)
 	err := Mysql.Get(donator, "SELECT id FROM donator WHERE name=?", name)
 	if err != nil {
-		res, _ := Mysql.Exec("INSERT INTO donator (`name`) VALUES (?)", name)
-		donator.Id, _ = res.LastInsertId()
+		if err == sql.ErrNoRows { // ошибка может быть разная, если мы ничего не нашли всегда возвращается sql.ErrNoRows, при других ошибках вернется иное, лучше делать разделение логики в этом случае
+			res, _ := Mysql.Exec("INSERT INTO donator (`name`) VALUES (?)", name)
+			donator.Id, _ = res.LastInsertId()
+		} else {
+			logErrorf("database err: %v", err)
+			return 0, false
+		}
 	}
-	return donator.Id
+	return donator.Id, true
 }
 
 func getRoomInfo(name string) (*tID, bool) {
@@ -36,6 +44,9 @@ func getRoomInfo(name string) (*tID, bool) {
 	room := new(tID)
 	err := Mysql.Get(room, "SELECT id FROM room WHERE name=?", name)
 	if err != nil {
+		if err != sql.ErrNoRows {
+			logErrorf("database err: %v", err)
+		}
 		result = false
 	}
 	return room, result
@@ -57,7 +68,7 @@ func saveDB() {
 		}
 	}
 
-	//fmt.Println("donators in cache:", len(data
+	// fmt.Println("donators in cache:", len(data
 
 	last := time.Now().Unix()
 	bulk := make(map[int]saveData)
@@ -65,9 +76,11 @@ func saveDB() {
 	for {
 		select {
 		case m := <-save:
-			//fmt.Println("Save channel:", len(save), cap(save))
+			// fmt.Println("Save channel:", len(save), cap(save))
 			if _, ok := data[m.From]; !ok {
-				data[m.From] = getDonId(m.From)
+				if from, ok := getDonId(m.From); ok { // check that donId returned without error from database
+					data[m.From] = from
+				}
 			}
 			if m.Amount > 99 {
 				msg, err := json.Marshal(AnnounceDonate{Room: m.Room, Donator: m.From, Amount: m.Amount})
@@ -76,7 +89,10 @@ func saveDB() {
 				}
 			}
 
-			Mysql.Exec("UPDATE `room` SET `last` = ? WHERE `id` = ?", m.Now, m.Rid)
+			if _, err = Mysql.Exec("UPDATE `room` SET `last` = ? WHERE `id` = ?", m.Now, m.Rid); err != nil {
+				logErrorf("database err: %v", err)
+				return
+			}
 
 			num := len(bulk)
 
@@ -88,21 +104,48 @@ func saveDB() {
 				tx, err := Mysql.Begin()
 				if err == nil {
 					for _, v := range bulk {
-						tx.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)", data[v.From], v.Rid, v.Amount, v.Now)
+						if _, err = tx.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)", data[v.From], v.Rid, v.Amount, v.Now); err != nil {
+							logErrorf("database err: %v", err)
+							return
+						}
 					}
+					if err = tx.Commit(); err != nil {
+						logErrorf("database err: %v", err)
+						return
+					}
+				} else {
+					logErrorf("database err: %v", err)
+					return
 				}
-				tx.Commit()
 
 				tx, err = Clickhouse.Begin()
-				if err == nil {
-					st, _ := tx.Prepare("INSERT INTO stat VALUES (?, ?, ?, ?)")
-					//fmt.Println("G:", err)
-					for _, v := range bulk {
-						st.Exec(uint32(data[v.From]), uint32(v.Rid), uint32(v.Amount), time.Unix(v.Now, 0))
-						//fmt.Println("B:", aaa, sss)
+				if err != nil {
+					logErrorf("database err: %v", err)
+					return
+				}
+
+				st, err := tx.Prepare("INSERT INTO stat VALUES (?, ?, ?, ?)")
+				if err != nil {
+					logErrorf("database err: %v", err)
+					return
+				}
+				// fmt.Println("G:", err)
+				for _, v := range bulk {
+					_, err = st.Exec(uint32(data[v.From]), uint32(v.Rid), uint32(v.Amount), time.Unix(v.Now, 0))
+					if err != nil {
+						logErrorf("database err: %v", err)
+						return
 					}
-					tx.Commit()
-					st.Close()
+					// fmt.Println("B:", aaa, sss)
+				}
+				if err = tx.Commit(); err != nil {
+					logErrorf("database err: %v", err)
+					return
+				}
+
+				if err = st.Close(); err != nil {
+					logErrorf("database err: %v", err)
+					return
 				}
 
 				last = now
@@ -125,9 +168,22 @@ func saveLogs() {
 				tx, err := Mysql.Begin()
 				if err == nil {
 					for _, v := range bulk {
-						tx.Exec("INSERT INTO `logs` (`rid`, `time`, `mes`) VALUES (?, ?, ?)", v.Rid, v.Now, v.Mes)
+						_, err = tx.Exec("INSERT INTO `logs` (`rid`, `time`, `mes`) VALUES (?, ?, ?)", v.Rid, v.Now, v.Mes)
+						if err != nil {
+							logErrorf("database err: %v", err)
+							if err = tx.Rollback(); err != nil {
+								logErrorf("database err: %v", err)
+							}
+							return
+						}
 					}
-					tx.Commit()
+					if err = tx.Commit(); err != nil {
+						logErrorf("database err: %v", err)
+						if err = tx.Rollback(); err != nil {
+							logErrorf("database err: %v", err)
+						}
+						return
+					}
 				}
 				last = now
 				bulk = make(map[int]saveLog)

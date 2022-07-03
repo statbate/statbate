@@ -14,18 +14,18 @@ type Info struct {
 	room   string
 	Server string `json:"server"`
 	Proxy  string `json:"proxy"`
+	Online string `json:"online"`
 	Start  int64  `json:"start"`
 	Last   int64  `json:"last"`
-	Online string `json:"online"`
 	Income int64  `json:"income"`
 }
 
 type Debug struct {
+	Process    []string
 	Goroutines int
 	Alloc      uint64
 	HeapSys    uint64
 	Uptime     int64
-	Process    []string
 }
 
 type Worker struct {
@@ -37,13 +37,15 @@ type Workers struct {
 	Map map[string]*Worker
 }
 
-var memInfo runtime.MemStats
-var chWorker = &Workers{Map: make(map[string]*Worker)}
+var (
+	memInfo  runtime.MemStats
+	chWorker = &Workers{Map: make(map[string]*Worker)}
+)
 
 func removeRoom(room string) {
 	if checkWorker(room) {
 		chWorker.Lock()
-		//fmt.Printf("%v remove %v from chWorker.Map \n", time.Now().UnixMilli(), room )
+		// fmt.Printf("%v remove %v from chWorker.Map \n", time.Now().UnixMilli(), room )
 		delete(chWorker.Map, room)
 		chWorker.Unlock()
 	}
@@ -65,30 +67,29 @@ func listRooms() string {
 	return s
 }
 
-func listHandler(w http.ResponseWriter, r *http.Request) {
+func listHandler(w http.ResponseWriter, _ *http.Request) {
 	fmt.Fprint(w, listRooms())
 }
 
-func debugHandler(w http.ResponseWriter, r *http.Request) {
-
-	chWorker.Lock()
-	tmp := chWorker.Map
-	chWorker.Unlock()
-
+func debugHandler(w http.ResponseWriter, _ *http.Request) {
 	x := []string{}
-	for k, _ := range tmp {
+	chWorker.RLock()
+	// chWorker contains pointers so we lock it for reading
+	for k := range chWorker.Map {
 		x = append(x, k)
 	}
+	chWorker.RUnlock()
 
 	runtime.ReadMemStats(&memInfo)
-	j, err := json.Marshal(Debug{runtime.NumGoroutine(), memInfo.Alloc, memInfo.HeapSys, uptime, x})
+	j, err := json.Marshal(Debug{Goroutines: runtime.NumGoroutine(), Alloc: memInfo.Alloc, HeapSys: memInfo.HeapSys, Uptime: uptime, Process: x})
 	if err == nil {
 		fmt.Fprint(w, string(j))
+	} else {
+		logErrorf("json err: %v", err)
 	}
 }
 
 func cmdHandler(w http.ResponseWriter, r *http.Request) {
-
 	if !conf.List[r.Header.Get("X-REAL-IP")] {
 		fmt.Fprint(w, "403")
 		return
@@ -121,7 +122,9 @@ func cmdHandler(w http.ResponseWriter, r *http.Request) {
 	if len(params["exit"]) > 0 {
 		room := strings.Join(params["exit"], "")
 		if checkWorker(room) {
+			chWorker.Lock()
 			close(chWorker.Map[room].chQuit) // exit gorutine
+			chWorker.Unlock()
 			removeRoom(room)
 		}
 	}

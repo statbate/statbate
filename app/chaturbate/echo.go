@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/gorilla/websocket"
 	"net/http"
-	//"fmt"
+	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
 func newHub() *Hub {
@@ -16,6 +17,7 @@ func newHub() *Hub {
 }
 
 type Hub struct {
+	sync.RWMutex
 	clients    map[*Client]bool
 	broadcast  chan []byte
 	register   chan *Client
@@ -32,37 +34,53 @@ func (h *Hub) run() {
 	for {
 		select {
 		case client := <-h.register:
+			h.Lock()
 			h.clients[client] = true
+			h.Unlock()
 		case client := <-h.unregister:
+			h.Lock()
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
 			}
+			h.Unlock()
 		case message := <-h.broadcast:
-			//fmt.Println("map channel:", len(h.broadcast), cap(h.broadcast))
+			h.Lock()
+			// fmt.Println("map channel:", len(h.broadcast), cap(h.broadcast))
 			for client := range h.clients {
 				select {
 				case client.send <- message:
 				default:
-					close(client.send)
 					delete(h.clients, client)
+					close(client.send)
 				}
 			}
+			h.Unlock()
 		}
 	}
 }
 
 func (c *Client) writePump() {
+	defer func() {
+		if err := c.conn.Close(); err != nil {
+			logErrorf("socket err: %v", err)
+		}
+	}()
+
 	for {
 		message, ok := <-c.send
 		if !ok {
 			// The hub closed the channel.
-			c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+			if err := c.conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
+				logErrorf("websocket err: %v", err)
+			}
 			return
 		}
-		c.conn.WriteMessage(1, message)
+		if err := c.conn.WriteMessage(websocket.TextMessage, message); err != nil {
+			logErrorf("websocket err: %v", err)
+			return
+		}
 	}
-	c.conn.Close()
 }
 
 func (c *Client) readPump() {
@@ -70,11 +88,14 @@ func (c *Client) readPump() {
 		// Client close connection
 		_, _, err := c.conn.ReadMessage()
 		if err != nil {
+			logErrorf("socket err: %v", err)
 			break
 		}
 	}
 	c.hub.unregister <- c
-	c.conn.Close()
+	if err := c.conn.Close(); err != nil {
+		logErrorf("socket err: %v", err)
+	}
 }
 
 func (hub *Hub) wsHandler(w http.ResponseWriter, r *http.Request) {
