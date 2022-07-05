@@ -122,7 +122,7 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 
 	ok, v := getAMF(room)
 	if !ok {
-		fmt.Println("exit: no amf parms")
+		logErrorf("exit: no amf parms")
 		return
 	}
 
@@ -142,10 +142,13 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 			HandshakeTimeout: 45 * time.Second, // https://pkg.go.dev/github.com/gorilla/websocket
 		}
 	}
+	defer func() {
+		rooms.Del <- room
+	}()
 
 	c, _, err := Dialer.Dial(u.String(), nil)
 	if err != nil {
-		fmt.Println(err.Error())
+		logErrorf("websocket err: %v", err)
 		return
 	}
 	defer func() {
@@ -153,39 +156,35 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 			logErrorf("websocket err: %v", err)
 		}
 	}()
-	defer func() {
-		rooms.Del <- room
-	}()
 
 	now := time.Now().Unix()
 	workerData := Info{room, server, proxy, now, now, 0}
 
 	if err = c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"id":%d,"name":"joinRoom","args":["%s",{"username":"%s","displayName":"%s","location":"%s","chathost":"%s","isRu":%t,"isPerformer":false,"hasStream":false,"isLogged":false,"isPayable":false,"showType":"public"},"%s"]}`, 1, v.UserData.Chathost, v.UserData.Username, v.UserData.DisplayName, v.UserData.Location, v.UserData.Chathost, v.UserData.IsRu, v.LocalData.DataKey))); err != nil {
-		fmt.Println(err.Error())
+		logErrorf("websocket err: %v", err)
 		return
 	}
 
 	_, message, err := c.ReadMessage()
 	if err != nil {
-		fmt.Println(err.Error())
+		logErrorf("websocket err: %v", err)
 		return
 	}
 
 	slog <- saveLog{info.Id, now, string(message)}
 
 	if err = c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"id":%d,"name":"ChatModule.connect","args":["public-chat"]}`, 2))); err != nil {
-		fmt.Println(err.Error())
+		logErrorf("websocket err: %v", err)
 		return
 	}
 
 	_, message, err = c.ReadMessage()
 	if err != nil {
-		fmt.Println(err.Error())
+		logErrorf("websocket err: %v", err)
 		return
 	}
 
 	slog <- saveLog{info.Id, now, string(message)}
-	quit := make(chan bool)
 	pid := 3
 
 	go func() {
@@ -193,17 +192,17 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 		defer ticker.Stop()
 		for {
 			select {
-			case <-quit:
+			case <-chQuit:
+				fmt.Println("Exit room:", room)
 				return
 			case <-ticker.C:
 				if err = c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"id":%d,"name":"ping"}`, pid))); err != nil {
-					fmt.Println(err.Error())
+					logErrorf("websocket err: %v", err)
 					close(chWorker.Map[room].chQuit)
 					return
 				}
 				// fmt.Println("ping", room)
 				pid++
-				break
 			}
 		}
 	}()
@@ -211,15 +210,11 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 	for {
 		select {
 		case <-chQuit:
-			fmt.Println("Exit room:", room)
-			quit <- true
 			return
-
 		default:
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				fmt.Println(err.Error())
-				quit <- true
+				logErrorf("websocket err: %v", err)
 				return
 			}
 
@@ -233,20 +228,18 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 			m := &ServerResponse{}
 
 			if err = json.Unmarshal(message, m); err != nil {
-				fmt.Println(err.Error())
+				logErrorf("json err: %v", err)
 				continue
 			}
 
 			// if m.Type == "ServerMessageEvent:PERFORMER_STATUS_CHANGE" && bytes.Contains(m.Body, []byte(`offile`)) {
 			if m.Type == "ServerMessageEvent:PERFORMER_STATUS_CHANGE" && string(m.Body) == `"offline"` {
 				fmt.Println(m.Type, room)
-				quit <- true
 				return
 			}
 
 			if m.Type == "ServerMessageEvent:ROOM_CLOSE" {
 				fmt.Println(m.Type, room)
-				quit <- true
 				return
 			}
 
@@ -259,6 +252,8 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 
 					workerData.Income += d.A
 					rooms.Add <- workerData
+				} else {
+					logErrorf("json err: %v", err)
 				}
 			}
 		}
