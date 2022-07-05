@@ -35,13 +35,15 @@ type Workers struct {
 	Map map[string]*Worker
 }
 
-var memInfo runtime.MemStats
-var chWorker = &Workers{Map: make(map[string]*Worker)}
+var (
+	memInfo  runtime.MemStats
+	chWorker = &Workers{Map: make(map[string]*Worker)}
+)
 
 func removeRoom(room string) {
 	if checkWorker(room) {
 		chWorker.Lock()
-		//fmt.Printf("%v remove %v from chWorker.Map \n", time.Now().UnixMilli(), room )
+		// fmt.Printf("%v remove %v from chWorker.Map \n", time.Now().UnixMilli(), room )
 		delete(chWorker.Map, room)
 		chWorker.Unlock()
 	}
@@ -62,11 +64,11 @@ func listRooms() string {
 	return s
 }
 
-func listHandler(w http.ResponseWriter, r *http.Request) {
+func listHandler(w http.ResponseWriter, _ *http.Request) {
 	fmt.Fprint(w, listRooms())
 }
 
-func debugHandler(w http.ResponseWriter, r *http.Request) {
+func debugHandler(w http.ResponseWriter, _ *http.Request) {
 	runtime.ReadMemStats(&memInfo)
 	j, err := json.Marshal(Debug{runtime.NumGoroutine(), memInfo.Alloc, memInfo.HeapSys, uptime})
 	if err == nil {
@@ -75,16 +77,16 @@ func debugHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func cmdHandler(w http.ResponseWriter, r *http.Request) {
-	wList := map[string]bool {
-		"::1": true,
+	wList := map[string]bool{
+		"::1":       true,
 		"127.0.0.1": true,
 	}
-	
+
 	if !wList[r.Header.Get("X-REAL-IP")] {
 		fmt.Fprint(w, "403")
 		return
 	}
-	
+
 	params := r.URL.Query()
 	if len(params["room"]) > 0 && len(params["server"]) > 0 && len(params["proxy"]) > 0 {
 		room := params["room"][0]
