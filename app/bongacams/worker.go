@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/websocket"
+	jsoniter "github.com/json-iterator/go"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
-
-	"github.com/gorilla/websocket"
-	jsoniter "github.com/json-iterator/go"
 	//"bytes"
 )
 
@@ -52,6 +51,7 @@ type AnnounceDonate struct {
 }
 
 func mapRooms() {
+
 	data := make(map[string]*Info)
 
 	for {
@@ -89,6 +89,7 @@ func announceCount() {
 }
 
 func getAMF(room string) (bool, *AuthResponse) {
+
 	v := &AuthResponse{}
 
 	req, err := http.NewRequest(http.MethodPost, "https://rt.bongocams.com/tools/amf.php?res=771840&t=1654437233142", strings.NewReader(`method=getRoomData&args[]=`+room))
@@ -103,7 +104,7 @@ func getAMF(room string) (bool, *AuthResponse) {
 	req.Header.Add("User-agent", "curl/7.79.1")
 
 	rsp, err := http.DefaultClient.Do(req)
-	if err != nil || rsp.StatusCode >= 400 {
+	if err != nil {
 		fmt.Println(err.Error())
 		return false, v
 	}
@@ -118,121 +119,153 @@ func getAMF(room string) (bool, *AuthResponse) {
 }
 
 func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url.URL) {
-	// fmt.Println("Start", room, "server", server, "proxy", proxy)
+	//fmt.Println("Start", room, "server", server, "proxy", proxy)
 
 	ok, v := getAMF(room)
 	if !ok {
-		logErrorf("exit: no amf parms")
+		fmt.Println("exit: no amf parms")
 		return
 	}
 
 	Dialer := *websocket.DefaultDialer
 
-	proxyMap := make(map[string]string)
-	proxyMap["us"] = "ip:port"
-	proxyMap["fi"] = "ip:port"
-
-	if _, ok := proxyMap[proxy]; ok {
+	if _, ok := conf.Proxy[proxy]; ok {
 		Dialer = websocket.Dialer{
 			Proxy: http.ProxyURL(&url.URL{
 				Scheme: "http", // or "https" depending on your proxy
-				Host:   proxyMap[proxy],
+				Host:   conf.Proxy[proxy],
 				Path:   "/",
 			}),
 			HandshakeTimeout: 45 * time.Second, // https://pkg.go.dev/github.com/gorilla/websocket
 		}
 	}
+
+	now := time.Now().Unix()
+	workerData := Info{room, server, proxy, now, now, 0}
+	rooms.Add <- workerData
+
 	defer func() {
+		fmt.Println("defer remove map", room)
 		rooms.Del <- room
 	}()
 
 	c, _, err := Dialer.Dial(u.String(), nil)
 	if err != nil {
-		logErrorf("websocket err: %v", err)
+		fmt.Println(err.Error(), room)
 		return
 	}
+	
+	
 	defer func() {
-		if err := c.Close(); err != nil {
-			logErrorf("websocket err: %v", err)
-		}
+		fmt.Println("defer close", room)
+		c.Close()
 	}()
 
-	now := time.Now().Unix()
-	workerData := Info{room, server, proxy, now, now, 0}
-
+	
+	fmt.Println("send first", room)
+	
 	if err = c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"id":%d,"name":"joinRoom","args":["%s",{"username":"%s","displayName":"%s","location":"%s","chathost":"%s","isRu":%t,"isPerformer":false,"hasStream":false,"isLogged":false,"isPayable":false,"showType":"public"},"%s"]}`, 1, v.UserData.Chathost, v.UserData.Username, v.UserData.DisplayName, v.UserData.Location, v.UserData.Chathost, v.UserData.IsRu, v.LocalData.DataKey))); err != nil {
-		logErrorf("websocket err: %v", err)
+		fmt.Println(err.Error())
 		return
 	}
-
+	
+	fmt.Println("read first", room)
+	
 	_, message, err := c.ReadMessage()
 	if err != nil {
-		logErrorf("websocket err: %v", err)
+		fmt.Println(err.Error(), room)
 		return
 	}
 
+	fmt.Println(room, len(string(message)), string(message))
+
 	slog <- saveLog{info.Id, now, string(message)}
+	
+	if string(message) == `{"id":1,"result":{"audioAvailable":false,"freeShow":false},"error":null}` {
+		fmt.Println("room offline, exit", room)
+		return
+	}
+	
+	fmt.Println("send second", room)
 
 	if err = c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"id":%d,"name":"ChatModule.connect","args":["public-chat"]}`, 2))); err != nil {
-		logErrorf("websocket err: %v", err)
+		fmt.Println(err.Error(), room)
 		return
 	}
+	
 
+	fmt.Println("read second", room)
 	_, message, err = c.ReadMessage()
 	if err != nil {
-		logErrorf("websocket err: %v", err)
+		fmt.Println(err.Error(), room)
 		return
 	}
-
+	
+	fmt.Println(room, len(string(message)), string(message))
+	
 	slog <- saveLog{info.Id, now, string(message)}
+	quit := make(chan bool)
 	pid := 3
-
+	
+	defer func() {
+		fmt.Println("defer quit", room)
+		quit <- true
+	}()
+	
 	go func() {
+		
+		fmt.Println("anon goroutine start", room)
+		
 		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
 		for {
 			select {
-			case <-chQuit:
-				fmt.Println("Exit room:", room)
+			case <-quit:
 				return
 			case <-ticker.C:
 				if err = c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"id":%d,"name":"ping"}`, pid))); err != nil {
-					logErrorf("websocket err: %v", err)
+					fmt.Println(err.Error(), room)
 					close(chWorker.Map[room].chQuit)
 					return
 				}
-				// fmt.Println("ping", room)
+				//fmt.Println("ping", room)
 				pid++
+				break
 			}
 		}
+		
+		fmt.Println("anon goroutine stop", room)
 	}()
 
+	fmt.Println("for start", room)
 	for {
 		select {
 		case <-chQuit:
+			fmt.Println("Exit room:", room)
+			
 			return
+
 		default:
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				logErrorf("websocket err: %v", err)
+				fmt.Println(err.Error())
 				return
 			}
 
 			now = time.Now().Unix()
-
-			workerData.Last = now
-			rooms.Add <- workerData
 
 			slog <- saveLog{info.Id, now, string(message)}
 
 			m := &ServerResponse{}
 
 			if err = json.Unmarshal(message, m); err != nil {
-				logErrorf("json err: %v", err)
+				fmt.Println(err.Error(), room)
 				continue
 			}
 
-			// if m.Type == "ServerMessageEvent:PERFORMER_STATUS_CHANGE" && bytes.Contains(m.Body, []byte(`offile`)) {
+			workerData.Last = now
+			rooms.Add <- workerData
+
 			if m.Type == "ServerMessageEvent:PERFORMER_STATUS_CHANGE" && string(m.Body) == `"offline"` {
 				fmt.Println(m.Type, room)
 				return
@@ -246,16 +279,15 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 			if m.Type == "ServerMessageEvent:INCOMING_TIP" {
 				d := &DonateResponse{}
 				if err = json.Unmarshal(m.Body, d); err == nil {
-					// fmt.Println(d.F.Username, " send ", d.A, "tokens")
+					//fmt.Println(d.F.Username, " send ", d.A, "tokens")
 
 					save <- saveData{room, d.F.Username, info.Id, d.A, now}
 
 					workerData.Income += d.A
 					rooms.Add <- workerData
-				} else {
-					logErrorf("json err: %v", err)
 				}
 			}
 		}
 	}
+	fmt.Println("for stop", room)
 }

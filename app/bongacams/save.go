@@ -61,7 +61,7 @@ func saveDB() {
 
 	last := time.Now().Unix()
 	bulk := make(map[int]saveData)
-	
+
 	for {
 		select {
 		case m := <-save:
@@ -77,14 +77,14 @@ func saveDB() {
 			}
 
 			Mysql.Exec("UPDATE `room` SET `last` = ? WHERE `id` = ?", m.Now, m.Rid)
-			
+
 			num := len(bulk)
-			
+
 			bulk[num] = m
-			
+
 			now := time.Now().Unix()
 
-			if(num >= 999 || now >= last+10){
+			if num >= 999 || now >= last+10 {
 				tx, err := Mysql.Begin()
 				if err == nil {
 					for _, v := range bulk {
@@ -92,19 +92,19 @@ func saveDB() {
 					}
 				}
 				tx.Commit()
-				
+
 				tx, err = Clickhouse.Begin()
 				if err == nil {
 					st, _ := tx.Prepare("INSERT INTO stat VALUES (?, ?, ?, ?)")
-					//fmt.Println("G:", err)					
+					//fmt.Println("G:", err)
 					for _, v := range bulk {
 						st.Exec(uint32(data[v.From]), uint32(v.Rid), uint32(v.Amount), time.Unix(v.Now, 0))
 						//fmt.Println("B:", aaa, sss)
 					}
-					tx.Commit();
+					tx.Commit()
 					st.Close()
 				}
-				
+
 				last = now
 				bulk = make(map[int]saveData)
 			}
@@ -118,19 +118,21 @@ func saveLogs() {
 	for {
 		select {
 		case m := <-slog:
-			num := len(bulk)
-			bulk[num] = m
-			now := time.Now().Unix()
-			if(num >= 2047 || now >= last+10){
-				tx, err := Mysql.Begin()
-				if err == nil {
-					for _, v := range bulk {
-						tx.Exec("INSERT INTO `logs` (`rid`, `time`, `mes`) VALUES (?, ?, ?)", v.Rid, v.Now, v.Mes)
+			if len(m.Mes) > 0 {
+				num := len(bulk)
+				bulk[num] = m
+				now := time.Now().Unix()
+				if num >= 2047 || now >= last+10 {
+					tx, err := Mysql.Begin()
+					if err == nil {
+						for _, v := range bulk {
+							tx.Exec("INSERT INTO `logs` (`rid`, `time`, `mes`) VALUES (?, ?, ?)", v.Rid, v.Now, v.Mes)
+						}
+						tx.Commit()
 					}
-					tx.Commit()
+					last = now
+					bulk = make(map[int]saveLog)
 				}
-				last = now
-				bulk = make(map[int]saveLog)
 			}
 		}
 	}

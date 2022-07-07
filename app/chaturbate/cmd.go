@@ -14,18 +14,18 @@ type Info struct {
 	room   string
 	Server string `json:"server"`
 	Proxy  string `json:"proxy"`
-	Online string `json:"online"`
 	Start  int64  `json:"start"`
 	Last   int64  `json:"last"`
+	Online string `json:"online"`
 	Income int64  `json:"income"`
 }
 
 type Debug struct {
-	Process    []string
 	Goroutines int
 	Alloc      uint64
 	HeapSys    uint64
 	Uptime     int64
+	Process    []string
 }
 
 type Worker struct {
@@ -45,7 +45,7 @@ var (
 func removeRoom(room string) {
 	if checkWorker(room) {
 		chWorker.Lock()
-		// fmt.Printf("%v remove %v from chWorker.Map \n", time.Now().UnixMilli(), room )
+		//fmt.Printf("%v remove %v from chWorker.Map \n", time.Now().UnixMilli(), room )
 		delete(chWorker.Map, room)
 		chWorker.Unlock()
 	}
@@ -72,24 +72,25 @@ func listHandler(w http.ResponseWriter, _ *http.Request) {
 }
 
 func debugHandler(w http.ResponseWriter, _ *http.Request) {
-	x := []string{}
+
 	chWorker.RLock()
-	// chWorker contains pointers so we lock it for reading
-	for k := range chWorker.Map {
+	tmp := chWorker.Map
+	chWorker.RUnlock()
+
+	x := []string{}
+	for k, _ := range tmp {
 		x = append(x, k)
 	}
-	chWorker.RUnlock()
 
 	runtime.ReadMemStats(&memInfo)
 	j, err := json.Marshal(Debug{Goroutines: runtime.NumGoroutine(), Alloc: memInfo.Alloc, HeapSys: memInfo.HeapSys, Uptime: uptime, Process: x})
 	if err == nil {
 		fmt.Fprint(w, string(j))
-	} else {
-		logErrorf("json err: %v", err)
 	}
 }
 
 func cmdHandler(w http.ResponseWriter, r *http.Request) {
+
 	if !conf.List[r.Header.Get("X-REAL-IP")] {
 		fmt.Fprint(w, "403")
 		return

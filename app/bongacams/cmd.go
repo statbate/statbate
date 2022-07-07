@@ -36,14 +36,14 @@ type Workers struct {
 }
 
 var (
-	memInfo  runtime.MemStats
+	memInfo runtime.MemStats
 	chWorker = &Workers{Map: make(map[string]*Worker)}
 )
 
 func removeRoom(room string) {
 	if checkWorker(room) {
 		chWorker.Lock()
-		// fmt.Printf("%v remove %v from chWorker.Map \n", time.Now().UnixMilli(), room )
+		//fmt.Printf("%v remove %v from chWorker.Map \n", time.Now().UnixMilli(), room )
 		delete(chWorker.Map, room)
 		chWorker.Unlock()
 	}
@@ -77,12 +77,7 @@ func debugHandler(w http.ResponseWriter, _ *http.Request) {
 }
 
 func cmdHandler(w http.ResponseWriter, r *http.Request) {
-	wList := map[string]bool{
-		"::1":       true,
-		"127.0.0.1": true,
-	}
-
-	if !wList[r.Header.Get("X-REAL-IP")] {
+	if !conf.List[r.Header.Get("X-REAL-IP")] {
 		fmt.Fprint(w, "403")
 		return
 	}
@@ -92,23 +87,25 @@ func cmdHandler(w http.ResponseWriter, r *http.Request) {
 		room := params["room"][0]
 		server := params["server"][0]
 		proxy := params["proxy"][0]
-		if !checkWorker(room) {
-
-			info, ok := getRoomInfo(room)
-			if !ok {
-				fmt.Println("No room in MySQL:", room)
-				return
-			}
-
-			chQuit := make(chan struct{})
-
-			chWorker.Lock()
-			chWorker.Map[room] = &Worker{chQuit: chQuit}
-			chWorker.Unlock()
-
-			go statRoom(chQuit, room, server, proxy, info, url.URL{Scheme: "wss", Host: server + ".bcccdn.com", Path: "/websocket"})
-
+		if checkWorker(room) {
+			fmt.Println("Already track:", room)
+			return
 		}
+
+		info, ok := getRoomInfo(room)
+		if !ok {
+			fmt.Println("No room in MySQL:", room)
+			return
+		}
+
+		chQuit := make(chan struct{})
+
+		chWorker.Lock()
+		chWorker.Map[room] = &Worker{chQuit: chQuit}
+		chWorker.Unlock()
+
+		go statRoom(chQuit, room, server, proxy, info, url.URL{Scheme: "wss", Host: server + ".bcccdn.com", Path: "/websocket"})
+
 	}
 	if len(params["exit"]) > 0 {
 		room := strings.Join(params["exit"], "")

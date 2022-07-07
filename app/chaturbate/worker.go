@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -33,6 +34,7 @@ type AnnounceDonate struct {
 }
 
 func mapRooms() {
+
 	data := make(map[string]*Info)
 
 	for {
@@ -44,8 +46,6 @@ func mapRooms() {
 			j, err := json.Marshal(data)
 			if err == nil {
 				s = string(j)
-			} else {
-				logErrorf("json err: %v", err)
 			}
 			rooms.Json <- s
 
@@ -71,7 +71,27 @@ func announceCount() {
 	}
 }
 
+func randString(n int) string {
+	const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	var bytes = make([]byte, n)
+	rand.Read(bytes)
+	for i, b := range bytes {
+		bytes[i] = alphanum[b%byte(len(alphanum))]
+	}
+	return string(bytes)
+}
+
+func reconnectRoom(room, server, proxy string) {
+	rand.Seed(time.Now().UnixNano())
+	n := rand.Intn(30-10+1) + 10
+	fmt.Printf("Sleeping %d seconds...\n", n)
+	time.Sleep(time.Duration(n) * time.Second)
+	fmt.Println("reconnect:", room, server, proxy)
+	http.Get("https://statbate.com/cmd/?room=" + room + "&server=" + server + "&proxy=" + proxy)
+}
+
 func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url.URL) {
+
 	fmt.Println("Start", room, "server", server, "proxy", proxy)
 
 	now := time.Now().Unix()
@@ -80,6 +100,10 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 	timeout := now
 
 	rooms.Add <- workerData
+
+	defer func() {
+		rooms.Del <- room
+	}()
 
 	Dialer := *websocket.DefaultDialer
 
@@ -94,20 +118,12 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 		}
 	}
 
-	defer func() {
-		rooms.Del <- room
-	}()
-
 	c, _, err := Dialer.Dial(u.String(), nil)
 	if err != nil {
-		logErrorf("dial err: %v room: %v", err, room)
+		fmt.Println(err.Error(), room)
 		return
 	}
-	defer func() {
-		if err = c.Close(); err != nil {
-			logErrorf("socket err: %v room: %v", err, room)
-		}
-	}()
+	defer c.Close()
 
 	for {
 
@@ -120,7 +136,7 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 
 		_, message, err := c.ReadMessage()
 		if err != nil {
-			logErrorf("websocket err: %v room: %v", err, room)
+			fmt.Println(err.Error(), room)
 			return
 		}
 
@@ -132,11 +148,12 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 		}
 
 		m := string(message)
-		slog <- saveLog{Rid: info.Id, Now: now, Mes: m}
+		slog <- saveLog{info.Id, now, m}
 
 		if m == "o" {
-			if err = c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"connect\",\"data\":{\"user\":\"__anonymous__777\",\"password\":\"anonymous\",\"room\":\"`+room+`\",\"room_password\":\"12345\"}}"]`)); err != nil {
-				logErrorf("websocket err: %v room: %v", err, room)
+			anon := "__anonymous__" + randString(9)
+			if err = c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"connect\",\"data\":{\"user\":\"`+anon+`\",\"password\":\"anonymous\",\"room\":\"`+room+`\",\"room_password\":\"12345\"}}"]`)); err != nil {
+				fmt.Println(err.Error(), room)
 				return
 			}
 			continue
@@ -144,7 +161,7 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 
 		if m == "h" {
 			if err = c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"updateRoomCount\",\"data\":{\"model_name\":\"`+room+`\",\"private_room\":\"false\"}}"]`)); err != nil {
-				logErrorf("websocket err: %v room: %v", err, room)
+				fmt.Println(err.Error(), room)
 				return
 			}
 			continue
@@ -152,21 +169,18 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 
 		// remove a[...]
 		if len(m) > 3 && m[0:2] == "a[" {
-			m, err = strconv.Unquote(m[2 : len(m)-1])
-			if err != nil {
-				logErrorf("unquote err: %v room: %v", err, room)
-			}
+			m, _ = strconv.Unquote(m[2 : len(m)-1])
 		}
 
 		input := Input{}
 		if err := json.Unmarshal([]byte(m), &input); err != nil {
-			logErrorf("json err: %v room: %v", err, room)
+			fmt.Println(err.Error(), room)
 			continue
 		}
 
 		if input.Method == "onAuthResponse" {
 			if err = c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"joinRoom\",\"data\":{\"room\":\"`+room+`\"}}"]`)); err != nil {
-				logErrorf("websocket err: %v room: %v", err, room)
+				fmt.Println(err.Error(), room)
 				return
 			}
 			continue
@@ -185,8 +199,6 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 					fmt.Println("few viewers room:", room)
 					return
 				}
-			} else {
-				logErrorf("atoi err: %v", err)
 			}
 			workerData.Online = input.Args[0]
 			rooms.Add <- workerData
@@ -195,6 +207,7 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 
 		if input.Method == "onPersonallyKicked" {
 			fmt.Println("onPersonallyKicked room:", room)
+			go reconnectRoom(room, server, proxy)
 			return
 		}
 
@@ -203,7 +216,7 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 			workerData.Last = now
 			rooms.Add <- workerData
 			if err := json.Unmarshal([]byte(input.Args[0]), &donate); err != nil {
-				logErrorf("json err: %v room: %v", err, room)
+				fmt.Println(err.Error(), room)
 				continue
 			}
 			if len(donate.From) > 3 && donate.Amount > 0 {
@@ -214,8 +227,8 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 
 				timeout = now
 
-				// fmt.Println(donate.From)
-				// fmt.Println(donate.Amount)
+				//fmt.Println(donate.From)
+				//fmt.Println(donate.Amount)
 			}
 		}
 	}
