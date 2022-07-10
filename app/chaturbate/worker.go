@@ -154,6 +154,11 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 			return
 		}
 
+		if now > workerData.Last+60*20 {
+			fmt.Println("no_mes exit:", room)
+			return
+		}
+
 		if m == "o" {
 			anon := "__anonymous__" + randString(9)
 			if err = c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"connect\",\"data\":{\"user\":\"`+anon+`\",\"password\":\"anonymous\",\"room\":\"`+room+`\",\"room_password\":\"12345\"}}"]`)); err != nil {
@@ -226,6 +231,12 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 				continue
 			}
 
+			if arg.Type == "clear_app" {
+				leave = true
+				timeout = now + 60*10
+				continue
+			}
+
 			if arg.Type == "room_leave" && room == arg.Name {
 				leave = true
 				timeout = now + 60*10
@@ -243,7 +254,9 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 				save <- saveData{room, arg.From, info.Id, arg.Amount, now}
 				workerData.Income += arg.Amount
 				rooms.Add <- workerData
-				timeout = now + 60*10
+				if leave {
+					timeout = now + 60*20
+				}
 
 				// fmt.Println(donate.From)
 				// fmt.Println(donate.Amount)
