@@ -117,8 +117,11 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 		return
 	}
 	defer c.Close()
-	
+
 	c.SetReadDeadline(time.Now().Add(30 * time.Minute))
+
+	leave := false
+	var timeout int64
 
 	for {
 
@@ -139,6 +142,11 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 
 		m := string(message)
 		slog <- saveLog{info.Id, now, m}
+
+		if leave && now > timeout {
+			fmt.Println("room_leave exit:", room)
+			return
+		}
 
 		if m == "o" {
 			anon := "__anonymous__" + randString(9)
@@ -212,15 +220,24 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 				continue
 			}
 
-			if jsonMap["type"] == "room_leave" && room == jsonMap["username"] {
-				fmt.Println("room_leave:", room)
-				return
+			if jsonMap["type"] == "room_leave" && room == jsonMap["username"].(string) {
+				leave = true
+				timeout = now + 60*10
+				//fmt.Println("room_leave:", room)
+				continue
 			}
 
-			if jsonMap["type"] == "tip_alert" && len(jsonMap["from_username"].(string)) > 3 && jsonMap["amount"].(int64) > 0 {
-				save <- saveData{room, jsonMap["from_username"].(string), info.Id, jsonMap["amount"].(int64), now}
-				workerData.Income += jsonMap["amount"].(int64)
+			if jsonMap["type"] == "room_entry" && room == jsonMap["username"].(string) {
+				leave = false
+				//fmt.Println("room_entry:", room)
+				continue
+			}
+
+			if jsonMap["type"] == "tip_alert" && len(jsonMap["from_username"].(string)) > 3 && int64(jsonMap["amount"].(float64)) > 0 {
+				save <- saveData{room, jsonMap["from_username"].(string), info.Id, int64(jsonMap["amount"].(float64)), now}
+				workerData.Income += int64(jsonMap["amount"].(float64))
 				rooms.Add <- workerData
+				timeout = now + 60*10
 
 				// fmt.Println(donate.From)
 				// fmt.Println(donate.Amount)
