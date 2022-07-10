@@ -119,6 +119,8 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 		return
 	}
 	defer c.Close()
+	
+	c.SetReadDeadline(time.Now().Add(30 * time.Minute))
 
 	for {
 
