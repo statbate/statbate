@@ -34,7 +34,7 @@ var rooms = &Rooms{
 
 func main() {
 	startConfig()
-	
+
 	initMysql()
 	initClickhouse()
 

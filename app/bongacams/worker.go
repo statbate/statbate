@@ -154,23 +154,23 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 		fmt.Println(err.Error(), room)
 		return
 	}
-	
-	
+
 	defer func() {
 		fmt.Println("defer close", room)
 		c.Close()
 	}()
 
-	
+	c.SetReadDeadline(time.Now().Add(60 * time.Second))
+
 	fmt.Println("send first", room)
-	
+
 	if err = c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"id":%d,"name":"joinRoom","args":["%s",{"username":"%s","displayName":"%s","location":"%s","chathost":"%s","isRu":%t,"isPerformer":false,"hasStream":false,"isLogged":false,"isPayable":false,"showType":"public"},"%s"]}`, 1, v.UserData.Chathost, v.UserData.Username, v.UserData.DisplayName, v.UserData.Location, v.UserData.Chathost, v.UserData.IsRu, v.LocalData.DataKey))); err != nil {
 		fmt.Println(err.Error())
 		return
 	}
-	
+
 	fmt.Println("read first", room)
-	
+
 	_, message, err := c.ReadMessage()
 	if err != nil {
 		fmt.Println(err.Error(), room)
@@ -180,19 +180,18 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 	fmt.Println(room, len(string(message)), string(message))
 
 	slog <- saveLog{info.Id, now, string(message)}
-	
+
 	if string(message) == `{"id":1,"result":{"audioAvailable":false,"freeShow":false},"error":null}` {
 		fmt.Println("room offline, exit", room)
 		return
 	}
-	
+
 	fmt.Println("send second", room)
 
 	if err = c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"id":%d,"name":"ChatModule.connect","args":["public-chat"]}`, 2))); err != nil {
 		fmt.Println(err.Error(), room)
 		return
 	}
-	
 
 	fmt.Println("read second", room)
 	_, message, err = c.ReadMessage()
@@ -200,22 +199,19 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 		fmt.Println(err.Error(), room)
 		return
 	}
-	
+
 	fmt.Println(room, len(string(message)), string(message))
-	
+
 	slog <- saveLog{info.Id, now, string(message)}
 	quit := make(chan bool)
 	pid := 3
-	
+
 	defer func() {
 		fmt.Println("defer quit", room)
 		quit <- true
 	}()
-	
+
 	go func() {
-		
-		fmt.Println("anon goroutine start", room)
-		
 		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
 		for {
@@ -228,24 +224,20 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 					close(chWorker.Map[room].chQuit)
 					return
 				}
-				//fmt.Println("ping", room)
 				pid++
 				break
 			}
 		}
-		
-		fmt.Println("anon goroutine stop", room)
 	}()
 
-	fmt.Println("for start", room)
 	for {
 		select {
 		case <-chQuit:
 			fmt.Println("Exit room:", room)
-			
 			return
 
 		default:
+			c.SetReadDeadline(time.Now().Add(30 * time.Minute))
 			_, message, err := c.ReadMessage()
 			if err != nil {
 				fmt.Println(err.Error())
@@ -289,5 +281,4 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 			}
 		}
 	}
-	fmt.Println("for stop", room)
 }

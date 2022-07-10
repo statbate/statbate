@@ -36,7 +36,7 @@ type Workers struct {
 }
 
 var (
-	memInfo runtime.MemStats
+	memInfo  runtime.MemStats
 	chWorker = &Workers{Map: make(map[string]*Worker)}
 )
 

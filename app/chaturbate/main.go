@@ -17,8 +17,8 @@ import (
 type Rooms struct {
 	Count chan int
 	Json  chan string
-	Add   chan Info
 	Del   chan string
+	Add   chan Info
 }
 
 var (
@@ -34,8 +34,8 @@ var (
 	rooms = &Rooms{
 		Count: make(chan int),
 		Json:  make(chan string),
-		Add:   make(chan Info),
 		Del:   make(chan string),
+		Add:   make(chan Info),
 	}
 )
 

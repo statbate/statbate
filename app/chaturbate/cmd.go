@@ -14,17 +14,17 @@ type Info struct {
 	room   string
 	Server string `json:"server"`
 	Proxy  string `json:"proxy"`
+	Online string `json:"online"`
 	Start  int64  `json:"start"`
 	Last   int64  `json:"last"`
-	Online string `json:"online"`
 	Income int64  `json:"income"`
 }
 
 type Debug struct {
 	Goroutines int
+	Uptime     int64
 	Alloc      uint64
 	HeapSys    uint64
-	Uptime     int64
 	Process    []string
 }
 

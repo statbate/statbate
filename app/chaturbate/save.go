@@ -118,19 +118,21 @@ func saveLogs() {
 	for {
 		select {
 		case m := <-slog:
-			num := len(bulk)
-			bulk[num] = m
-			now := time.Now().Unix()
-			if num >= 2047 || now >= last+10 {
-				tx, err := Mysql.Begin()
-				if err == nil {
-					for _, v := range bulk {
-						tx.Exec("INSERT INTO `logs` (`rid`, `time`, `mes`) VALUES (?, ?, ?)", v.Rid, v.Now, v.Mes)
+			if len(m.Mes) > 0 {
+				num := len(bulk)
+				bulk[num] = m
+				now := time.Now().Unix()
+				if num >= 2047 || now >= last+10 {
+					tx, err := Mysql.Begin()
+					if err == nil {
+						for _, v := range bulk {
+							tx.Exec("INSERT INTO `logs` (`rid`, `time`, `mes`) VALUES (?, ?, ?)", v.Rid, v.Now, v.Mes)
+						}
+						tx.Commit()
 					}
-					tx.Commit()
+					last = now
+					bulk = make(map[int]saveLog)
 				}
-				last = now
-				bulk = make(map[int]saveLog)
 			}
 		}
 	}
