@@ -92,8 +92,6 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 	now := time.Now().Unix()
 	workerData := Info{room: room, Server: server, Proxy: proxy, Start: now, Last: now, Online: "0", Income: 0}
 
-	timeout := now
-
 	rooms.Add <- workerData
 
 	defer func() {
@@ -138,11 +136,6 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 		}
 
 		now = time.Now().Unix()
-
-		if now > workerData.Last+60*15 || now > timeout+60*60*2 {
-			fmt.Println("Timeout room:", room)
-			return
-		}
 
 		m := string(message)
 		slog <- saveLog{info.Id, now, m}
@@ -228,7 +221,6 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 				save <- saveData{room, jsonMap["from_username"].(string), info.Id, jsonMap["amount"].(int64), now}
 				workerData.Income += jsonMap["amount"].(int64)
 				rooms.Add <- workerData
-				timeout = now
 
 				// fmt.Println(donate.From)
 				// fmt.Println(donate.Amount)
