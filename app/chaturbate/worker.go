@@ -18,6 +18,13 @@ type Input struct {
 	Args   []string `json:"args"`
 }
 
+type InputArgs struct {
+	Type   string `json:"type"`
+	Name   string `json:"username"`
+	From   string `json:"from_username"`
+	Amount int64  `json:"amount"`
+}
+
 type AnnounceCount struct {
 	Count int `json:"count"`
 }
@@ -118,8 +125,6 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 	}
 	defer c.Close()
 
-	c.SetReadDeadline(time.Now().Add(30 * time.Minute))
-
 	leave := false
 	var timeout int64
 
@@ -132,6 +137,7 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 		default:
 		}
 
+		c.SetReadDeadline(time.Now().Add(30 * time.Minute))
 		_, message, err := c.ReadMessage()
 		if err != nil {
 			fmt.Println(err.Error(), room)
@@ -213,29 +219,29 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 			workerData.Last = now
 			rooms.Add <- workerData
 
-			jsonMap := make(map[string]interface{})
+			arg := InputArgs{}
 
-			if err := json.Unmarshal([]byte(input.Args[0]), &jsonMap); err != nil {
+			if err := json.Unmarshal([]byte(input.Args[0]), &arg); err != nil {
 				fmt.Println(err.Error(), room)
 				continue
 			}
 
-			if jsonMap["type"] == "room_leave" && room == jsonMap["username"].(string) {
+			if arg.Type == "room_leave" && room == arg.Name {
 				leave = true
 				timeout = now + 60*10
 				//fmt.Println("room_leave:", room)
 				continue
 			}
 
-			if jsonMap["type"] == "room_entry" && room == jsonMap["username"].(string) {
+			if arg.Type == "room_entry" && room == arg.Name {
 				leave = false
 				//fmt.Println("room_entry:", room)
 				continue
 			}
 
-			if jsonMap["type"] == "tip_alert" && len(jsonMap["from_username"].(string)) > 3 && int64(jsonMap["amount"].(float64)) > 0 {
-				save <- saveData{room, jsonMap["from_username"].(string), info.Id, int64(jsonMap["amount"].(float64)), now}
-				workerData.Income += int64(jsonMap["amount"].(float64))
+			if arg.Type == "tip_alert" && len(arg.From) > 3 && arg.Amount > 0 {
+				save <- saveData{room, arg.From, info.Id, arg.Amount, now}
+				workerData.Income += arg.Amount
 				rooms.Add <- workerData
 				timeout = now + 60*10
 
