@@ -18,11 +18,6 @@ type Input struct {
 	Args   []string `json:"args"`
 }
 
-type Donate struct {
-	From   string `json:"from_username"`
-	Amount int64  `json:"amount"`
-}
-
 type AnnounceCount struct {
 	Count int `json:"count"`
 }
@@ -211,24 +206,30 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 			return
 		}
 
-		donate := Donate{}
 		if input.Method == "onNotify" {
 			workerData.Last = now
 			rooms.Add <- workerData
-			if err := json.Unmarshal([]byte(input.Args[0]), &donate); err != nil {
+
+			jsonMap := make(map[string]interface{})
+
+			if err := json.Unmarshal([]byte(input.Args[0]), &jsonMap); err != nil {
 				fmt.Println(err.Error(), room)
 				continue
 			}
-			if len(donate.From) > 3 && donate.Amount > 0 {
-				save <- saveData{room, donate.From, info.Id, donate.Amount, now}
 
-				workerData.Income += donate.Amount
+			if jsonMap["type"] == "room_leave" && room == jsonMap["username"] {
+				fmt.Println("room_leave:", room)
+				return
+			}
+
+			if jsonMap["type"] == "tip_alert" && len(jsonMap["from_username"].(string)) > 3 && jsonMap["amount"].(int64) > 0 {
+				save <- saveData{room, jsonMap["from_username"].(string), info.Id, jsonMap["amount"].(int64), now}
+				workerData.Income += jsonMap["amount"].(int64)
 				rooms.Add <- workerData
-
 				timeout = now
 
-				//fmt.Println(donate.From)
-				//fmt.Println(donate.Amount)
+				// fmt.Println(donate.From)
+				// fmt.Println(donate.Amount)
 			}
 		}
 	}
