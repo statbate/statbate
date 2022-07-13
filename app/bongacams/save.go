@@ -1,7 +1,9 @@
 package main
 
-//import "fmt"
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type tID struct {
 	Id int64 `db:"id"`
@@ -19,6 +21,11 @@ type saveLog struct {
 	Rid int64
 	Now int64
 	Mes string
+}
+
+type DonatorCache struct {
+	Id   int64
+	Last int64
 }
 
 func getDonId(name string) int64 {
@@ -42,38 +49,31 @@ func getRoomInfo(name string) (*tID, bool) {
 }
 
 func saveDB() {
-	var id int64
-	var name string
-
-	data := make(map[string]int64)
-
-	rows, err := Mysql.Query("SELECT * FROM donator")
-	if err == nil {
-		for rows.Next() {
-			err := rows.Scan(&id, &name)
-			if err == nil {
-				data[name] = id
-			}
-		}
-	}
-
-	//fmt.Println("donators in cache:", len(data
-
 	last := time.Now().Unix()
 	bulk := make(map[int]saveData)
+	data := make(map[string]*DonatorCache)
 
 	for {
 		select {
 		case m := <-save:
 			//fmt.Println("Save channel:", len(save), cap(save))
-			if _, ok := data[m.From]; !ok {
-				data[m.From] = getDonId(m.From)
+
+			now := time.Now().Unix()
+
+			if _, ok := data[m.From]; ok {
+				data[m.From].Last = now
+			} else {
+				data[m.From] = &DonatorCache{Id: getDonId(m.From), Last: now}
 			}
-			if m.Amount > 99 {
-				msg, err := json.Marshal(AnnounceDonate{Room: m.Room, Donator: m.From, Amount: m.Amount})
-				if err == nil {
-					hub.broadcast <- msg
+
+			if randInt(0, 10000) == 777 { // 0.001%
+				l := len(data)
+				for k, v := range data {
+					if now > v.Last+60*60*48 {
+						delete(data, k)
+					}
 				}
+				fmt.Println("Clean map:", l, "=>", len(data))
 			}
 
 			Mysql.Exec("UPDATE `room` SET `last` = ? WHERE `id` = ?", m.Now, m.Rid)
@@ -82,13 +82,11 @@ func saveDB() {
 
 			bulk[num] = m
 
-			now := time.Now().Unix()
-
 			if num >= 999 || now >= last+10 {
 				tx, err := Mysql.Begin()
 				if err == nil {
 					for _, v := range bulk {
-						tx.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)", data[v.From], v.Rid, v.Amount, v.Now)
+						tx.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)", data[v.From].Id, v.Rid, v.Amount, v.Now)
 					}
 				}
 				tx.Commit()
@@ -98,7 +96,7 @@ func saveDB() {
 					st, _ := tx.Prepare("INSERT INTO stat VALUES (?, ?, ?, ?)")
 					//fmt.Println("G:", err)
 					for _, v := range bulk {
-						st.Exec(uint32(data[v.From]), uint32(v.Rid), uint32(v.Amount), time.Unix(v.Now, 0))
+						st.Exec(uint32(data[v.From].Id), uint32(v.Rid), uint32(v.Amount), time.Unix(v.Now, 0))
 						//fmt.Println("B:", aaa, sss)
 					}
 					tx.Commit()
@@ -107,6 +105,12 @@ func saveDB() {
 
 				last = now
 				bulk = make(map[int]saveData)
+			}
+			if m.Amount > 99 {
+				msg, err := json.Marshal(AnnounceDonate{Room: m.Room, Donator: m.From, Amount: m.Amount})
+				if err == nil {
+					hub.broadcast <- msg
+				}
 			}
 		}
 	}

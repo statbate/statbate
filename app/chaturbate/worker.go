@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -73,19 +72,8 @@ func announceCount() {
 	}
 }
 
-func randString(n int) string {
-	const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	var bytes = make([]byte, n)
-	rand.Read(bytes)
-	for i, b := range bytes {
-		bytes[i] = alphanum[b%byte(len(alphanum))]
-	}
-	return string(bytes)
-}
-
 func reconnectRoom(room, server, proxy string) {
-	rand.Seed(time.Now().UnixNano())
-	n := rand.Intn(30-10+1) + 10
+	n := randInt(10, 30)
 	fmt.Printf("Sleeping %d seconds...\n", n)
 	time.Sleep(time.Duration(n) * time.Second)
 	fmt.Println("reconnect:", room, server, proxy)

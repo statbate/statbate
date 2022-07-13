@@ -1,14 +1,17 @@
 package main
 
 import (
+	"log"
+	"math/rand"
+	"net"
+	"net/http"
+	"os"
+	"time"
+
 	_ "github.com/ClickHouse/clickhouse-go"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	jsoniter "github.com/json-iterator/go"
-	"log"
-	"net"
-	"net/http"
-	"os"
 )
 
 type Rooms struct {
@@ -33,6 +36,8 @@ var rooms = &Rooms{
 }
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
+
 	startConfig()
 
 	initMysql()
@@ -74,4 +79,8 @@ func initClickhouse() {
 		panic(err)
 	}
 	Clickhouse = db
+}
+
+func randInt(min int, max int) int {
+	return min + rand.Intn(max-min)
 }
