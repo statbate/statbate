@@ -112,14 +112,18 @@ func fastStart() {
 		fmt.Println(err)
 		return
 	}
-	list := make(map[string]*Info)
+	list := make(map[string]Info)
 	if err := json.Unmarshal(val, &list); err != nil {
 		fmt.Println(err.Error())
 		return
 	}
+	now := time.Now().Unix()
 	for k, v := range list {
+		if now > v.Last+60*30 {
+			continue
+		}
 		fmt.Println("fastStart:", k, v.Server, v.Proxy)
-		http.Get("https://statbate.com/cmd/?room=" + k + "&server=" + v.Server + "&proxy=" + v.Proxy)
+		startRoom(k, v.Server, v.Proxy)
 		time.Sleep(100 * time.Millisecond)
 	}
 }

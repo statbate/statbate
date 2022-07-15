@@ -66,16 +66,6 @@ func saveDB() {
 				data[m.From] = &DonatorCache{Id: getDonId(m.From), Last: now}
 			}
 
-			if randInt(0, 10000) == 777 { // 0.001%
-				l := len(data)
-				for k, v := range data {
-					if now > v.Last+60*60*48 {
-						delete(data, k)
-					}
-				}
-				fmt.Println("Clean map:", l, "=>", len(data))
-			}
-
 			Mysql.Exec("UPDATE `room` SET `last` = ? WHERE `id` = ?", m.Now, m.Rid)
 
 			num := len(bulk)
@@ -111,6 +101,15 @@ func saveDB() {
 				if err == nil {
 					hub.broadcast <- msg
 				}
+			}
+			if randInt(0, 10000) == 777 { // 0.001%
+				l := len(data)
+				for k, v := range data {
+					if now > v.Last+60*60*48 {
+						delete(data, k)
+					}
+				}
+				fmt.Println("Clean map:", l, "=>", len(data))
 			}
 		}
 	}

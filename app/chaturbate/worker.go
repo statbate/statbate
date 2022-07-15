@@ -41,7 +41,7 @@ func mapRooms() {
 	for {
 		select {
 		case m := <-rooms.Add:
-			data[m.room] = &Info{Server: m.Server, Proxy: m.Proxy, Start: m.Start, Last: m.Last, Online: m.Online, Income: m.Income}
+			data[m.room] = &Info{Server: m.Server, Proxy: m.Proxy, Start: m.Start, Last: m.Last, Online: m.Online, Income: m.Income, Dons: m.Dons, Tips: m.Tips}
 
 		case s := <-rooms.Json:
 			j, err := json.Marshal(data)
@@ -77,15 +77,15 @@ func reconnectRoom(room, server, proxy string) {
 	fmt.Printf("Sleeping %d seconds...\n", n)
 	time.Sleep(time.Duration(n) * time.Second)
 	fmt.Println("reconnect:", room, server, proxy)
-	http.Get("https://statbate.com/cmd/?room=" + room + "&server=" + server + "&proxy=" + proxy)
+	startRoom(room, server, proxy)
 }
 
-func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url.URL) {
+func xWorker(chQuit chan struct{}, room, server, proxy string, info *tID, u url.URL) {
 
 	fmt.Println("Start", room, "server", server, "proxy", proxy)
 
 	now := time.Now().Unix()
-	workerData := Info{room: room, Server: server, Proxy: proxy, Start: now, Last: now, Online: "0", Income: 0}
+	workerData := Info{room: room, Server: server, Proxy: proxy, Start: now, Last: now, Online: "0", Income: 0, Dons: 0, Tips: 0}
 
 	rooms.Add <- workerData
 
@@ -115,6 +115,8 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 
 	leave := false
 	var timeout int64
+	
+	dons := make(map[string]struct{})
 
 	for {
 
@@ -239,6 +241,11 @@ func statRoom(chQuit chan struct{}, room, server, proxy string, info *tID, u url
 			}
 
 			if arg.Type == "tip_alert" && len(arg.From) > 3 && arg.Amount > 0 {
+				workerData.Tips++
+				if _, ok := dons[arg.From]; !ok {
+					dons[arg.From] = struct{}{}
+					workerData.Dons++
+				}
 				save <- saveData{room, arg.From, info.Id, arg.Amount, now}
 				workerData.Income += arg.Amount
 				rooms.Add <- workerData

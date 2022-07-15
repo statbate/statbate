@@ -18,6 +18,8 @@ type Info struct {
 	Start  int64  `json:"start"`
 	Last   int64  `json:"last"`
 	Income int64  `json:"income"`
+	Dons   int64  `json:"dons"`
+	Tips   int64  `json:"tips"`
 }
 
 type Debug struct {
@@ -90,43 +92,47 @@ func debugHandler(w http.ResponseWriter, _ *http.Request) {
 }
 
 func cmdHandler(w http.ResponseWriter, r *http.Request) {
-
 	if !conf.List[r.Header.Get("X-REAL-IP")] {
 		fmt.Fprint(w, "403")
 		return
 	}
-
 	params := r.URL.Query()
-	if len(params["room"]) > 0 && len(params["server"]) > 0 && len(params["proxy"]) > 0 {
-		room := params["room"][0]
-		server := params["server"][0]
-		proxy := params["proxy"][0]
-		if checkWorker(room) {
-			fmt.Println("Already track:", room)
-			return
-		}
-
-		info, ok := getRoomInfo(room)
-		if !ok {
-			fmt.Println("No room in MySQL:", room)
-			return
-		}
-
-		chQuit := make(chan struct{})
-
-		chWorker.Lock()
-		chWorker.Map[room] = &Worker{chQuit: chQuit}
-		chWorker.Unlock()
-
-		go statRoom(chQuit, room, server, proxy, info, url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"})
+	if len(params["room"]) > 0 && len(params["server"]) > 0 && len(params["proxy"]) > 0 {		
+		startRoom(params["room"][0], params["server"][0], params["proxy"][0])
 	}
 	if len(params["exit"]) > 0 {
 		room := strings.Join(params["exit"], "")
-		if checkWorker(room) {
-			chWorker.Lock()
-			close(chWorker.Map[room].chQuit) // exit gorutine
-			chWorker.Unlock()
-			removeRoom(room)
-		}
+		stopRoom(room)
+	}
+	fmt.Fprint(w, string("ok"))
+}
+
+func startRoom(room, server, proxy string){
+	if checkWorker(room) {
+		fmt.Println("Already track:", room)
+		return
+	}
+	
+	info, ok := getRoomInfo(room)
+	if !ok {
+		fmt.Println("No room in MySQL:", room)
+		return
+	}
+	
+	chQuit := make(chan struct{})
+
+	chWorker.Lock()
+	chWorker.Map[room] = &Worker{chQuit: chQuit}
+	chWorker.Unlock()
+	
+	go xWorker(chQuit, room, server, proxy, info, url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"})
+}
+
+func stopRoom(room string){
+	if checkWorker(room) {
+		chWorker.Lock()
+		close(chWorker.Map[room].chQuit) // exit gorutine
+		chWorker.Unlock()
+		removeRoom(room)
 	}
 }
