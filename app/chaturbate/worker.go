@@ -72,34 +72,31 @@ func announceCount() {
 	}
 }
 
-func reconnectRoom(room, server, proxy string) {
+func reconnectRoom(workerData Info) {
 	n := randInt(10, 30)
 	fmt.Printf("Sleeping %d seconds...\n", n)
 	time.Sleep(time.Duration(n) * time.Second)
-	fmt.Println("reconnect:", room, server, proxy)
-	startRoom(room, server, proxy)
+	fmt.Println("reconnect:", workerData.room, workerData.Server, workerData.Proxy)
+	startRoom(workerData)
 }
 
-func xWorker(chQuit chan struct{}, room, server, proxy string, info *tID, u url.URL) {
+func xWorker(chQuit chan struct{}, workerData Info, u url.URL) {
 
-	fmt.Println("Start", room, "server", server, "proxy", proxy)
-
-	now := time.Now().Unix()
-	workerData := Info{room: room, Server: server, Proxy: proxy, Start: now, Last: now, Online: "0", Income: 0, Dons: 0, Tips: 0}
+	fmt.Println("Start", workerData.room, "server", workerData.Server, "proxy", workerData.Proxy)
 
 	rooms.Add <- workerData
 
 	defer func() {
-		rooms.Del <- room
+		rooms.Del <- workerData.room
 	}()
 
 	Dialer := *websocket.DefaultDialer
 
-	if _, ok := conf.Proxy[proxy]; ok {
+	if _, ok := conf.Proxy[workerData.Proxy]; ok {
 		Dialer = websocket.Dialer{
 			Proxy: http.ProxyURL(&url.URL{
 				Scheme: "http", // or "https" depending on your proxy
-				Host:   conf.Proxy[proxy],
+				Host:   conf.Proxy[workerData.Proxy],
 				Path:   "/",
 			}),
 			HandshakeTimeout: 45 * time.Second, // https://pkg.go.dev/github.com/gorilla/websocket
@@ -108,21 +105,21 @@ func xWorker(chQuit chan struct{}, room, server, proxy string, info *tID, u url.
 
 	c, _, err := Dialer.Dial(u.String(), nil)
 	if err != nil {
-		fmt.Println(err.Error(), room)
+		fmt.Println(err.Error(), workerData.room)
 		return
 	}
 	defer c.Close()
 
 	leave := false
 	var timeout int64
-	
+
 	dons := make(map[string]struct{})
 
 	for {
 
 		select {
 		case <-chQuit:
-			fmt.Println("Exit room:", room)
+			fmt.Println("Exit room:", workerData.room)
 			return
 		default:
 		}
@@ -130,37 +127,37 @@ func xWorker(chQuit chan struct{}, room, server, proxy string, info *tID, u url.
 		c.SetReadDeadline(time.Now().Add(30 * time.Minute))
 		_, message, err := c.ReadMessage()
 		if err != nil {
-			fmt.Println(err.Error(), room)
+			fmt.Println(err.Error(), workerData.room)
 			return
 		}
 
-		now = time.Now().Unix()
+		now := time.Now().Unix()
 
 		m := string(message)
-		slog <- saveLog{info.Id, now, m}
+		slog <- saveLog{Rid: workerData.Rid, Now: now, Mes: m}
 
 		if leave && now > timeout {
-			fmt.Println("room_leave exit:", room)
+			fmt.Println("room_leave exit:", workerData.room)
 			return
 		}
 
 		if now > workerData.Last+60*20 {
-			fmt.Println("no_mes exit:", room)
+			fmt.Println("no_mes exit:", workerData.room)
 			return
 		}
 
 		if m == "o" {
 			anon := "__anonymous__" + randString(9)
-			if err = c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"connect\",\"data\":{\"user\":\"`+anon+`\",\"password\":\"anonymous\",\"room\":\"`+room+`\",\"room_password\":\"12345\"}}"]`)); err != nil {
-				fmt.Println(err.Error(), room)
+			if err = c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"connect\",\"data\":{\"user\":\"`+anon+`\",\"password\":\"anonymous\",\"room\":\"`+workerData.room+`\",\"room_password\":\"12345\"}}"]`)); err != nil {
+				fmt.Println(err.Error(), workerData.room)
 				return
 			}
 			continue
 		}
 
 		if m == "h" {
-			if err = c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"updateRoomCount\",\"data\":{\"model_name\":\"`+room+`\",\"private_room\":\"false\"}}"]`)); err != nil {
-				fmt.Println(err.Error(), room)
+			if err = c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"updateRoomCount\",\"data\":{\"model_name\":\"`+workerData.room+`\",\"private_room\":\"false\"}}"]`)); err != nil {
+				fmt.Println(err.Error(), workerData.room)
 				return
 			}
 			continue
@@ -173,13 +170,13 @@ func xWorker(chQuit chan struct{}, room, server, proxy string, info *tID, u url.
 
 		input := Input{}
 		if err := json.Unmarshal([]byte(m), &input); err != nil {
-			fmt.Println(err.Error(), room)
+			fmt.Println(err.Error(), workerData.room)
 			continue
 		}
 
 		if input.Method == "onAuthResponse" {
-			if err = c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"joinRoom\",\"data\":{\"room\":\"`+room+`\"}}"]`)); err != nil {
-				fmt.Println(err.Error(), room)
+			if err = c.WriteMessage(websocket.TextMessage, []byte(`["{\"method\":\"joinRoom\",\"data\":{\"room\":\"`+workerData.room+`\"}}"]`)); err != nil {
+				fmt.Println(err.Error(), workerData.room)
 				return
 			}
 			continue
@@ -195,7 +192,7 @@ func xWorker(chQuit chan struct{}, room, server, proxy string, info *tID, u url.
 			online, err := strconv.Atoi(input.Args[0])
 			if err == nil {
 				if online < 10 {
-					fmt.Println("few viewers room:", room)
+					fmt.Println("few viewers room:", workerData.room)
 					return
 				}
 			}
@@ -205,8 +202,8 @@ func xWorker(chQuit chan struct{}, room, server, proxy string, info *tID, u url.
 		}
 
 		if input.Method == "onPersonallyKicked" {
-			fmt.Println("onPersonallyKicked room:", room)
-			go reconnectRoom(room, server, proxy)
+			fmt.Println("onPersonallyKicked room:", workerData.room)
+			go reconnectRoom(workerData)
 			return
 		}
 
@@ -217,7 +214,7 @@ func xWorker(chQuit chan struct{}, room, server, proxy string, info *tID, u url.
 			arg := InputArgs{}
 
 			if err := json.Unmarshal([]byte(input.Args[0]), &arg); err != nil {
-				fmt.Println(err.Error(), room)
+				fmt.Println(err.Error(), workerData.room)
 				continue
 			}
 
@@ -227,16 +224,16 @@ func xWorker(chQuit chan struct{}, room, server, proxy string, info *tID, u url.
 				continue
 			}
 
-			if arg.Type == "room_leave" && room == arg.Name {
+			if arg.Type == "room_leave" && workerData.room == arg.Name {
 				leave = true
 				timeout = now + 60*10
-				//fmt.Println("room_leave:", room)
+				//fmt.Println("room_leave:", workerData.room)
 				continue
 			}
 
-			if arg.Type == "room_entry" && room == arg.Name {
+			if arg.Type == "room_entry" && workerData.room == arg.Name {
 				leave = false
-				//fmt.Println("room_entry:", room)
+				//fmt.Println("room_entry:", workerData.room)
 				continue
 			}
 
@@ -246,7 +243,7 @@ func xWorker(chQuit chan struct{}, room, server, proxy string, info *tID, u url.
 					dons[arg.From] = struct{}{}
 					workerData.Dons++
 				}
-				save <- saveData{room, arg.From, info.Id, arg.Amount, now}
+				save <- saveData{Room: workerData.room, From: arg.From, Rid: workerData.Rid, Amount: arg.Amount, Now: now}
 				workerData.Income += arg.Amount
 				rooms.Add <- workerData
 				if leave {

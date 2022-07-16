@@ -102,18 +102,18 @@ func randString(n int) string {
 	return string(bytes)
 }
 
-func wJson(s string) {
-	os.WriteFile("/tmp/fastStart.txt", []byte(s), 0644)
-}
-
 func fastStart() {
-	val, err := os.ReadFile("/tmp/fastStart.txt")
+	defer func() {
+		go updateFileRooms()
+	}()
+	updateFileRooms()
+	dat, err := os.ReadFile(conf.Conn["start"])
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	list := make(map[string]Info)
-	if err := json.Unmarshal(val, &list); err != nil {
+	if err := json.Unmarshal(dat, &list); err != nil {
 		fmt.Println(err.Error())
 		return
 	}
@@ -123,7 +123,19 @@ func fastStart() {
 			continue
 		}
 		fmt.Println("fastStart:", k, v.Server, v.Proxy)
-		startRoom(k, v.Server, v.Proxy)
+		workerData := Info{
+			room:   k,
+			Server: v.Server,
+			Proxy:  v.Proxy,
+			Online: v.Online,
+			Start:  v.Start,
+			Last:   v.Last,
+			Rid:    v.Rid,
+			Income: v.Income,
+			Dons:   v.Dons,
+			Tips:   v.Tips,
+		}
+		startRoom(workerData)
 		time.Sleep(100 * time.Millisecond)
 	}
 }

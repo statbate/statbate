@@ -17,6 +17,7 @@ func startConfig() {
 	conf.Conn = map[string]string{
 		"mysql": "user:passwd@unix(/var/run/mysqld/mysqld.sock)/base?interpolateParams=true",
 		"click": "tcp://127.0.0.1:9000/base?compress=true&debug=false",
+		"start": "/tmp/fastStart.txt",
 	}
 
 	// 3proxy

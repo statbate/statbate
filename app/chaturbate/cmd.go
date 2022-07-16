@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"runtime"
 	"strings"
 	"sync"
-	//	"time"
+	"time"
 )
 
 type Info struct {
@@ -15,6 +16,7 @@ type Info struct {
 	Server string `json:"server"`
 	Proxy  string `json:"proxy"`
 	Online string `json:"online"`
+	Rid    int64  `json:"rid"`
 	Start  int64  `json:"start"`
 	Last   int64  `json:"last"`
 	Income int64  `json:"income"`
@@ -62,15 +64,25 @@ func checkWorker(room string) bool {
 	return false
 }
 
-func listRooms() string {
-	rooms.Json <- ""
-	s := <-rooms.Json
-	wJson(s)
-	return s
+func updateFileRooms() string {
+	for {
+		rooms.Json <- ""
+		s := <-rooms.Json
+		err := os.WriteFile(conf.Conn["start"], []byte(s), 0644)
+		if err != nil {
+			fmt.Println(err)
+		}
+		time.Sleep(10 * time.Second)
+	}
 }
 
 func listHandler(w http.ResponseWriter, _ *http.Request) {
-	fmt.Fprint(w, listRooms())
+	dat, err := os.ReadFile(conf.Conn["start"])
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Fprint(w, string(dat))
 }
 
 func debugHandler(w http.ResponseWriter, _ *http.Request) {
@@ -97,8 +109,21 @@ func cmdHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	params := r.URL.Query()
-	if len(params["room"]) > 0 && len(params["server"]) > 0 && len(params["proxy"]) > 0 {		
-		startRoom(params["room"][0], params["server"][0], params["proxy"][0])
+	if len(params["room"]) > 0 && len(params["server"]) > 0 && len(params["proxy"]) > 0 {
+		now := time.Now().Unix()
+		workerData := Info{
+			room:   params["room"][0],
+			Server: params["server"][0],
+			Proxy:  params["proxy"][0],
+			Online: "0",
+			Start:  now,
+			Last:   now,
+			Rid:    0,
+			Income: 0,
+			Dons:   0,
+			Tips:   0,
+		}
+		startRoom(workerData)
 	}
 	if len(params["exit"]) > 0 {
 		room := strings.Join(params["exit"], "")
@@ -107,28 +132,30 @@ func cmdHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, string("ok"))
 }
 
-func startRoom(room, server, proxy string){
-	if checkWorker(room) {
-		fmt.Println("Already track:", room)
+func startRoom(workerData Info) {
+	if checkWorker(workerData.room) {
+		fmt.Println("Already track:", workerData.room)
 		return
 	}
-	
-	info, ok := getRoomInfo(room)
+
+	info, ok := getRoomInfo(workerData.room)
 	if !ok {
-		fmt.Println("No room in MySQL:", room)
+		fmt.Println("No room in MySQL:", workerData.room)
 		return
 	}
-	
+
+	workerData.Rid = info.Id
+
 	chQuit := make(chan struct{})
 
 	chWorker.Lock()
-	chWorker.Map[room] = &Worker{chQuit: chQuit}
+	chWorker.Map[workerData.room] = &Worker{chQuit: chQuit}
 	chWorker.Unlock()
-	
-	go xWorker(chQuit, room, server, proxy, info, url.URL{Scheme: "wss", Host: server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"})
+
+	go xWorker(chQuit, workerData, url.URL{Scheme: "wss", Host: workerData.Server + ".stream.highwebmedia.com", Path: "/ws/555/kmdqiune/websocket"})
 }
 
-func stopRoom(room string){
+func stopRoom(room string) {
 	if checkWorker(room) {
 		chWorker.Lock()
 		close(chWorker.Map[room].chQuit) // exit gorutine
