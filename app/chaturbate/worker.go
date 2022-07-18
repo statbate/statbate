@@ -77,6 +77,7 @@ func reconnectRoom(workerData Info) {
 	fmt.Printf("Sleeping %d seconds...\n", n)
 	time.Sleep(time.Duration(n) * time.Second)
 	fmt.Println("reconnect:", workerData.room, workerData.Server, workerData.Proxy)
+	workerData.Last = time.Now().Unix()
 	startRoom(workerData)
 }
 

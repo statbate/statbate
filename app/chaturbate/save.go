@@ -5,10 +5,6 @@ import (
 	"time"
 )
 
-type tID struct {
-	Id int64 `db:"id"`
-}
-
 type saveData struct {
 	Room   string
 	From   string
@@ -28,30 +24,51 @@ type DonatorCache struct {
 	Last int64
 }
 
-func getDonId(name string) int64 {
-	donator := new(tID)
-	err := Mysql.Get(donator, "SELECT id FROM donator WHERE name=?", name)
-	if err != nil {
-		res, _ := Mysql.Exec("INSERT INTO donator (`name`) VALUES (?)", name)
-		donator.Id, _ = res.LastInsertId()
-	}
-	return donator.Id
+type AnnounceIndex struct {
+	Index int64 `json:"index"`
 }
 
-func getRoomInfo(name string) (*tID, bool) {
+func getDonId(name string) int64 {
+	var id int64
+	err := Mysql.Get(&id, "SELECT id FROM donator WHERE name=?", name)
+	if err != nil {
+		res, _ := Mysql.Exec("INSERT INTO donator (`name`) VALUES (?)", name)
+		id, _ = res.LastInsertId()
+	}
+	return id
+}
+
+func getRoomInfo(name string) (int64, bool) {
+	var id int64
 	result := true
-	room := new(tID)
-	err := Mysql.Get(room, "SELECT id FROM room WHERE name=?", name)
+	err := Mysql.Get(&id, "SELECT id FROM room WHERE name=?", name)
 	if err != nil {
 		result = false
 	}
-	return room, result
+	return id, result
+}
+
+func getSumTokens() int64 {
+	r := struct {
+		Date string
+		Sum  int64
+	}{}
+	err := Clickhouse.Get(&r, "SELECT toStartOfHour(toDateTime(`unix`)) as date, SUM(`token`) as sum FROM `stat` WHERE time = today() GROUP BY date ORDER BY date DESC LIMIT 1")
+	if err == nil && r.Sum > 0 {
+		return r.Sum
+	}
+	return 0
 }
 
 func saveDB() {
 	last := time.Now().Unix()
+	hours, _, _ := time.Now().Clock()
+
 	bulk := make(map[int]saveData)
 	data := make(map[string]*DonatorCache)
+	index := make(map[string]int64)
+
+	index = map[string]int64{"hours": int64(hours), "tokens": getSumTokens(), "last": last}
 
 	for {
 		select {
@@ -83,10 +100,10 @@ func saveDB() {
 
 				tx, err = Clickhouse.Begin()
 				if err == nil {
-					st, _ := tx.Prepare("INSERT INTO stat VALUES (?, ?, ?, ?)")
+					st, _ := tx.Prepare("INSERT INTO stat VALUES (?, ?, ?, ?, ?)")
 					//fmt.Println("G:", err)
 					for _, v := range bulk {
-						st.Exec(uint32(data[v.From].Id), uint32(v.Rid), uint32(v.Amount), time.Unix(v.Now, 0))
+						st.Exec(uint32(data[v.From].Id), uint32(v.Rid), uint32(v.Amount), time.Unix(v.Now, 0), uint32(v.Now))
 						//fmt.Println("B:", aaa, sss)
 					}
 					tx.Commit()
@@ -102,6 +119,22 @@ func saveDB() {
 					hub.broadcast <- msg
 				}
 			}
+
+			hours, minutes, seconds := time.Now().Clock()
+			if int64(hours) == index["hours"] {
+				index["tokens"] += m.Amount
+			} else {
+				index = map[string]int64{"hours": int64(hours), "tokens": 0, "last": 0}
+			}
+			if minutes >= 5 && now > index["last"]+30 {
+				seconds += minutes * 60
+				msg, err := json.Marshal(AnnounceIndex{Index: index["tokens"] / int64(seconds) * 3600 / 1000 * 5 / 100})
+				if err == nil {
+					hub.broadcast <- msg
+				}
+				index["last"] = now
+			}
+
 			if randInt(0, 10000) == 777 { // 0.001%
 				l := len(data)
 				for k, v := range data {

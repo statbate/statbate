@@ -138,13 +138,13 @@ func startRoom(workerData Info) {
 		return
 	}
 
-	info, ok := getRoomInfo(workerData.room)
+	rid, ok := getRoomInfo(workerData.room)
 	if !ok {
 		fmt.Println("No room in MySQL:", workerData.room)
 		return
 	}
 
-	workerData.Rid = info.Id
+	workerData.Rid = rid
 
 	chQuit := make(chan struct{})
 

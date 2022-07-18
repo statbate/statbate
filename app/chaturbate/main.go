@@ -106,7 +106,6 @@ func fastStart() {
 	defer func() {
 		go updateFileRooms()
 	}()
-	updateFileRooms()
 	dat, err := os.ReadFile(conf.Conn["start"])
 	if err != nil {
 		fmt.Println(err)
@@ -119,7 +118,7 @@ func fastStart() {
 	}
 	now := time.Now().Unix()
 	for k, v := range list {
-		if now > v.Last+60*30 {
+		if now > v.Last+60*20 {
 			continue
 		}
 		fmt.Println("fastStart:", k, v.Server, v.Proxy)
@@ -129,7 +128,7 @@ func fastStart() {
 			Proxy:  v.Proxy,
 			Online: v.Online,
 			Start:  v.Start,
-			Last:   v.Last,
+			Last:   now,
 			Rid:    v.Rid,
 			Income: v.Income,
 			Dons:   v.Dons,
