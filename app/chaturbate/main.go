@@ -25,8 +25,6 @@ type Rooms struct {
 var (
 	Mysql, Clickhouse *sqlx.DB
 
-	hub = newHub()
-
 	json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 	save = make(chan saveData, 100)
@@ -48,13 +46,12 @@ func main() {
 	initMysql()
 	initClickhouse()
 
-	go hub.run()
 	go mapRooms()
 	go announceCount()
 	go saveDB()
 	go saveLogs()
 
-	http.HandleFunc("/ws/", hub.wsHandler)
+	http.HandleFunc("/ws/", wsHandler)
 	http.HandleFunc("/cmd/", cmdHandler)
 	http.HandleFunc("/list/", listHandler)
 	http.HandleFunc("/debug/", debugHandler)

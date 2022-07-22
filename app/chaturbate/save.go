@@ -116,7 +116,7 @@ func saveDB() {
 			if m.Amount > 99 {
 				msg, err := json.Marshal(AnnounceDonate{Room: m.Room, Donator: m.From, Amount: m.Amount})
 				if err == nil {
-					hub.broadcast <- msg
+					broadcast(msg)
 				}
 			}
 
@@ -130,7 +130,7 @@ func saveDB() {
 				seconds += minutes * 60
 				msg, err := json.Marshal(AnnounceIndex{Index: index["tokens"] / int64(seconds) * 3600 / 1000 * 5 / 100})
 				if err == nil {
-					hub.broadcast <- msg
+					go broadcast(msg)
 				}
 				index["last"] = now
 			}
