@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+//	"fmt"
 	"net/http"
 	"sync"
 
@@ -24,7 +24,6 @@ func broadcast(b []byte) {
 }
 
 func wsHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("wsHandler start")
 	conn, err := websocket.Upgrade(w, r, w.Header(), 1024, 1024)
 	if err != nil {
 		return

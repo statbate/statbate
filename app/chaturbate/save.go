@@ -116,7 +116,7 @@ func saveDB() {
 			if m.Amount > 99 {
 				msg, err := json.Marshal(AnnounceDonate{Room: m.Room, Donator: m.From, Amount: m.Amount})
 				if err == nil {
-					broadcast(msg)
+					go broadcast(msg)
 				}
 			}
 

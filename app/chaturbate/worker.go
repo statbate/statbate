@@ -67,7 +67,7 @@ func announceCount() {
 		l := <-rooms.Count
 		msg, err := json.Marshal(AnnounceCount{Count: l})
 		if err == nil {
-			broadcast(msg)
+			go broadcast(msg)
 		}
 	}
 }

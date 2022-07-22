@@ -26,6 +26,7 @@ type Info struct {
 
 type Debug struct {
 	Goroutines int
+	WebSocket  int
 	Uptime     int64
 	Alloc      uint64
 	HeapSys    uint64
@@ -86,7 +87,6 @@ func listHandler(w http.ResponseWriter, _ *http.Request) {
 }
 
 func debugHandler(w http.ResponseWriter, _ *http.Request) {
-
 	chWorker.RLock()
 	tmp := chWorker.Map
 	chWorker.RUnlock()
@@ -96,8 +96,12 @@ func debugHandler(w http.ResponseWriter, _ *http.Request) {
 		x = append(x, k)
 	}
 
+	wsClients.RLock()
+	l := len(wsClients.Map)
+	wsClients.RUnlock()
+	
 	runtime.ReadMemStats(&memInfo)
-	j, err := json.Marshal(Debug{Goroutines: runtime.NumGoroutine(), Alloc: memInfo.Alloc, HeapSys: memInfo.HeapSys, Uptime: uptime, Process: x})
+	j, err := json.Marshal(Debug{Goroutines: runtime.NumGoroutine(), Alloc: memInfo.Alloc, HeapSys: memInfo.HeapSys, Uptime: uptime, WebSocket: l, Process: x})
 	if err == nil {
 		fmt.Fprint(w, string(j))
 	}
