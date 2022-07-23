@@ -3,27 +3,42 @@ package main
 import (
 	//	"fmt"
 	"net/http"
-	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
-type Client struct {
-	sync.RWMutex
-	Map map[*websocket.Conn]struct{}
-}
+var (
+	wsClients = make(map[*websocket.Conn]struct{})
 
-var wsClients = &Client{Map: make(map[*websocket.Conn]struct{})}
+	ws = struct {
+		Count chan int
+		Send  chan []byte
+		Add   chan *websocket.Conn
+	}{
+		Count: make(chan int, 100),
+		Send:  make(chan []byte, 100),
+		Add:   make(chan *websocket.Conn, 100),
+	}
+)
 
-func broadcast(b []byte) {
-	wsClients.Lock()
-	for conn := range wsClients.Map {
-		if err := conn.WriteMessage(1, b); err != nil {
-			delete(wsClients.Map, conn)
-			conn.Close()
+func broadcast() {
+	for {
+		select {
+		case conn := <-ws.Add:
+			wsClients[conn] = struct{}{}
+
+		case <-ws.Count:
+			ws.Count <- len(wsClients)
+
+		case message := <-ws.Send:
+			for conn := range wsClients {
+				if err := conn.WriteMessage(1, message); err != nil {
+					conn.Close()
+					delete(wsClients, conn)
+				}
+			}
 		}
 	}
-	wsClients.Unlock()
 }
 
 func wsHandler(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +46,5 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	wsClients.Lock()
-	wsClients.Map[conn] = struct{}{}
-	wsClients.Unlock()
+	ws.Add <- conn
 }

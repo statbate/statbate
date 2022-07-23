@@ -96,10 +96,9 @@ func debugHandler(w http.ResponseWriter, _ *http.Request) {
 		x = append(x, k)
 	}
 
-	wsClients.RLock()
-	l := len(wsClients.Map)
-	wsClients.RUnlock()
-	
+	ws.Count <- 0
+	l := <-ws.Count
+
 	runtime.ReadMemStats(&memInfo)
 	j, err := json.Marshal(Debug{Goroutines: runtime.NumGoroutine(), Alloc: memInfo.Alloc, HeapSys: memInfo.HeapSys, Uptime: uptime, WebSocket: l, Process: x})
 	if err == nil {

@@ -50,6 +50,7 @@ func main() {
 	go announceCount()
 	go saveDB()
 	go saveLogs()
+	go broadcast()
 
 	http.HandleFunc("/ws/", wsHandler)
 	http.HandleFunc("/cmd/", cmdHandler)
