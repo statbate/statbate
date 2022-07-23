@@ -1,7 +1,7 @@
 package main
 
 import (
-//	"fmt"
+	//	"fmt"
 	"net/http"
 	"sync"
 
@@ -10,17 +10,20 @@ import (
 
 type Client struct {
 	sync.RWMutex
-	Map map[(chan []byte)]struct{}
+	Map map[*websocket.Conn]struct{}
 }
 
-var wsClients = &Client{Map: make(map[(chan []byte)]struct{})}
+var wsClients = &Client{Map: make(map[*websocket.Conn]struct{})}
 
 func broadcast(b []byte) {
-	wsClients.RLock()
-	for k := range wsClients.Map {
-		k <- b
+	wsClients.Lock()
+	for conn := range wsClients.Map {
+		if err := conn.WriteMessage(1, b); err != nil {
+			delete(wsClients.Map, conn)
+			conn.Close()
+		}
 	}
-	wsClients.RUnlock()
+	wsClients.Unlock()
 }
 
 func wsHandler(w http.ResponseWriter, r *http.Request) {
@@ -28,30 +31,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	defer conn.Close()
-
-	ch := make(chan []byte)
-
 	wsClients.Lock()
-	wsClients.Map[ch] = struct{}{}
+	wsClients.Map[conn] = struct{}{}
 	wsClients.Unlock()
-
-	//fmt.Println(wsClients.Map)
-
-	defer func() {
-		wsClients.Lock()
-		delete(wsClients.Map, ch)
-		wsClients.Unlock()
-
-		//fmt.Println(wsClients.Map)
-	}()
-
-	for {
-		select {
-		case message := <-ch:
-			if err := conn.WriteMessage(1, message); err != nil {
-				return
-			}
-		}
-	}
 }
