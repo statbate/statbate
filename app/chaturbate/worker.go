@@ -12,28 +12,6 @@ import (
 
 var uptime = time.Now().Unix()
 
-type Input struct {
-	Method string   `json:"method"`
-	Args   []string `json:"args"`
-}
-
-type InputArgs struct {
-	Type   string `json:"type"`
-	Name   string `json:"username"`
-	From   string `json:"from_username"`
-	Amount int64  `json:"amount"`
-}
-
-type AnnounceCount struct {
-	Count int `json:"count"`
-}
-
-type AnnounceDonate struct {
-	Room    string `json:"room"`
-	Donator string `json:"donator"`
-	Amount  int64  `json:"amount"`
-}
-
 func mapRooms() {
 
 	data := make(map[string]*Info)
@@ -75,7 +53,9 @@ func announceCount() {
 		time.Sleep(30 * time.Second)
 		rooms.Count <- 0
 		l := <-rooms.Count
-		msg, err := json.Marshal(AnnounceCount{Count: l})
+		msg, err := json.Marshal(struct {
+			Count int `json:"count"`
+		}{Count: l})
 		if err == nil {
 			ws.Send <- msg
 		}
@@ -179,7 +159,11 @@ func xWorker(workerData Info, u url.URL) {
 			m, _ = strconv.Unquote(m[2 : len(m)-1])
 		}
 
-		input := Input{}
+		input := struct {
+			Method string   `json:"method"`
+			Args   []string `json:"args"`
+		}{}
+		
 		if err := json.Unmarshal([]byte(m), &input); err != nil {
 			fmt.Println(err.Error(), workerData.room)
 			continue
@@ -222,7 +206,12 @@ func xWorker(workerData Info, u url.URL) {
 			workerData.Last = now
 			rooms.Add <- workerData
 
-			arg := InputArgs{}
+			arg := struct {
+				Type   string `json:"type"`
+				Name   string `json:"username"`
+				From   string `json:"from_username"`
+				Amount int64  `json:"amount"`
+			}{}
 
 			if err := json.Unmarshal([]byte(input.Args[0]), &arg); err != nil {
 				fmt.Println(err.Error(), workerData.room)

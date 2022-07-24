@@ -24,10 +24,6 @@ type DonatorCache struct {
 	Last int64
 }
 
-type AnnounceIndex struct {
-	Index int64 `json:"index"`
-}
-
 func getDonId(name string) int64 {
 	var id int64
 	err := Mysql.Get(&id, "SELECT id FROM donator WHERE name=?", name)
@@ -113,8 +109,17 @@ func saveDB() {
 				last = now
 				bulk = make(map[int]saveData)
 			}
+
 			if m.Amount > 99 {
-				msg, err := json.Marshal(AnnounceDonate{Room: m.Room, Donator: m.From, Amount: m.Amount})
+				msg, err := json.Marshal(struct {
+					Room    string `json:"room"`
+					Donator string `json:"donator"`
+					Amount  int64  `json:"amount"`
+				}{
+					Room:    m.Room,
+					Donator: m.From,
+					Amount:  m.Amount,
+				})
 				if err == nil {
 					ws.Send <- msg
 				}
@@ -126,9 +131,12 @@ func saveDB() {
 			} else {
 				index = map[string]int64{"hours": int64(hours), "tokens": 0, "last": 0}
 			}
+
 			if minutes >= 5 && now > index["last"]+30 {
 				seconds += minutes * 60
-				msg, err := json.Marshal(AnnounceIndex{Index: index["tokens"] / int64(seconds) * 3600 / 1000 * 5 / 100})
+				msg, err := json.Marshal(struct {
+					Index int64 `json:"index"`
+				}{Index: index["tokens"] / int64(seconds) * 3600 / 1000 * 5 / 100})
 				if err == nil {
 					ws.Send <- msg
 				}
