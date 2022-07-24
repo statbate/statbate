@@ -41,7 +41,7 @@ func mapRooms() {
 	for {
 		select {
 		case m := <-rooms.Add:
-			data[m.room] = &Info{Server: m.Server, Proxy: m.Proxy, Start: m.Start, Last: m.Last, Online: m.Online, Income: m.Income, Dons: m.Dons, Tips: m.Tips}
+			data[m.room] = &Info{Server: m.Server, Proxy: m.Proxy, Start: m.Start, Last: m.Last, Online: m.Online, Income: m.Income, Dons: m.Dons, Tips: m.Tips, ch: m.ch}
 
 		case s := <-rooms.Json:
 			j, err := json.Marshal(data)
@@ -55,7 +55,17 @@ func mapRooms() {
 
 		case key := <-rooms.Del:
 			delete(data, key)
-			removeRoom(key)
+
+		case room := <-rooms.Check:
+			if _, ok := data[room]; !ok {
+				room = ""
+			}
+			rooms.Check <- room
+
+		case room := <-rooms.Stop:
+			if _, ok := data[room]; ok {
+				close(data[room].ch)
+			}
 		}
 	}
 }
@@ -81,7 +91,7 @@ func reconnectRoom(workerData Info) {
 	startRoom(workerData)
 }
 
-func xWorker(chQuit chan struct{}, workerData Info, u url.URL) {
+func xWorker(workerData Info, u url.URL) {
 
 	fmt.Println("Start", workerData.room, "server", workerData.Server, "proxy", workerData.Proxy)
 
@@ -119,7 +129,7 @@ func xWorker(chQuit chan struct{}, workerData Info, u url.URL) {
 	for {
 
 		select {
-		case <-chQuit:
+		case <-workerData.ch:
 			fmt.Println("Exit room:", workerData.room)
 			return
 		default:
