@@ -57,14 +57,13 @@ func getSumTokens() int64 {
 }
 
 func saveDB() {
-	last := time.Now().Unix()
 	hours, _, _ := time.Now().Clock()
 
 	bulk := make(map[int]saveData)
 	data := make(map[string]*DonatorCache)
 	index := make(map[string]int64)
 
-	index = map[string]int64{"hours": int64(hours), "tokens": getSumTokens(), "last": last}
+	index = map[string]int64{"hours": int64(hours), "tokens": getSumTokens(), "last": time.Now().Unix()}
 
 	for {
 		select {
@@ -85,28 +84,28 @@ func saveDB() {
 
 			bulk[num] = m
 
-			if num >= 999 || now >= last+10 {
+			if num > 512 {
+
 				tx, err := Mysql.Begin()
 				if err == nil {
+					st, _ := tx.Prepare("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)")
 					for _, v := range bulk {
-						tx.Exec("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)", data[v.From].Id, v.Rid, v.Amount, v.Now)
-					}
-				}
-				tx.Commit()
-
-				tx, err = Clickhouse.Begin()
-				if err == nil {
-					st, _ := tx.Prepare("INSERT INTO stat VALUES (?, ?, ?, ?, ?)")
-					//fmt.Println("G:", err)
-					for _, v := range bulk {
-						st.Exec(uint32(data[v.From].Id), uint32(v.Rid), uint32(v.Amount), time.Unix(v.Now, 0), uint32(v.Now))
-						//fmt.Println("B:", aaa, sss)
+						st.Exec(data[v.From].Id, v.Rid, v.Amount, v.Now)
 					}
 					tx.Commit()
 					st.Close()
 				}
 
-				last = now
+				tx, err = Clickhouse.Begin()
+				if err == nil {
+					st, _ := tx.Prepare("INSERT INTO stat VALUES (?, ?, ?, ?, ?)")
+					for _, v := range bulk {
+						st.Exec(uint32(data[v.From].Id), uint32(v.Rid), uint32(v.Amount), time.Unix(v.Now, 0), uint32(v.Now))
+					}
+					tx.Commit()
+					st.Close()
+				}
+
 				bulk = make(map[int]saveData)
 			}
 
@@ -157,7 +156,6 @@ func saveDB() {
 }
 
 func saveLogs() {
-	last := time.Now().Unix()
 	bulk := make(map[int]saveLog)
 	for {
 		select {
@@ -165,16 +163,16 @@ func saveLogs() {
 			if len(m.Mes) > 0 {
 				num := len(bulk)
 				bulk[num] = m
-				now := time.Now().Unix()
-				if num >= 2047 || now >= last+10 {
+				if num > 512 {
 					tx, err := Mysql.Begin()
 					if err == nil {
+						st, _ := tx.Prepare("INSERT INTO `logs` (`rid`, `time`, `mes`) VALUES (?, ?, ?)")
 						for _, v := range bulk {
-							tx.Exec("INSERT INTO `logs` (`rid`, `time`, `mes`) VALUES (?, ?, ?)", v.Rid, v.Now, v.Mes)
+							st.Exec(v.Rid, v.Now, v.Mes)
 						}
 						tx.Commit()
+						st.Close()
 					}
-					last = now
 					bulk = make(map[int]saveLog)
 				}
 			}

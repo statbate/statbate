@@ -163,7 +163,7 @@ func xWorker(workerData Info, u url.URL) {
 			Method string   `json:"method"`
 			Args   []string `json:"args"`
 		}{}
-		
+
 		if err := json.Unmarshal([]byte(m), &input); err != nil {
 			fmt.Println(err.Error(), workerData.room)
 			continue

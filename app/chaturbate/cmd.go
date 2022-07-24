@@ -92,8 +92,7 @@ func cmdHandler(w http.ResponseWriter, r *http.Request) {
 		startRoom(workerData)
 	}
 	if len(params["exit"]) > 0 {
-		room := strings.Join(params["exit"], "")
-		rooms.Stop <- room
+		rooms.Stop <- strings.Join(params["exit"], "")
 	}
 	fmt.Fprint(w, string("ok"))
 }
