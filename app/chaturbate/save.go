@@ -60,6 +60,7 @@ func saveDB() {
 	hours, _, _ := time.Now().Clock()
 
 	bulk := make(map[int]saveData)
+	update := make(map[int64]int64)
 	data := make(map[string]*DonatorCache)
 	index := make(map[string]int64)
 
@@ -78,11 +79,11 @@ func saveDB() {
 				data[m.From] = &DonatorCache{Id: getDonId(m.From), Last: now}
 			}
 
-			Mysql.Exec("UPDATE `room` SET `last` = ? WHERE `id` = ?", m.Now, m.Rid)
-
 			num := len(bulk)
 
 			bulk[num] = m
+
+			update[m.Rid] = m.Now
 
 			if num > 512 {
 
@@ -91,6 +92,16 @@ func saveDB() {
 					st, _ := tx.Prepare("INSERT INTO `stat` (`did`, `rid`, `token`, `time`) VALUES (?, ?, ?, ?)")
 					for _, v := range bulk {
 						st.Exec(data[v.From].Id, v.Rid, v.Amount, v.Now)
+					}
+					tx.Commit()
+					st.Close()
+				}
+
+				tx, err = Mysql.Begin()
+				if err == nil {
+					st, _ := tx.Prepare("UPDATE `room` SET `last` = ? WHERE `id` = ?")
+					for k, v := range update {
+						st.Exec(v, k)
 					}
 					tx.Commit()
 					st.Close()
@@ -107,6 +118,7 @@ func saveDB() {
 				}
 
 				bulk = make(map[int]saveData)
+				update = make(map[int64]int64)
 			}
 
 			if m.Amount > 99 {
@@ -163,7 +175,7 @@ func saveLogs() {
 			if len(m.Mes) > 0 {
 				num := len(bulk)
 				bulk[num] = m
-				if num > 512 {
+				if num > 2048 {
 					tx, err := Mysql.Begin()
 					if err == nil {
 						st, _ := tx.Prepare("INSERT INTO `logs` (`rid`, `time`, `mes`) VALUES (?, ?, ?)")
