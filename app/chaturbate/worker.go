@@ -119,6 +119,9 @@ func xWorker(workerData Info, u url.URL) {
 		_, message, err := c.ReadMessage()
 		if err != nil {
 			fmt.Println(err.Error(), workerData.room)
+			if workerData.Income > 1 && !leave {
+				go reconnectRoom(workerData)
+			}
 			return
 		}
 
