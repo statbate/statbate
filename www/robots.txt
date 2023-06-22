@@ -1,5 +1,9 @@
 User-Agent: *
 Allow: /$
+Allow: /bonga/$
+Allow: /strip/$
+
+Allow: /search$
 
 Allow: *.js
 Allow: *.css
@@ -7,3 +11,5 @@ Allow: *.png
 Allow: *.jpg
 
 Disallow: /
+
+Host: statbate.com

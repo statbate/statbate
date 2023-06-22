@@ -1,9 +1,12 @@
 <?php
 // example: cacheResult('getList', [], 30)
 function cacheResult($name, $params = [], $time = 600, $json = false){
-	global $redis;
-	$key = md5($name.implode('.',$params));
+	global $redis, $dbname;
+	$key = md5($dbname.$name.implode('.',$params));
 	$result = $redis->get($key);
+	
+	//if (1 == 1) {
+	
 	if($result === false || (php_sapi_name() == "cli" && $redis->ttl($key) < 120)){
 		$result = call_user_func($name, $params);
 		if(!empty($result)){
@@ -20,11 +23,31 @@ function cacheResult($name, $params = [], $time = 600, $json = false){
 }
 
 function getList(){
-	return file_get_contents('https://statbate.com/list/');
+	global $dbname;
+	if($dbname == 'chaturbate'){
+		$url = 'https://statbate.com/list/';
+	}
+	if($dbname == 'bongacams'){
+		$url = 'https://statbate.com/bongacams/list/';
+	}
+	if($dbname == 'stripchat'){
+		$url = 'https://statbate.com/stripchat/list/';
+	}
+	return file_get_contents($url);
 }
 
 function getDebug(){
-	return file_get_contents('https://statbate.com/debug/');
+	global $dbname;
+	if($dbname == 'chaturbate'){
+		$url = 'https://statbate.com/debug/';
+	}
+	if($dbname == 'bongacams'){
+		$url = 'https://statbate.com/bongacams/debug/';
+	}
+	if($dbname == 'stripchat'){
+		$url = 'https://statbate.com/stripchat/debug/';
+	}
+	return file_get_contents($url);
 }
 
 function dotFormat($v){
@@ -32,7 +55,12 @@ function dotFormat($v){
 }
 
 function toUSD($v){
-	$x = $v*0.05; // One TK = 0.05 USD
+	global $dbname;
+	$u = 0.05;
+	if($dbname == 'bongacams'){
+		$u = 0.025;
+	}
+	$x = $v*$u; // One TK = 0.05 USD
 	if($x < 10){
 		return round($x, 2);
 	}
@@ -64,6 +92,24 @@ function getCbArr(){
 	return false;
 }
 
+function getBgArr(){
+	global $redis;
+	$bg_list = $redis->get('bongacamsList');
+	if($bg_list !== false){
+		return json_decode($bg_list, true);
+	}
+	return false;
+}
+
+function getStArr(){
+	global $redis;
+	$st_list = $redis->get('stripchatList');
+	if($st_list !== false){
+		return json_decode($st_list, true);
+	}
+	return false;
+}
+
 function getCbList(){
 	$a = getCbArr();
 	if(!$a){
@@ -76,96 +122,6 @@ function getCbList(){
 	return $list;
 }
 
-function showRoomList(){
-	if(isset($_GET['list'])){
-		$arr = json_decode(cacheResult('getList', [], 30), true);
-		$debug = json_decode(cacheResult('getDebug', [], 30), true);
-		uasort($arr, function($a, $b){
-			return $a['online'] < $b['online'];
-		});
-
-		$users = getStatUsers();
-		$clicks = getStatUsers('clickUsers');
-
-		echo "<title>tracking ".count($arr)." rooms</title>";
-		//echo "<meta http-equiv='refresh' content='60'>";
-		echo "<style>{body background-color: #eeeeee;}table, th, td {border: 1px solid black;border-collapse: collapse;} td {min-width: 100px; height: 25px; text-align: center; vertical-align: middle;} a { color: #333; text-decoration: none;} a:hover { color: #333; text-decoration: underline;} a:active { color: #333;} </style>";
-		echo "<pre>";
-		echo "<a href='/' style='text-decoration: underline; color: darkgreen;'>main page</a>\n\n";
-		echo "statbate.com сollects data from open sources\n";
-		echo "- room name or nickname\n";
-		echo "- chat log\n\n";
-		echo "excluded from rating\n";
-		echo "- rooms with an average tips of more than 50$\n";
-		echo "- donators with an average tips of more than 1000$\n\n";
-
-		echo "Tracks rooms where online more than 50 viewers\n";
-		echo "Stop if the online becomes below 25\n\n";
-
-		echo "This is a technical page. We use it for debugging\n";
-		echo "Also for you it is proof that the statistics are trust\n\n";
-		echo "We keep logs for six hours\n";
-		echo "Click on the name of the room to view\n\n";
-		echo "Today we have {$users['0']} uniq users and {$users['1']} hits\n\n";
-		echo "{$clicks['0']} uniq users followed links {$clicks['1']} times\n\n";
-		echo "<table>";
-		foreach($debug as $key => $val){
-			switch($key){
-				case 'Alloc':
-				case 'HeapSys':
-					$val = formatBytes($val);
-				break;
-
-				case 'Uptime':
-					$val =  get_time_ago($val);
-				default:
-				break;
-			}
-			echo "<tr><td>$key</td> <td>$val</td>";
-		}
-		echo "</table> \n\n";
-		$a = getCbArr();
-		if($a){
-			$count = [0, 0, 0, 0];
-			foreach($a as $val){
-				if($val['num_users'] > 100){
-					$count['0']++;
-				}
-				if($val['num_users'] > 50){
-					$count['1']++;
-				}
-				if($val['num_users'] > 25){
-					$count['2']++;
-				}
-				$count['3'] += $val['num_users'];
-			}
-			echo "<table><tr><td>online more</td><td>25</td><td>50</td><td>100</td></tr><tr><td>rooms</td><td>{$count['2']}</td><td>{$count['1']}</td><td>{$count['0']}</td></tr><tr><td>total rooms</td><td colspan='3'>".count($a)."</td></tr><tr><td>total online</td><td colspan='3'>{$count['3']}</td></tr></table>\n\n";
-		}
-		echo "<table><tr><td></td><td>room</td> <td>proxy</td> <td>online</td><td>$ income</td><td title='In minutes'>duration</td> </tr>";
-		$i=0;
-		$time = time();
-		foreach($arr as $key => $val){
-			$i++;
-			if($val['online'] == 0){
-				$val['online'] = 'new';
-			}
-
-
-			$val['last'] = $time-$val['last'];
-
-			$td = '';
-			if($val['last'] > 600) {
-				$td = "<td style='background: #ff9800;'>{$val['last']}</td>";
-			}
-
-			$key = "<a href='https://statbate.com/public/log.php?name=$key' target='_blank'>$key</a>";
-
-			echo "<tr><td>$i</td><td>$key</td> <td>{$val['proxy']}</td> <td>{$val['online']}</td>  <td> ".toUSD($val['income'])." </td> <td> ".round(($time - $val['start'])/60)."</td> $td </tr>";
-		}
-		echo "</table></pre>";
-		die;
-	}
-}
 // https://www.w3schools.in/php-script/time-ago-function/
 function get_time_ago($time){
     $time_difference = time() - $time;
@@ -187,8 +143,16 @@ function get_time_ago($time){
 }
 
 function createUrl($name){
+	global $dbname;
+	$i = 'l';
+	if($dbname == 'bongacams'){
+		$i = 'b';
+	}
+	if($dbname == 'stripchat'){
+		$i = 's';
+	}
 	$name = strip_tags($name);
-	return "<a href='/l/{$name}' target='_blank' rel='nofollow'>{$name}</a>";
+	return "<a href='/{$i}/{$name}' target='_blank' rel='nofollow'>{$name}</a>";
 }
 
 function getGoogleTrends(){
@@ -199,6 +163,60 @@ function getGoogleTrends(){
 		$s .= "{\"keyword\":\"$val\",\"geo\":\"\",\"time\":\"$time\"},";
 	}
 	return $s;
+}
+
+function getApiChartStrip(){ // dub
+	global $redis;
+	$json = $redis->get('stripchatList');
+	$arr = json_decode($json, true);
+	$gender = ['male' => 'Male', 'female' => 'Female', 'tranny' => 'Trans', 'group' => 'Couple'];
+	$data = ['Male' => [0, 0], 'Female' => [0, 0], 'Trans' => [0, 0], 'Couple' => [0, 0]];
+	
+	foreach($arr as $val){
+
+		if(!array_key_exists($val['gender'], $gender)){
+			continue;
+		}
+		
+		$key = $gender[$val['gender']];
+		$data[$key][0]++;
+		$data[$key][1] += $val['num_users'];
+	}
+	
+	$a = $b = [];
+
+	foreach($data as $k => $v){
+		$a[] = ['name' => $k, 'y' => $v[0]];
+		$b[] = ['name' => $k, 'y' => $v[1]];
+	}
+	return [json_encode($a), json_encode($b)];	
+}
+
+function getApiChartBonga(){ // dub
+	global $redis;
+	$json = $redis->get('bongacamsList');
+	$arr = json_decode($json, true);
+	$gender = ['male' => 'Male', 'female' => 'Female', 'transsexual' => 'Trans', 'couple' => 'Couple'];
+	$data = ['Male' => [0, 0], 'Female' => [0, 0], 'Trans' => [0, 0], 'Couple' => [0, 0]];
+	
+	foreach($arr as $val){
+
+		if(!array_key_exists($val['gender'], $gender)){
+			continue;
+		}
+		
+		$key = $gender[$val['gender']];
+		$data[$key][0]++;
+		$data[$key][1] += $val['num_users'];
+	}
+	
+	$a = $b = [];
+
+	foreach($data as $k => $v){
+		$a[] = ['name' => $k, 'y' => $v[0]];
+		$b[] = ['name' => $k, 'y' => $v[1]];
+	}
+	return [json_encode($a), json_encode($b)];	
 }
 
 function getApiChart(){
@@ -263,4 +281,44 @@ function getStatUsers($s = 'statbateUsers'){
 	}
 	$arr = json_decode($json, true);
 	return [count($arr), array_sum($arr)];
+}
+
+function send($method, $chatID, $text){
+	$markup = json_encode(['keyboard' => [["info", "list", "remove all"]], 'resize_keyboard' => true]);
+	$data = ['chat_id' => $chatID, 'reply_markup' => $markup, 'text' => $text];
+    $url = "https://api.telegram.org/bot5598234002:AAHelhSJPerjKADPmxYbLwSVukNz1B0STzE". "/" . $method;
+    if (!$curld = curl_init()) {
+        exit;
+    }
+    curl_setopt($curld, CURLOPT_POST, true);
+    curl_setopt($curld, CURLOPT_POSTFIELDS, $data);
+    curl_setopt($curld, CURLOPT_URL, $url);
+    curl_setopt($curld, CURLOPT_RETURNTRANSFER, true);
+    $output = curl_exec($curld);
+    curl_close($curld);
+}
+
+function fileTime($file){
+	$file = $_SERVER['DOCUMENT_ROOT'].$file;
+	
+    if(!file_exists($file)) {
+        return false;
+    }
+    return str_replace($_SERVER['DOCUMENT_ROOT'], '', $file).'?'.md5_file($file);
+}
+
+function getCSS($arr){
+	$s = "";
+	foreach($arr as $val) {
+		$s .= "<link rel='stylesheet' href='".fileTime('/css/'.$val)."'>";
+	}
+	return $s;
+}
+
+function getJS($arr){
+	$s = "";
+	foreach($arr as $val) {
+		$s .= "<script src='".fileTime('/js/'.$val)."'></script>";
+	}
+	return $s;
 }

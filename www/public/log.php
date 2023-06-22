@@ -1,4 +1,15 @@
 <?php
+
+$dbname = 'chaturbate';
+
+if(!empty($_GET['base']) && $_GET['base'] == 'bongacams'){
+	$dbname = 'bongacams';
+}
+
+if(!empty($_GET['base']) && $_GET['base'] == 'stripchat'){
+	$dbname = 'stripchat';
+}
+
 require_once('/var/www/statbate/root/private/init.php');
 
 function getLog($name){
@@ -10,7 +21,7 @@ function getLog($name){
 		die('Empty log');
 	}
 	$id = $query->fetch()['id'];
-	$query = $db->prepare("SELECT `time`, `mes` FROM `logs` WHERE `rid` = :id AND `date` = current_date ORDER BY `id` DESC");
+	$query = $db->prepare("SELECT `time`, `mes` FROM `logs` WHERE `rid` = :id AND `date` = current_date ORDER BY `time` DESC");
 	$query->bindParam(':id', $id);
 	$query->execute();
 	if($query->rowCount() == 0){
