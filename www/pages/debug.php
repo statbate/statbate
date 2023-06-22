@@ -32,7 +32,7 @@ function showRoomList(){
 		//echo "Today we have {$users['0']} uniq users and {$users['1']} hits\n\n";
 		//echo "{$clicks['0']} uniq users followed links {$clicks['1']} times\n\n";
 		
-		echo "Debug: <a href='/debug.php'>Chaturbate</a> | <a href='/debug.php?b=bonga'>BongaCams</a> | <a href='/debug.php?b=strip' >StripChat</a> \n\n";
+		echo "Debug: <a href='/info'>Chaturbate</a> | <a href='/info/bonga'>BongaCams</a> | <a href='/info/strip' >StripChat</a> \n\n";
 		echo "<table>";
 		echo "<tr><td>Database</td> <td>$dbname</td>";
 		foreach($debug as $key => $val){
