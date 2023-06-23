@@ -22,7 +22,7 @@ if(!empty($_GET['base'])){
 }
 
 require_once('/var/www/statbate/root/private/init.php');
-//logUsers();
+
 $topDon = cacheResult('getTopDons', [], 3600);
 $heatMap = cacheResult('getHeatMap', [], 3600);
 $bestTips = cacheResult('getBestTips', [], 3600);

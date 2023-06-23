@@ -37,9 +37,7 @@ function getTop100Tips($arr){
 	global $clickhouse; $text = ""; $i = 0;
 	$query = $clickhouse->query("SELECT token, did, unix FROM stat WHERE `rid` = {$arr['id']} ORDER BY token DESC LIMIT 100");
 	while($row = $query->fetch()){
-		$i++;
 		$text .= "<tr>
-		<td>$i</td>
 		<td>".date("d F Y" ,$row['unix'])."</td>
 		<td>".getDonName(['id' => $row['did']])."</td>
 		<td>{$row['token']}</td>
@@ -59,7 +57,7 @@ function incomeDetails($arr){
 			$xarr[$row['time']][] = [cacheResult('getDonName', ['id' => $row['did'], 86000]), $row['total']];		
 		}
 		$i = 0;
-		$text .= "<table class='table table-striped table-bordered dataTable no-footer'><tr><td>date</td><td>donator</td> <td>token(s)</td> <td>$ spend</td> </tr>";
+		$text .= "<table class='table table-striped table-bordered dataTable no-footer' style='margin-bottom: 0px !important;'><tr><td>date</td><td>donator</td> <td class='d-none d-sm-table-cell'>token(s)</td> <td>$.spend</td> </tr>";
 		foreach($xarr as $key => $val){
 			$rs = count($xarr["$key"]);
 			$i++;
@@ -70,10 +68,10 @@ function incomeDetails($arr){
 			foreach($val as $k => $v){
 				$text .= "<tr style='background: #$color;'>";
 				if ($k === array_key_first($val)) {
-					$text .= "<td rowspan='$rs'>$key</td>";
-				}
+					$text .= "<td rowspan='$rs'>".date("F d", strtotime($key))."</td>";
+				}	
 				$text .= "<td>".$v[0]."</td>";
-				$text .= "<td>".$v[1]."</td>";
+				$text .= "<td class='d-none d-sm-table-cell'>".$v[1]."</td>";
 				$text .= "<td>".toUSD($v[1])."</td>";
 				$text .= "</tr>";
 			}
@@ -131,9 +129,9 @@ function getDonsTop100($arr){
 				$color = "ffffff";
 			}
 			$donsTable .= "<tr style='background: #$color;'>
-			<td>$i</td>  
+			<td class='d-none d-sm-table-cell'>$i</td>  
 			<td>".cacheResult('getDonName', ['id' => $row['did'], 86000])."</td>
-			<td>".$row['tips']."</td>
+			<td class='d-none d-sm-table-cell'>".$row['tips']."</td>
 			<td>".toUSD($row['avg'])."</td>
 			<td>".toUSD($row['total'])."</td>
 			</tr>";

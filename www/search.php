@@ -14,7 +14,7 @@ switch(@$_GET['db']){
 
 require_once('/var/www/statbate/root/private/init.php');
 require_once('/var/www/statbate/root/private/func/search.php');
-//logUsers();
+
 $track = trackCount();
 
 $lastSearch = $redis->get('lastSearch');
@@ -195,13 +195,13 @@ if($xdb == 3) {
 						<button class="nav-link" id="tab4-tab" data-bs-toggle="tab" data-bs-target="#tab4">Top100</button>
 					</li>
 					<li class="nav-item">
+						<button class="nav-link" id="tab8-tab" data-bs-toggle="tab" data-bs-target="#tab8">All time</button>
+					</li>
+					<li class="nav-item">
 						<button class="nav-link" id="tab7-tab" data-bs-toggle="tab" data-bs-target="#tab7">Tips</button>
 					</li>
 					<li class="nav-item">
-						<button class="nav-link" id="tab8-tab" data-bs-toggle="tab" data-bs-target="#tab8">Top100Tips</button>
-					</li>
-					<li class="nav-item">
-						<button class="nav-link" data-submit-profile="">Profile Page</button>
+						<button class="nav-link" data-submit-profile="">Profile page</button>
 					</li>
 				</ul>
 			</div>
@@ -218,9 +218,9 @@ if($xdb == 3) {
 						<a class="dropdown-item" href="#tab111" data-bs-toggle="tab" role="tab" aria-controls="tab111-tab" aria-selected="false">Details</a>
 						<a class="dropdown-item" href="#tab2" data-bs-toggle="tab" role="tab" aria-controls="tab2-tab" aria-selected="false">Donators</a>
 						<a class="dropdown-item" href="#tab4" data-bs-toggle="tab" role="tab" aria-controls="tab4-tab" aria-selected="false">Top100</a>
+						<a class="dropdown-item" href="#tab8" data-bs-toggle="tab" role="tab" aria-controls="tab8-tab" aria-selected="false">All time</a>
 						<a class="dropdown-item" href="#tab7" data-bs-toggle="tab" role="tab" aria-controls="tab7-tab" aria-selected="false">Tips</a>
-						<a class="dropdown-item" href="#tab8" data-bs-toggle="tab" role="tab" aria-controls="tab8-tab" aria-selected="false">Top100Tips</a>
-						<a class="dropdown-item" href="#tab7" data-submit-profile="">Profile Page</a>
+						<a class="dropdown-item" href="#tab7" data-submit-profile="">Profile page</a>
 					</div>
 				</div>
 			</div>
@@ -245,7 +245,7 @@ if($xdb == 3) {
 				
 				<div aria-labelledby="tab3-tab" role="tabpanel" class="tab-pane fade" id="tab3">
 					<div class="table-neresponsive">
-						<table id="search_income" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" width="100%" role="grid" aria-describedby="supportList_info">
+						<table id="search_income" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" aria-describedby="supportList_info" style="margin-bottom: 0px !important;">
 							<thead>
 								<tr>
 									<th>date</th>
@@ -263,18 +263,18 @@ if($xdb == 3) {
 					</div>
 					
 					<div aria-labelledby="tab8-tab" role="tabpanel" class="tab-pane fade" id="tab8">
-						<table id="search_income" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" role="grid" aria-describedby="supportList_info">
+						<table id="search_income" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" aria-describedby="supportList_info" style="margin-bottom: 0px !important;">
 							<thead>
 								<tr>
-									<th></th>
-									<th>date</th>
+									<th class="d-none d-sm-table-cell"></th>
 									<th>donator</th>
-									<th>tokens</th>
-									<th>usd</th>
+									<th class="d-none d-sm-table-cell">tips</th>
+									<th>AVG</th>
+									<th>USD</th>
 								</tr>
 							</thead>
 							<tbody>
-								<?php echo cacheResult('getTop100Tips', ['id' => $info['id']], 600); ?>
+								<?php echo cacheResult('getDonsTop100', ['id' => $info['id'], 'time' => 'all'], 600); ?>
 							</tbody>
 						</table>
 					</div>
@@ -284,7 +284,22 @@ if($xdb == 3) {
 					</div>
 					
 					<div aria-labelledby="tab4-tab" role="tabpanel" class="tab-pane fade" id="tab4">
-						<center>temporarily not working</center>
+						
+						<table id="search_income" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" aria-describedby="supportList_info" style="margin-bottom: 0px !important;">
+							<thead>
+								<tr>
+									<th class="d-none d-sm-table-cell"></th>
+									<th>donator</th>
+									<th class="d-none d-sm-table-cell">tips</th>
+									<th>AVG</th>
+									<th>USD</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php echo cacheResult('getDonsTop100', ['id' => $info['id'], 'time' => 'month'], 600); ?>
+							</tbody>
+						</table>
+						
 					</div>
 				
 				

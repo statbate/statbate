@@ -42,8 +42,6 @@ if(!$js){
 	die('error');
 }
 
-//logUsers('clickUsers');
-
 //header("Location: url");
 //die();
 

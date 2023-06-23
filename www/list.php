@@ -11,26 +11,24 @@ if(!empty($_GET['base'])){
 }
 
 require_once('/var/www/statbate/root/private/init.php');
-//logUsers();
+
 $track = trackCount();
 $bestTips = cacheResult('getBestTips', [], 3600);
 $arr = json_decode(cacheResult('getList', [], 30), true);
 
-
-if($dbname == 'chaturbate'){
-	$a = getCbArr(); $xdb = 1;
-	$statbateConf = '{"page": "list", "redirect": "https://statbate.com/l/", "platform": "chaturbate", "speed_gauge": 60}';
-	$title = "Chaturbate";
-}
+$xdb = 1;
+$a = getListArr(); 
+$statbateConf = '{"page": "list", "redirect": "https://statbate.com/l/", "platform": "chaturbate", "speed_gauge": 60}';
+$title = "Chaturbate";
 
 if($dbname == 'bongacams'){
-	$a = getBgArr(); $xdb = 2;
+	$xdb = 2;
 	$statbateConf = '{"page": "list", "redirect": "https://statbate.com/b/", "platform": "bongacams", "speed_gauge": 10}';
 	$title = "BongaCams";
 }
 
 if($dbname == 'stripchat'){
-	$a = getStArr(); $xdb = 3;
+	$xdb = 3;
 	$statbateConf = '{"page": "list", "redirect": "https://statbate.com/s/", "platform": "stripchat", "speed_gauge": 30}';
 	$title = "Stripchat";
 }
