@@ -149,12 +149,11 @@ function getTop($arr){ // cache done
 		return false;
 	}
 	
-	$query = $db->query("SELECT `id`, `name`, `gender`, `fans`, `last` FROM `room` WHERE `id` IN ($in)");
+	$query = $db->query("SELECT `id`, `name`, `gender`, `last` FROM `room` WHERE `id` IN ($in)");
 	while($row = $query->fetch()){
 		@$data[$row['id']]['name'] = $row['name'];
 		$data[$row['id']]['last'] = $row['last'];
 		$data[$row['id']]['gender'] = $row['gender'];
-		$data[$row['id']]['fans'] = round($row['fans']/1000);
 	}
 	return $data;
 }
@@ -185,9 +184,7 @@ function prepareTable($g){ // cache done
 		$list[] = $val['name'];
 		$val['token'] = toUSD($val['token']);
 		
-		
 		//print_r( array_keys($arr));
-		
 		
 		if((in_array($val['name'], $arr) || array_key_exists($val['name'], $arr)) && $val['last'] > time()-60*20){
 			$tr = str_replace('{ID}', "<a href='/search/$xdb/{$val['name']}' style='color:#A52A2A'>$i</a>", $tmpl);
@@ -202,16 +199,10 @@ function prepareTable($g){ // cache done
 		}else{
 			$val['last'] = get_time_ago($val['last']);
 		}
-
-		if($val['fans'] == 0){
-			$val['fans'] = '';
-		}
 		
 		$tr = str_replace('{URL}', createUrl($val['name']), $tr);
 		$tr = str_replace('{DONS}', $val['dons'], $tr);
-		//$tr = str_replace('{GENDER}', $gender[$val['gender']], $tr);
 		$tr = str_replace('{LAST}', $val['last'], $tr);
-		//$tr = str_replace('{FANS}', $val['fans'], $tr);
 		$tr = str_replace('{PERDAY}', round($val['token']/$val['days']), $tr);
 		$tr = str_replace('{USD}', "<a href=\"#\" data-modal-info data-modal-id=$key data-modal-type=income data-modal-name=".strip_tags($val['name']).">{$val['token']}</a>", $tr);
 		$stat .= $tr;
