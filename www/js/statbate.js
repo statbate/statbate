@@ -238,7 +238,7 @@ msgs = {arr: [],};
 statbate();
 showStat();
 
-console.log('Debug https://statbate.com/info');
+console.log('Debug https://statbate.com/debug');
 console.log('Statbate is open source project (https://github.com/statbate)');
 
 $(document).ready(function () {

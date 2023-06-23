@@ -22,7 +22,7 @@ function cacheResult($name, $params = [], $time = 600, $json = false){
 function getList(){
 	global $dbname;
 	if($dbname == 'chaturbate'){
-		$url = 'https://statbate.com/list/';
+		$url = 'https://statbate.com/chaturbate/list/';
 	}
 	if($dbname == 'bongacams'){
 		$url = 'https://statbate.com/bongacams/list/';
@@ -36,7 +36,7 @@ function getList(){
 function getDebug(){
 	global $dbname;
 	if($dbname == 'chaturbate'){
-		$url = 'https://statbate.com/debug/';
+		$url = 'https://statbate.com/chaturbate/debug/';
 	}
 	if($dbname == 'bongacams'){
 		$url = 'https://statbate.com/bongacams/debug/';
@@ -80,43 +80,13 @@ function formatBytes($size, $precision = 2){
     return round(pow(1024, $base - floor($base)), $precision) .' '. $suffixes[floor($base)];
 }
 
-function getCbArr(){
-	global $redis;
-	$cb_list = $redis->get('chaturbateList');
+function getListArr(){
+	global $redis, $dbname;
+	$cb_list = $redis->get($dbname.'List');
 	if($cb_list !== false){
 		return json_decode($cb_list, true);
 	}
 	return false;
-}
-
-function getBgArr(){
-	global $redis;
-	$bg_list = $redis->get('bongacamsList');
-	if($bg_list !== false){
-		return json_decode($bg_list, true);
-	}
-	return false;
-}
-
-function getStArr(){
-	global $redis;
-	$st_list = $redis->get('stripchatList');
-	if($st_list !== false){
-		return json_decode($st_list, true);
-	}
-	return false;
-}
-
-function getCbList(){
-	$a = getCbArr();
-	if(!$a){
-		return [];
-	}
-	$list = [];
-	foreach($a as $key => $val){
-		$list[] = $val['username'];
-	}
-	return $list;
 }
 
 // https://www.w3schools.in/php-script/time-ago-function/
@@ -152,63 +122,9 @@ function createUrl($name){
 	return "<a href='/{$i}/{$name}' target='_blank' rel='nofollow'>{$name}</a>";
 }
 
-function getApiChartStrip(){ // dub
-	global $redis;
-	$json = $redis->get('stripchatList');
-	$arr = json_decode($json, true);
-	$gender = ['male' => 'Male', 'female' => 'Female', 'tranny' => 'Trans', 'group' => 'Couple'];
-	$data = ['Male' => [0, 0], 'Female' => [0, 0], 'Trans' => [0, 0], 'Couple' => [0, 0]];
-	
-	foreach($arr as $val){
-
-		if(!array_key_exists($val['gender'], $gender)){
-			continue;
-		}
-		
-		$key = $gender[$val['gender']];
-		$data[$key][0]++;
-		$data[$key][1] += $val['num_users'];
-	}
-	
-	$a = $b = [];
-
-	foreach($data as $k => $v){
-		$a[] = ['name' => $k, 'y' => $v[0]];
-		$b[] = ['name' => $k, 'y' => $v[1]];
-	}
-	return [json_encode($a), json_encode($b)];	
-}
-
-function getApiChartBonga(){ // dub
-	global $redis;
-	$json = $redis->get('bongacamsList');
-	$arr = json_decode($json, true);
-	$gender = ['male' => 'Male', 'female' => 'Female', 'transsexual' => 'Trans', 'couple' => 'Couple'];
-	$data = ['Male' => [0, 0], 'Female' => [0, 0], 'Trans' => [0, 0], 'Couple' => [0, 0]];
-	
-	foreach($arr as $val){
-
-		if(!array_key_exists($val['gender'], $gender)){
-			continue;
-		}
-		
-		$key = $gender[$val['gender']];
-		$data[$key][0]++;
-		$data[$key][1] += $val['num_users'];
-	}
-	
-	$a = $b = [];
-
-	foreach($data as $k => $v){
-		$a[] = ['name' => $k, 'y' => $v[0]];
-		$b[] = ['name' => $k, 'y' => $v[1]];
-	}
-	return [json_encode($a), json_encode($b)];	
-}
-
 function getApiChart(){
-	global $redis;
-	$json = $redis->get('chaturbateList');
+	global $redis, $dbname;
+	$json = $redis->get($dbname.'List');
 	if($json === false){
 		return;
 	}
@@ -216,6 +132,12 @@ function getApiChart(){
 	$arr = json_decode($json, true);
 
 	$gender = ['m' => 'Male', 'f' => 'Female', 's' => 'Trans', 'c' => 'Couple'];
+	if($dbname == "bongacams"){
+		$gender = ['male' => 'Male', 'female' => 'Female', 'transsexual' => 'Trans', 'couple' => 'Couple'];
+	}
+	if($dbname == "stripchat"){
+		$gender = ['male' => 'Male', 'female' => 'Female', 'tranny' => 'Trans', 'group' => 'Couple'];
+	}
 	$data = ['Male' => [0, 0], 'Female' => [0, 0], 'Trans' => [0, 0], 'Couple' => [0, 0]];
 
 	foreach($arr as $val){

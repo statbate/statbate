@@ -55,19 +55,14 @@ function showRoomList(){
 		}
 		echo "</table> \n\n";
 		
-
-		if($dbname == 'chaturbate'){
-			$a = getCbArr();
-			$xdb=1;
-		}
+		$xdb=1;
+		$a = getListArr();
 
 		if($dbname == 'bongacams'){
-			$a = getBgArr();
 			$xdb=2;
 		}
 			
 		if($dbname == 'stripchat'){
-			$a = getStArr();
 			$xdb=3;
 		}
 		

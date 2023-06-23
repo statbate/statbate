@@ -163,24 +163,15 @@ function prepareTable($g){ // cache done
 	
 	global $dbname;
 	
-	
-	if($dbname == 'chaturbate'){
-		$xdb = 1;
-		$arr = getCbList();
-		//var_dump($arr);
-		
-	}
+	$xdb = 1;
+	$arr = getListArr();
 	
 	if($dbname == 'bongacams'){
 		$xdb = 2;
-		$arr = getBgArr();
-		//var_dump($arr);
 	}
 	
 	if($dbname == 'stripchat'){
 		$xdb = 3;
-		$arr = getStArr();
-		//var_dump($arr);
 	}
 	
 	$i = 0; $stat = ''; $list = [];
