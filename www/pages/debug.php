@@ -1,6 +1,11 @@
 <?php
 require_once('/var/www/statbate/root/private/init.php');
 
+function getDebug(){
+	global $dbname;
+	return file_get_contents("https://statbate.com/$dbname/debug/");
+}
+
 function showRoomList(){
 	global $dbname;
 	//if(isset($_GET['list'])){

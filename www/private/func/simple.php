@@ -21,30 +21,7 @@ function cacheResult($name, $params = [], $time = 600, $json = false){
 
 function getList(){
 	global $dbname;
-	if($dbname == 'chaturbate'){
-		$url = 'https://statbate.com/chaturbate/list/';
-	}
-	if($dbname == 'bongacams'){
-		$url = 'https://statbate.com/bongacams/list/';
-	}
-	if($dbname == 'stripchat'){
-		$url = 'https://statbate.com/stripchat/list/';
-	}
-	return file_get_contents($url);
-}
-
-function getDebug(){
-	global $dbname;
-	if($dbname == 'chaturbate'){
-		$url = 'https://statbate.com/chaturbate/debug/';
-	}
-	if($dbname == 'bongacams'){
-		$url = 'https://statbate.com/bongacams/debug/';
-	}
-	if($dbname == 'stripchat'){
-		$url = 'https://statbate.com/stripchat/debug/';
-	}
-	return file_get_contents($url);
+	return file_get_contents("https://statbate.com/$dbname/list/");
 }
 
 function dotFormat($v){
