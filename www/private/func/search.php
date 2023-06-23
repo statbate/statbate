@@ -46,7 +46,8 @@ function getTop100Tips($arr){
 		<td>".toUSD($row['token'])."</td>
 		</tr>";
 	}
-	return $text;
+	
+	return preg_replace('/\s+/', ' ', trim($text));
 }
 
 function incomeDetails($arr){
@@ -100,7 +101,8 @@ function getSearchIncome($arr){
 				<td>".toUSD($row['total'])."</td>";
 		}
 	}
-	return $s;
+	
+	return preg_replace('/\s+/', ' ', trim($s));
 }
 
 function showSearchLast($lastSearch, $l = -10){

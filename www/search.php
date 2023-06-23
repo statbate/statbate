@@ -76,8 +76,7 @@ if($xdb == 3) {
 	$statbateConf = '{"page": "search", "redirect": "https://statbate.com/s/", "platform": "stripchat"}';
 }
 
-?>
-<!DOCTYPE html>
+?><!DOCTYPE html>
 <html lang="en">
 	<head>
 		<title>Statbate: <?php echo $info['name']; ?></title>
@@ -93,7 +92,7 @@ if($xdb == 3) {
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?4">
+		<link rel="stylesheet" href="/css/statbate.css?6">
 	</head>
 	
 	<body>
@@ -176,30 +175,30 @@ if($xdb == 3) {
 					
 			
 			<div class="content_nav">
-				<ul class="nav nav-tabs justify-content-center" id="nav-tab" role="tablist">
+				<ul class="nav nav-tabs justify-content-center" id="nav-tab">
 					<li class="nav-item">
-						<button class="nav-link active" id="tab5-tab" data-bs-toggle="tab" role="tab" data-bs-target="#tab5" aria-controls="tab4" aria-selected="true">Total</button>
+						<button class="nav-link active" id="tab5-tab" data-bs-toggle="tab" data-bs-target="#tab5">Total</button>
 					</li>
 					<li class="nav-item">
-						<button class="nav-link" id="tab1-tab" data-bs-toggle="tab" role="tab" data-bs-target="#tab1" aria-controls="tab1" aria-selected="false">Income</button>
+						<button class="nav-link" id="tab1-tab" data-bs-toggle="tab" data-bs-target="#tab1">Income</button>
 					</li>
 					<li class="nav-item">
-						<button class="nav-link" id="tab3-tab" data-bs-toggle="tab" role="tab" data-bs-target="#tab3" aria-controls="tab3" aria-selected="false">Month</button>
+						<button class="nav-link" id="tab3-tab" data-bs-toggle="tab" data-bs-target="#tab3">Month</button>
 					</li>
 					<li class="nav-item">
-						<button class="nav-link" id="tab111-tab" data-bs-toggle="tab" role="tab" data-bs-target="#tab111" aria-controls="tab111" aria-selected="false">Details</button>
+						<button class="nav-link" id="tab111-tab" data-bs-toggle="tab" data-bs-target="#tab111">Details</button>
 					</li>
 					<li class="nav-item">
-						<button class="nav-link" id="tab2-tab" data-bs-toggle="tab" role="tab" data-bs-target="#tab2" aria-controls="tab2" aria-selected="false">Donators</button>
+						<button class="nav-link" id="tab2-tab" data-bs-toggle="tab" data-bs-target="#tab2">Donators</button>
 					</li>
 					<li class="nav-item">
-						<button class="nav-link" id="tab4-tab" data-bs-toggle="tab" role="tab" data-bs-target="#tab4" aria-controls="tab4" aria-selected="false">Top100</button>
+						<button class="nav-link" id="tab4-tab" data-bs-toggle="tab" data-bs-target="#tab4">Top100</button>
 					</li>
 					<li class="nav-item">
-						<button class="nav-link" id="tab7-tab" data-bs-toggle="tab" role="tab" data-bs-target="#tab7" aria-controls="tab7" aria-selected="false">Tips</button>
+						<button class="nav-link" id="tab7-tab" data-bs-toggle="tab" data-bs-target="#tab7">Tips</button>
 					</li>
 					<li class="nav-item">
-						<button class="nav-link" id="tab8-tab" data-bs-toggle="tab" role="tab" data-bs-target="#tab8" aria-controls="tab8" aria-selected="false">Top100Tips</button>
+						<button class="nav-link" id="tab8-tab" data-bs-toggle="tab" data-bs-target="#tab8">Top100Tips</button>
 					</li>
 					<li class="nav-item">
 						<button class="nav-link" data-submit-profile="">Profile Page</button>
@@ -329,7 +328,7 @@ if($xdb == 3) {
 	<script src="/js/highstock.js"></script>
 	<script src="/js/data.js"></script>
 	<script src="/js/simplebar.js"></script>
-	<script src="/js/statbate.js?2"></script>
+	<script src="/js/statbate.js?6"></script>
 	<script>
 		$(document).on("click","[data-submit-profile]", function(e){
 			$(this).blur();
@@ -338,7 +337,7 @@ if($xdb == 3) {
 		});
 		
 		function movePage(){
-			window.location.href = "/search.php?name="+$('input[id=searchName]').val()+"&db="+$('#searchBase option:selected').val();
+			window.location.href = "/search/"+ $('#searchBase option:selected').val() + "/" + $('input[id=searchName]').val();
 		}
 				
 		$(document).on("click","[data-submit-search]", function(e){

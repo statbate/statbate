@@ -35,11 +35,9 @@ $('.dropdown-menu').on( 'click', 'a', function() {
 $(document).on("click", "[data-modal-info]", function (e) {
 	$(this).blur();
 	e.preventDefault();
-
 	var id = $(this).data('modal-id');
 	var name = $(this).data('modal-name');
 	var type = $(this).data('modal-type');
-
 	$.post("/public/info.php", {'type': type, 'id': id, 'cam': statbateConf.platform}, function(json){
 		data = JSON.parse(json);
 		if (data.table.length != 0) {
@@ -47,18 +45,15 @@ $(document).on("click", "[data-modal-info]", function (e) {
 			$("#donRoomTable tbody").html(data.table);
 			$('#donRoomModal').modal('show');
 		}
-
 		if (data.amount.length != 0) {
-			$("#allIncome").html('<hr />');
-			$("#allIncome").append("<center><b>All time " + type + ": " + data.amount + " USD</b></center><hr/>");
+			$("#allIncome").html("<b>All time " + type + " " + data.amount + " USD</b>");
 		}
-
 		if (data.chart.length != 0) {
 			xx11 = JSON.parse(data.chart);
 			var xx22 = MG.convert.date(xx11, 'date');
 			MG.data_graphic({
 				data: xx22,
-				width: 380,
+				width: 390,
 				height: 120,
 				right: 10,
 				missing_is_zero: true,
@@ -205,11 +200,11 @@ function createTables(){
 	};
 	aoColumns = [
 		{ "orderable": false, "searchable": false, "sWidth": "5%" },
-		{ "orderable": false, "sWidth": "35%" },
-		{ "orderable": false, "sWidth": "15%" },
-		{ "searchable": false, "sWidth": "15%" },
-		{ "searchable": false, "sWidth": "15%" },
-		{ "searchable": false, "sWidth": "15%" },
+		{ "orderable": false, "sWidth": "39%" },
+		{ "orderable": false, "sWidth": "14%" },
+		{ "searchable": false, "sWidth": "14%" },
+		{ "searchable": false, "sWidth": "14%" },
+		{ "searchable": false, "sWidth": "14%" },
 	];
 	
 	tables["main"] = $('#main').DataTable({...dataTableOptions, aoColumns: aoColumns,});
@@ -243,7 +238,7 @@ msgs = {arr: [],};
 statbate();
 showStat();
 
-console.log('Debug https://statbate.com/debug.php');
+console.log('Debug https://statbate.com/info');
 console.log('Statbate is open source project (https://github.com/statbate)');
 
 $(document).ready(function () {

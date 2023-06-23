@@ -2,7 +2,6 @@ User-Agent: *
 Allow: /$
 Allow: /bonga/$
 Allow: /strip/$
-
 Allow: /search$
 
 Allow: *.js

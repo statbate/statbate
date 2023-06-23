@@ -4,9 +4,6 @@ function cacheResult($name, $params = [], $time = 600, $json = false){
 	global $redis, $dbname;
 	$key = md5($dbname.$name.implode('.',$params));
 	$result = $redis->get($key);
-	
-	//if (1 == 1) {
-	
 	if($result === false || (php_sapi_name() == "cli" && $redis->ttl($key) < 120)){
 		$result = call_user_func($name, $params);
 		if(!empty($result)){
@@ -155,16 +152,6 @@ function createUrl($name){
 	return "<a href='/{$i}/{$name}' target='_blank' rel='nofollow'>{$name}</a>";
 }
 
-function getGoogleTrends(){
-	$s = "";
-	$time = "2020-01-01 ".date("Y-m-d", time());
-	$arr = ["Chaturbate", "Stripchat", "BongaCams", "LiveJasmin", "CamSoda"];
-	foreach($arr as $val){
-		$s .= "{\"keyword\":\"$val\",\"geo\":\"\",\"time\":\"$time\"},";
-	}
-	return $s;
-}
-
 function getApiChartStrip(){ // dub
 	global $redis;
 	$json = $redis->get('stripchatList');
@@ -222,9 +209,9 @@ function getApiChartBonga(){ // dub
 function getApiChart(){
 	global $redis;
 	$json = $redis->get('chaturbateList');
-//	if($json === false){
-//		return;
-//	}
+	if($json === false){
+		return;
+	}
 
 	$arr = json_decode($json, true);
 
@@ -249,76 +236,4 @@ function getApiChart(){
 		$b[] = ['name' => $k, 'y' => $v[1]];
 	}
 	return [json_encode($a), json_encode($b)];
-}
-
-function logUsers($s = 'statbateUsers'){ 
-	global $redis;
-	$hash = sha1($_SERVER['REMOTE_ADDR']);
-	$key = $s.date("Ymd", time());
-	$json = $redis->get($key);
-	if($json === false){
-		$arr[$hash] = 1;
-		$result = json_encode($arr);
-		$redis->setex($key, 86400, $result);
-		die;
-	}
-	$arr = json_decode($json, true);
-	if(!empty($arr[$hash])){
-		$arr[$hash]++;
-	}else{
-		$arr[$hash] = 1;
-	}
-	$result = json_encode($arr);
-	$redis->setex($key, 86400, $result);
-}
-
-function getStatUsers($s = 'statbateUsers'){
-	global $redis;
-	$key = $s.date("Ymd", time());
-	$json = $redis->get($key);
-	if($json === false){
-		return [0, 0];
-	}
-	$arr = json_decode($json, true);
-	return [count($arr), array_sum($arr)];
-}
-
-function send($method, $chatID, $text){
-	$markup = json_encode(['keyboard' => [["info", "list", "remove all"]], 'resize_keyboard' => true]);
-	$data = ['chat_id' => $chatID, 'reply_markup' => $markup, 'text' => $text];
-    $url = "https://api.telegram.org/bot5598234002:AAHelhSJPerjKADPmxYbLwSVukNz1B0STzE". "/" . $method;
-    if (!$curld = curl_init()) {
-        exit;
-    }
-    curl_setopt($curld, CURLOPT_POST, true);
-    curl_setopt($curld, CURLOPT_POSTFIELDS, $data);
-    curl_setopt($curld, CURLOPT_URL, $url);
-    curl_setopt($curld, CURLOPT_RETURNTRANSFER, true);
-    $output = curl_exec($curld);
-    curl_close($curld);
-}
-
-function fileTime($file){
-	$file = $_SERVER['DOCUMENT_ROOT'].$file;
-	
-    if(!file_exists($file)) {
-        return false;
-    }
-    return str_replace($_SERVER['DOCUMENT_ROOT'], '', $file).'?'.md5_file($file);
-}
-
-function getCSS($arr){
-	$s = "";
-	foreach($arr as $val) {
-		$s .= "<link rel='stylesheet' href='".fileTime('/css/'.$val)."'>";
-	}
-	return $s;
-}
-
-function getJS($arr){
-	$s = "";
-	foreach($arr as $val) {
-		$s .= "<script src='".fileTime('/js/'.$val)."'></script>";
-	}
-	return $s;
 }

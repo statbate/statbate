@@ -64,7 +64,7 @@ foreach($arr as $key => $val){
 		continue;
 	}
 	
-	if($time > $val['last']+60*30){
+	if($time > $val['last']+60*60){
 		continue;
 	}
 	
@@ -92,17 +92,17 @@ foreach($arr as $key => $val){
 		<td class=\"d-none d-sm-table-cell\">$url</td>
 		<td>$key</td>
 		<td class=\"d-none d-sm-table-cell\">".round(($time - $val['start'])/60)."</td>
-		
 		<td>$hour</td>
 		<td class=\"d-none d-sm-table-cell\">$avg</td>
 		<td class=\"d-none d-sm-table-cell\">{$val['dons']}</td>
-		
 		<td>$income</td>
 	</tr>";
 }
 
-?>
-<!DOCTYPE html>
+$tr = preg_replace('/\s+/', ' ', trim($tr));
+
+
+?><!DOCTYPE html>
 <html lang="en">
 	<head>
 		<title><?php echo $title; ?> tracking <?php echo count($arr); ?> rooms</title>
@@ -118,7 +118,7 @@ foreach($arr as $key => $val){
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?4">
+		<link rel="stylesheet" href="/css/statbate.css?6">
 		
 		<!-- JS -->
 		<script>
@@ -213,7 +213,7 @@ foreach($arr as $key => $val){
 			
 			<div class="tab-content">
 					<div class="promo-block">
-						<a href="https://www.getmonero.org" target="_blank"><img src="/img/xmr.webp" width="380" height="31"></a>
+						<a href="https://www.getmonero.org" target="_blank"><img src="/img/xmr.webp" width="380" height="31" alt="monero banner"></a>
 					</div>
 				
 				<!-- test data start -->
@@ -273,7 +273,7 @@ foreach($arr as $key => $val){
 	<script src="/js/highcharts-more.js"></script>
 	<script src="/js/solid-gauge.js"></script>
 	<script src="/js/simplebar.js"></script>
-	<script src="/js/statbate.js?2"></script>
+	<script src="/js/statbate.js?6"></script>
 	<script>
 		// Solid gauge
 		var gaugeOptions = {

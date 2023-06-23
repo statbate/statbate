@@ -2,19 +2,21 @@
 
 $title = 'Statbate: Chaturbate Top 100';
 $statbateConf = '{"page": "main", "redirect": "https://statbate.com/l/", "platform": "chaturbate", "heatmap": 60}';
+$token_cost = 0.5;
 
 if(!empty($_GET['base'])){
 	
 	if($_GET['base'] == 'bonga'){
 		$clname = $dbname = 'bongacams';
 		$title = 'Statbate: BongaCams Top 100';
-		$statbateConf = '{"page": "main", "redirect": "https://statbate.com/b/", "platform": "bongacams", "heatmap": 4}';
+		$statbateConf = '{"page": "main", "redirect": "https://statbate.com/b/", "platform": "bongacams", "heatmap": 6}';
+		$token_cost = 0.025;
 	}
 	
 	if($_GET['base'] == 'strip'){
 		$clname = $dbname = 'stripchat';
 		$title = 'Statbate: Stripchat Top 100';
-		$statbateConf = '{"page": "main", "redirect": "https://statbate.com/s/", "platform": "stripchat", "heatmap": 20}';
+		$statbateConf = '{"page": "main", "redirect": "https://statbate.com/s/", "platform": "stripchat", "heatmap": 30}';
 	}
 
 }
@@ -28,9 +30,7 @@ $bestTips = cacheResult('getBestTips', [], 3600);
 $fin = cacheResult('getFinStat', [], 3600, true);
 $track = trackCount();
 $apiCharts = getApiChart();
-?>
-
-<!DOCTYPE html>
+?><!DOCTYPE html>
 <html lang="en">
 	<head>
 		<title><?php echo $title; ?></title>
@@ -47,7 +47,7 @@ $apiCharts = getApiChart();
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?4">
+		<link rel="stylesheet" href="/css/statbate.css?6">
 		
 		<!-- JS -->
 		<script>
@@ -130,7 +130,7 @@ $apiCharts = getApiChart();
 							</tr>
 							<tr>
 								<td>One token</td>
-								<td>$0.05</td>
+								<td>$<?php echo $token_cost; ?></td>
 							</tr>
 						</tbody>
 					</table>
@@ -138,33 +138,33 @@ $apiCharts = getApiChart();
 			</div>
 	
 			<div class="content_nav">
-				<ul class="nav nav-tabs justify-content-center" id="nav-tab" role="tablist">
+				<ul class="nav nav-tabs justify-content-center" id="nav-tab">
 					<li class="nav-item">
-						<button class="nav-link active" id="cams-tab" data-bs-toggle="tab" role="tab" data-bs-target="#cams" aria-controls="cams" aria-selected="true">Rooms</button>
+						<button class="nav-link active" id="cams-tab" data-bs-toggle="tab" data-bs-target="#cams">Rooms</button>
 					</li>
 					<li class="nav-item">
-						<button class="nav-link" id="dons-tab" data-bs-toggle="tab" role="tab" data-bs-target="#dons" aria-controls="dons" aria-selected="false">Donators</button>
+						<button class="nav-link" id="dons-tab" data-bs-toggle="tab" data-bs-target="#dons">Donators</button>
 					</li>
 					<li class="nav-item">
-						<button class="nav-link" id="boys-tab" data-bs-toggle="tab" role="tab" data-bs-target="#boys" aria-controls="boys" aria-selected="false">Boys</button>
+						<button class="nav-link" id="boys-tab" data-bs-toggle="tab" data-bs-target="#boys">Boys</button>
 					</li>
 					<li class="nav-item">
-						<button class="nav-link" id="trans-tab" data-bs-toggle="tab" role="tab" data-bs-target="#trans" aria-controls="trans" aria-selected="false">Trans</button>
+						<button class="nav-link" id="trans-tab" data-bs-toggle="tab" data-bs-target="#trans">Trans</button>
 					</li>
 					<li class="nav-item">
-						<button class="nav-link" id="couple-tab" data-bs-toggle="tab" role="tab" data-bs-target="#couple" aria-controls="couple" aria-selected="false">Couple</button>
+						<button class="nav-link" id="couple-tab" data-bs-toggle="tab" data-bs-target="#couple">Couple</button>
 					</li>
 					<li class="nav-item">
-						<button class="nav-link" id="incomeCharts-tab" data-bs-toggle="tab" role="tab" data-bs-target="#incomeCharts" aria-controls="incomeCharts" aria-selected="false">Income</button>
+						<button class="nav-link" id="incomeCharts-tab" data-bs-toggle="tab" data-bs-target="#incomeCharts">Income</button>
 					</li>
 					<li class="nav-item">
-						<button class="nav-link" id="roomsCharts-tab" aria-invalid="roomsCharts" data-bs-toggle="tab" role="tab" data-bs-target="#roomsCharts" aria-controls="roomsCharts" aria-selected="false">Streamers</button>
+						<button class="nav-link" id="roomsCharts-tab" data-bs-toggle="tab" data-bs-target="#roomsCharts">Streamers</button>
 					</li>
 					<li class="nav-item">
-						<button class="nav-link" id="viewersCharts-tab" data-bs-toggle="tab" role="tab" data-bs-target="#viewersCharts" aria-controls="viewersCharts" aria-selected="false">Viewers</button>
+						<button class="nav-link" id="viewersCharts-tab" data-bs-toggle="tab" data-bs-target="#viewersCharts">Viewers</button>
 					</li>
 					<li class="nav-item">
-						<button class="nav-link" id="heatmap-tab" data-bs-toggle="tab" role="tab" data-bs-target="#heatmap" aria-controls="heatmap" aria-selected="false">Heat map</button>
+						<button class="nav-link" id="heatmap-tab" data-bs-toggle="tab" data-bs-target="#heatmap">Heat map</button>
 					</li>
 				</ul>
 			</div>
@@ -175,15 +175,15 @@ $apiCharts = getApiChart();
 						Rooms
 					</button>
 					<div class="dropdown-menu nav nav-tabs collapse" aria-labelledby="dropdownMenuButton">
-						<a class="dropdown-item color_first" href="#cams" data-bs-toggle="tab" role="tab" aria-controls="cams" aria-selected="false">Rooms</a>
-						<a class="dropdown-item color_second" href="#dons" data-bs-toggle="tab" role="tab" aria-controls="dons" aria-selected="false">Donators</a>
-						<a class="dropdown-item color_first" href="#boys" data-bs-toggle="tab" role="tab" aria-controls="boys" aria-selected="false">Boys</a>
-						<a class="dropdown-item color_second" href="#trans" data-bs-toggle="tab" role="tab" aria-controls="trans" aria-selected="false">Trans</a>
-						<a class="dropdown-item color_first" href="#couple" data-bs-toggle="tab" role="tab" aria-controls="couple" aria-selected="false">Couple</a>
-						<a class="dropdown-item color_second" href="#incomeCharts" data-bs-toggle="tab" role="tab" aria-controls="incomeCharts" aria-selected="false">Income</a>
-						<a class="dropdown-item color_first" href="#roomsCharts" data-bs-toggle="tab" role="tab" aria-controls="roomsCharts" aria-selected="false">Streamers</a>
-						<a class="dropdown-item color_second" href="#viewersCharts" data-bs-toggle="tab" role="tab" aria-controls="viewers-charts" aria-selected="false">Viewers</a>
-						<a class="dropdown-item color_first" href="#heatmap" data-bs-toggle="tab" role="tab" aria-controls="heatmap" aria-selected="false">Heat map</a>
+						<a class="dropdown-item color_first" href="#cams" data-bs-toggle="tab" aria-controls="cams" aria-selected="false">Rooms</a>
+						<a class="dropdown-item color_second" href="#dons" data-bs-toggle="tab" aria-controls="dons" aria-selected="false">Donators</a>
+						<a class="dropdown-item color_first" href="#boys" data-bs-toggle="tab" aria-controls="boys" aria-selected="false">Boys</a>
+						<a class="dropdown-item color_second" href="#trans" data-bs-toggle="tab" aria-controls="trans" aria-selected="false">Trans</a>
+						<a class="dropdown-item color_first" href="#couple" data-bs-toggle="tab" aria-controls="couple" aria-selected="false">Couple</a>
+						<a class="dropdown-item color_second" href="#incomeCharts" data-bs-toggle="tab" aria-controls="incomeCharts" aria-selected="false">Income</a>
+						<a class="dropdown-item color_first" href="#roomsCharts" data-bs-toggle="tab" aria-controls="roomsCharts" aria-selected="false">Streamers</a>
+						<a class="dropdown-item color_second" href="#viewersCharts" data-bs-toggle="tab" aria-controls="viewers-charts" aria-selected="false">Viewers</a>
+						<a class="dropdown-item color_first" href="#heatmap" data-bs-toggle="tab" aria-controls="heatmap" aria-selected="false">Heat map</a>
 					</div>
 				</div>
 			</div>
@@ -191,7 +191,7 @@ $apiCharts = getApiChart();
 			<div class="tab-content">
 				<div aria-labelledby="cams-tab" role="tabpanel active" class="tab-pane fade active show" id="cams">	
 					<div class="promo-block">
-						<a href="https://www.getmonero.org" target="_blank"><img src="/img/xmr.webp" width="380" height="31"></a>
+						<a href="https://www.getmonero.org" target="_blank"><img src="/img/xmr.webp" width="380" height="31" alt="monero banner"></a>
 					</div>
 					<table id="main" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" role="grid" aria-describedby="supportList_info">
 						<thead>
@@ -233,7 +233,7 @@ $apiCharts = getApiChart();
 				
 				<div aria-labelledby="couple-tab" role="tabpanel" class="tab-pane fade" id="couple">
 					<div class="promo-block">
-						<a href="https://www.getmonero.org" target="_blank"><img src="/img/xmr.webp" width="380" height="31"></a>
+						<a href="https://www.getmonero.org" target="_blank"><img src="/img/xmr.webp" width="380" height="31" alt="monero banner"></a>
 					</div>
 					<table id="couple_table" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" role="grid" aria-describedby="supportList_info">
 						<thead>
@@ -255,7 +255,7 @@ $apiCharts = getApiChart();
 				
 				<div aria-labelledby="boys-tab" role="tabpanel" class="tab-pane fade" id="boys">
 					<div class="promo-block">
-						<a href="https://www.getmonero.org" target="_blank"><img src="/img/xmr.webp" width="380" height="31"></a>
+						<a href="https://www.getmonero.org" target="_blank"><img src="/img/xmr.webp" width="380" height="31" alt="monero banner"></a>
 					</div>
 					<table id="boys_table" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" role="grid" aria-describedby="supportList_info">
 						<thead>
@@ -276,7 +276,7 @@ $apiCharts = getApiChart();
 				
 				<div aria-labelledby="trans-tab" role="tabpanel" class="tab-pane fade" id="trans">
 					<div class="promo-block">
-						<a href="https://www.getmonero.org" target="_blank"><img src="/img/xmr.webp" width="380" height="31"></a>
+						<a href="https://www.getmonero.org" target="_blank"><img src="/img/xmr.webp" width="380" height="31" alt="monero banner"></a>
 					</div>
 					<table id="trans_table" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" role="grid" aria-describedby="supportList_info">
 						<thead>
@@ -341,11 +341,14 @@ $apiCharts = getApiChart();
 		
 	</div>
 	
-	<!-- modal windows start -->
-	<div class="modal fade" id="donRoomModal" tabindex="-1" role="dialog" aria-hidden="true">
+	<!-- Modal -->
+	<div class="modal fade" id="donRoomModal" tabindex="-1" aria-hidden="true">
 		<div class="modal-dialog" style="max-width: 400px;">
 			<div class="modal-content">
-				<div class="modal-body">
+				<div style="padding: 10px 10px 0px 10px;">
+					<button type="button" class="btn btn-dark" style="width: 100%;color: black !important;background-color:#e8e8e8 !important;" data-bs-dismiss="modal">Close</button>
+				</div>
+				<div class="modal-body" style="padding: 10px;">
 					<table id="donRoomTable" class="table table-striped DonTable">
 						<thead>
 							<tr>
@@ -357,15 +360,13 @@ $apiCharts = getApiChart();
 						<tbody>
 						</tbody>
 					</table>
-					<hr>
-					<div id="modelChart" class="d-none d-md-block" style="margin-top: -25px;"></div>
-					<div id="allIncome"></div>
+					<div id="modelChart" class="d-none d-md-block" style="margin-top: -30px; margin-bottom: 10px;"></div>
+					<div id="allIncome" style="padding: 0 10px 10px 10px; text-align: center;"></div>
 				</div>
 			</div>
 		</div>
 	</div>
-	<!-- modal windows end --> 
-	
+	<!-- Modal -->
 	
 	<!-- JS -->
 	<script src="/js/jquery.min.js"></script>
@@ -377,7 +378,7 @@ $apiCharts = getApiChart();
 	<script src="/js/highcharts.js"></script>
 	<script src="/js/heatmap.js"></script>
 	<script src="/js/simplebar.js"></script>
-	<script src="/js/statbate.js?2"></script>
+	<script src="/js/statbate.js?6"></script>
 	<script>
 		Highcharts.chart('pieStat', {
 			chart: {

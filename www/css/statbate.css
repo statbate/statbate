@@ -50,7 +50,7 @@ a:active {
 
 .header_navbar li a {
 	font-weight: bold;
-	color: rgba(0, 0, 0, 0.5);
+	color: rgba(0, 0, 0, 0.6);
 	text-decoration: none;
 }
 
@@ -163,7 +163,7 @@ a:active {
 }
 
 .table_online td {
-	padding: 5px 20px;
+	padding: 5px 15px;
 	border-bottom: 1px solid #dee2e6;
 	border-right: 1px solid #dee2e6;
 }
@@ -634,6 +634,10 @@ input[type=date] {
 
 @media (max-width: 690px) {
 
+	.modal-dialog {
+		margin: 1rem auto !important;
+	}
+
 	.content_info {
 		flex-direction: column;
 	}
@@ -648,6 +652,18 @@ input[type=date] {
 }
 
 @media (max-width: 568px) {
+
+	.table_online td {
+		padding: 5px 10px;
+	}
+	
+	table.dataTable tbody th,
+	table.dataTable tbody td {
+		max-width: 160px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
 	.income_chart {
 		display: none;
 	}
