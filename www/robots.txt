@@ -1,14 +1,17 @@
 User-Agent: *
 Allow: /$
-Allow: /bonga/$
-Allow: /strip/$
-Allow: /search$
+Allow: /bonga$
+Allow: /strip$
+Allow: /soda$
 
 Allow: *.js
 Allow: *.css
 Allow: *.png
 Allow: *.jpg
+Allow: *.webp
 
 Disallow: /
 
 Host: statbate.com
+
+Sitemap: https://statbate.com/sitemap.xml

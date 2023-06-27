@@ -3,10 +3,13 @@
 $title = 'Statbate: Chaturbate Top 100';
 $statbateConf = '{"page": "main", "redirect": "https://statbate.com/l/", "platform": "chaturbate", "heatmap": 60}';
 $token_cost = 0.5;
+$urlOnline = 'https://statbate.com/online';
+
 
 if(!empty($_GET['base'])){
 	
 	if($_GET['base'] == 'bonga'){
+		$urlOnline = 'https://statbate.com/bonga/online';
 		$clname = $dbname = 'bongacams';
 		$title = 'Statbate: BongaCams Top 100';
 		$statbateConf = '{"page": "main", "redirect": "https://statbate.com/b/", "platform": "bongacams", "heatmap": 6}';
@@ -14,9 +17,17 @@ if(!empty($_GET['base'])){
 	}
 	
 	if($_GET['base'] == 'strip'){
+		$urlOnline = 'https://statbate.com/strip/online';
 		$clname = $dbname = 'stripchat';
 		$title = 'Statbate: Stripchat Top 100';
 		$statbateConf = '{"page": "main", "redirect": "https://statbate.com/s/", "platform": "stripchat", "heatmap": 30}';
+	}
+	
+	if($_GET['base'] == 'soda'){
+		$urlOnline = 'https://statbate.com/soda/online';
+		$clname = $dbname = 'camsoda';
+		$title = 'Statbate: CamSoda Top 100';
+		$statbateConf = '{"page": "main", "redirect": "https://statbate.com/c/", "platform": "camsoda", "heatmap": 4}';
 	}
 
 }
@@ -64,14 +75,14 @@ $apiCharts = getApiChart();
 					<a href="/" aria-label="Move to main page" class="header_logo"></a>
 					<ul class="header_navbar">
 						<li><a href="/" id="chaturbate_link">Chaturbate</a></li>
-						<li><a href="/bonga/" id="bongacams_link">BongaCams</a></li>
-						<li><a href="/strip/" id="stripchat_link">Stripchat</a></li>
+						<li><a href="/bonga" id="bongacams_link">BongaCams</a></li>
+						<li><a href="/strip" id="stripchat_link">Stripchat</a></li>
 						<li><a href="/search">Search</a></li>
 					</ul>
 					<script>
 						document.getElementById(statbateConf.platform + "_link").classList.add("nav_active");
 					</script>
-					<a class="header_track trackCount" href="./online">track <?php echo $track; ?> rooms</a>
+					<a class="header_track trackCount" href="<?php echo $urlOnline; ?>">track <?php echo $track; ?> rooms</a>
 			</div>
 		</div>
 		<!-- header end -->
@@ -91,10 +102,10 @@ $apiCharts = getApiChart();
 		</div>
 		<div class="header_mobile_nav">
 			<a href="/" class="color_first">Chaturbate</a>
-			<a href="/bonga/" class="color_second">BongaCams</a>
-			<a href="/strip/" class="color_first">Stripchat</a>
+			<a href="/bonga" class="color_second">BongaCams</a>
+			<a href="/strip" class="color_first">Stripchat</a>
 			<a href="/search" class="color_second">Search</a>
-			<a class="header_track trackCount color_first" href="./online"><?php echo $track; ?> rooms</a>
+			<a class="header_track trackCount color_first" href="<?php echo $urlOnline; ?>"><?php echo $track; ?> rooms</a>
 		</div>
 		<!-- header mobile end -->
 		

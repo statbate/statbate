@@ -173,6 +173,10 @@ function prepareTable($g){ // cache done
 		$xdb = 3;
 	}
 	
+	if($dbname == 'camsoda'){
+		$xdb = 4;
+	}
+	
 	$i = 0; $stat = ''; $list = [];
 	$gender = ['boy', 'girl', 'trans', 'couple'];
 	$data = cacheResult('getTop', [$g], 600, true);

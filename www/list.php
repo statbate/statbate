@@ -8,6 +8,10 @@ if(!empty($_GET['base'])){
 	if($_GET['base'] == 'strip'){
 		$clname = $dbname = 'stripchat';
 	}
+	
+	if($_GET['base'] == 'soda'){
+		$clname = $dbname = 'camsoda';
+	}
 }
 
 require_once('/var/www/statbate/root/private/init.php');
@@ -31,6 +35,12 @@ if($dbname == 'stripchat'){
 	$xdb = 3;
 	$statbateConf = '{"page": "list", "redirect": "https://statbate.com/s/", "platform": "stripchat", "speed_gauge": 30}';
 	$title = "Stripchat";
+}
+
+if($dbname == 'camsoda'){
+	$xdb = 4;
+	$statbateConf = '{"page": "list", "redirect": "https://statbate.com/c/", "platform": "camsoda", "speed_gauge": 10}';
+	$title = "CamSoda";
 }
 
 if($a){
@@ -84,7 +94,7 @@ foreach($arr as $key => $val){
 	
 	
 	
-	$url = "<a href='/public/log.php?name=$key&base=$dbname' target='_blank'>$i</a>";
+	$url = "<a href='/log/$dbname/$key' target='_blank'>$i</a>";
 	$key = "<a href='/search/$xdb/$key' target='_blank'>$key</a>";
 	$tr .= "<tr>
 		<td class=\"d-none d-sm-table-cell\">$url</td>
@@ -108,6 +118,7 @@ $tr = preg_replace('/\s+/', ' ', trim($tr));
 		<meta name="description" content="How much do webcam models make? Now you know the answer!">
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 		<meta name="format-detection" content="telephone=no">
+		<meta name="robots" content="noindex, nofollow" />
 		<link rel="shortcut icon" type="image/webp" href="/img/favicon.webp" />
 		
 		<!-- CSS -->
@@ -132,8 +143,8 @@ $tr = preg_replace('/\s+/', ' ', trim($tr));
 					<a href="/" aria-label="Move to main page" class="header_logo"></a>
 					<ul class="header_navbar">
 						<li><a href="/" id="chaturbate_link">Chaturbate</a></li>
-						<li><a href="/bonga/" id="bongacams_link">BongaCams</a></li>
-						<li><a href="/strip/" id="stripchat_link">Stripchat</a></li>
+						<li><a href="/bonga" id="bongacams_link">BongaCams</a></li>
+						<li><a href="/strip" id="stripchat_link">Stripchat</a></li>
 						<li><a href="/search">Search</a></li>
 					</ul>
 					<a class="header_track trackCount" href="./online">track <?php echo $track; ?> rooms</a>
@@ -159,8 +170,8 @@ $tr = preg_replace('/\s+/', ' ', trim($tr));
 		</div>
 		<div class="header_mobile_nav">
 			<a href="/" class="color_first">Chaturbate</a>
-			<a href="/bonga/" class="color_second">BongaCams</a>
-			<a href="/strip/" class="color_first">Stripchat</a>
+			<a href="/bonga" class="color_second">BongaCams</a>
+			<a href="/strip" class="color_first">Stripchat</a>
 			<a href="/search" class="color_second">Search</a>
 			<a class="header_track trackCount color_first" href="./online"><?php echo $track; ?> rooms</a>
 		</div>

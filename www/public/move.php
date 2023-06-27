@@ -34,6 +34,10 @@ function getJSRedirect(){
 		return "window.location.replace('$url');";
 	}
 	
+	if($_GET['c'] == 'camsoda'){
+		return "window.location.replace('https://www.camsoda.com/enter.php?id=statbate&type=REV&model=$room');";
+	}
+	
 	return false;
 }
 

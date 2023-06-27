@@ -95,6 +95,9 @@ function createUrl($name){
 	if($dbname == 'stripchat'){
 		$i = 's';
 	}
+	if($dbname == 'camsoda'){
+		$i = 'c';
+	}
 	$name = strip_tags($name);
 	return "<a href='/{$i}/{$name}' target='_blank' rel='nofollow'>{$name}</a>";
 }
@@ -114,6 +117,9 @@ function getApiChart(){
 	}
 	if($dbname == "stripchat"){
 		$gender = ['male' => 'Male', 'female' => 'Female', 'tranny' => 'Trans', 'group' => 'Couple'];
+	}
+	if($dbname == "camsoda"){
+		$gender = ['m' => 'Male', 'f' => 'Female', 't' => 'Trans', 'c' => 'Couple'];
 	}
 	$data = ['Male' => [0, 0], 'Female' => [0, 0], 'Trans' => [0, 0], 'Couple' => [0, 0]];
 

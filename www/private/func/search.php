@@ -160,6 +160,10 @@ function getSimilar($arr){
 		$xdb = 3;
 	}
 	
+	if($dbname == 'camsoda'){
+		$xdb = 4;
+	}
+	
 	$query = $clickhouse->query("SELECT rid, SUM(token) as total FROM stat WHERE did IN (".implode(",", $dons).") AND time > today() - toIntervalMonth(1) GROUP BY rid ORDER BY total DESC LIMIT 11");
 	while($row = $query->fetch()){
 		if ($row['rid'] == $arr['id']){

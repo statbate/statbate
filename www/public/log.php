@@ -10,6 +10,10 @@ if(!empty($_GET['base']) && $_GET['base'] == 'stripchat'){
 	$dbname = 'stripchat';
 }
 
+if(!empty($_GET['base']) && $_GET['base'] == 'camsoda'){
+	$dbname = 'camsoda';
+}
+
 require_once('/var/www/statbate/root/private/init.php');
 
 function getLog($name){
@@ -29,7 +33,7 @@ function getLog($name){
 	}
 	echo "<title>$name</title><style>body {background-color: #eeeeee;}table, th, td {border: 1px solid black;border-collapse: collapse;} td {min-width: 100px; height: 25px; text-align: center; vertical-align: middle;}</style><pre>\n\n";
 	while($row = $query->fetch()){
-		echo "[".date('H:i:s', $row['time'])."] {$row['mes']}\n";
+		echo "[".date('H:i:s', $row['time'])."] ".strip_tags($row['mes'])."\n";
 	}
 }
 

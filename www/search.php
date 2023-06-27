@@ -9,6 +9,10 @@ switch(@$_GET['db']){
 		$xdb = 3; 
 		$clname = $dbname = 'stripchat';
 	break;
+	case '4': 
+		$xdb = 4; 
+		$clname = $dbname = 'camsoda';
+	break;
 	default: $xdb = 1; break;
 }
 
@@ -36,12 +40,15 @@ if(!$info){
 	});
 	$lname = key(array_slice($arrFilter, -1, 1, true)); // get last search	
 	if(empty($lname)){
-		$lname = 'unicorngirls';
+		$lname = 'ehotlovea';
 		if($xdb == 2){
 			$lname = 'misstake';
 		}
 		if($xdb == 3){
 			$lname = 'jessicakay288';
+		}
+		if($xdb == 4){
+			$lname = 'lolabunniii';
 		}
 	}
 	$info = getRoomInfo(['name' => $lname, 'return' => true]);
@@ -76,6 +83,11 @@ if($xdb == 3) {
 	$statbateConf = '{"page": "search", "redirect": "https://statbate.com/s/", "platform": "stripchat"}';
 }
 
+if($xdb == 4) {
+	$list_link = '/soda/online';
+	$statbateConf = '{"page": "search", "redirect": "https://statbate.com/c/", "platform": "camsoda"}';
+}
+
 ?><!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -84,6 +96,7 @@ if($xdb == 3) {
 		<meta name="description" content="How much do webcam models make? Now you know the answer!">
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 		<meta name="format-detection" content="telephone=no">
+		<meta name="robots" content="noindex, nofollow" />
 		<link rel="shortcut icon" type="image/webp" href="/img/favicon.webp" />
 		
 		<!-- CSS -->
@@ -103,8 +116,8 @@ if($xdb == 3) {
 					<a href="/" aria-label="Move to main page" class="header_logo"></a>
 					<ul class="header_navbar">
 						<li><a href="/" >Chaturbate</a></li>
-						<li><a href="/bonga/">BongaCams</a></li>
-						<li><a href="/strip/">Stripchat</a></li>
+						<li><a href="/bonga">BongaCams</a></li>
+						<li><a href="/strip">Stripchat</a></li>
 						<li><a href="/search" class="nav_active">Search</a></li>
 					</ul>
 					<a class="header_track trackCount" href="<?php echo $list_link; ?>">track <?php echo $track; ?> rooms</a>
@@ -127,8 +140,8 @@ if($xdb == 3) {
 		</div>
 		<div class="header_mobile_nav">
 			<a href="/" class="color_first">Chaturbate</a>
-			<a href="/bonga/" class="color_second">BongaCams</a>
-			<a href="/strip/" class="color_first">Stripchat</a>
+			<a href="/bonga" class="color_second">BongaCams</a>
+			<a href="/strip" class="color_first">Stripchat</a>
 			<a href="/search" class="color_second">Search</a>
 			<a class="header_track trackCount color_first" href="<?php echo $list_link; ?>"><?php echo $track; ?> rooms</a>
 		</div>
@@ -143,6 +156,7 @@ if($xdb == 3) {
 							<option value="1" <?php if($xdb==1){ echo "selected"; } ?>>cb</option>
 							<option value="2" <?php if($xdb==2){ echo "selected"; } ?>>bc</option>
 							<option value="3" <?php if($xdb==3){ echo "selected"; } ?>>sc</option>
+							<option value="4" <?php if($xdb==4){ echo "selected"; } ?>>cs</option>
 						</select>
 						<input type="text" class="form-control" style="text-align: center;" id="searchName" name="name" placeholder="Name" aria-label="Name" aria-describedby="button-addon2" value="<?php echo $info['name']; ?>">
 						<button class="btn btn-secondary" data-submit-search="" type="submit" id="button-addon2" style="color: #000; background-color: #f5f5f5; border-color: #dee2e6;">send</button>			

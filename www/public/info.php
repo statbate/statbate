@@ -16,6 +16,10 @@ if(!empty($_POST['cam']) && $_POST['cam'] == 'stripchat'){
 	$clname = $dbname = 'stripchat';
 }
 
+if(!empty($_POST['cam']) && $_POST['cam'] == 'camsoda'){
+	$clname = $dbname = 'camsoda';
+}
+
 require_once('../private/init.php');
 
 echo json_encode([	
