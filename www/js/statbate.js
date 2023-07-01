@@ -135,20 +135,24 @@ function printWsText(text) {
 }
 
 function statbate() {
+	var ping; 
 	var ws = new WebSocket("wss://statbate.com/ws/");
 	
 	ws.onopen = function () {
+		ping = setInterval(function(){ws.send("ping")}, 30000);
 		printWsText('Socket is open. Here is the log of big tips.');
 		console.log('websocket open');
-		ws.send(statbateConf.platform);
+		ws.send(JSON.stringify({"chanel": statbateConf.platform}));
 	};
 	
 	window.onbeforeunload = function() {
+		clearInterval(ping);
 		ws.onclose = function () {}; // disable onclose handler first
 		ws.close(1000);
 	};
   
 	ws.onclose = function (e) {
+		clearInterval(ping);
 		printWsText('Socket is closed. Reconnect will be attempted in 1 second.');
 		console.log('Socket is closed. Reconnect will be attempted in 1 second.', e.code);
 		setTimeout(function () {
@@ -158,8 +162,7 @@ function statbate() {
 	};
 	
 	ws.onmessage = function (e) {
-		if(e.data == "ping") {
-			ws.send("pong");
+		if(e.data == "pong") {
 			return;
 		}
 		j = JSON.parse(e.data);
