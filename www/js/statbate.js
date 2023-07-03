@@ -134,6 +134,10 @@ function printWsText(text) {
 	document.querySelector('.wstext').innerHTML = msgs.arr.join('');
 }
 
+function randomIntFromInterval(min, max) {
+	return Math.floor(Math.random() * (max - min + 1) + min)
+}
+
 function statbate() {
 	var ping; 
 	var ws = new WebSocket("wss://statbate.com/ws/");
@@ -153,11 +157,11 @@ function statbate() {
   
 	ws.onclose = function (e) {
 		clearInterval(ping);
-		printWsText('Socket is closed. Reconnect will be attempted in 1 second.');
-		console.log('Socket is closed. Reconnect will be attempted in 1 second.', e.code);
+		printWsText('Socket is closed. Try reconnect.');
+		console.log('Socket is closed. Try reconnect.', e.code);
 		setTimeout(function () {
 			statbate();
-		}, 1000);
+		}, randomIntFromInterval(2, 5) * randomIntFromInterval(500, 1000));
 		return;
 	};
 	
