@@ -37,14 +37,15 @@ function getTop100Tips($arr){
 	global $clickhouse; $text = ""; $i = 0;
 	$query = $clickhouse->query("SELECT token, did, unix FROM stat WHERE `rid` = {$arr['id']} ORDER BY token DESC LIMIT 100");
 	while($row = $query->fetch()){
+		$i++;
 		$text .= "<tr>
-		<td>".date("d F Y" ,$row['unix'])."</td>
+		<td class='d-none d-sm-table-cell'>$i</td>
+		<td class='d-none d-sm-table-cell'>".date("j M Y" ,$row['unix'])."</td>
 		<td>".getDonName(['id' => $row['did']])."</td>
 		<td>{$row['token']}</td>
 		<td>".toUSD($row['token'])."</td>
 		</tr>";
 	}
-	
 	return preg_replace('/\s+/', ' ', trim($text));
 }
 

@@ -91,7 +91,7 @@ if($xdb == 4) {
 ?><!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Statbate: <?php echo $info['name']; ?></title>
+		<title>Statbate • <?php echo $info['name']; ?> •</title>
 		<meta charset="UTF-8">
 		<meta name="description" content="How much do webcam models make? Now you know the answer!">
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -105,7 +105,7 @@ if($xdb == 4) {
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?6">
+		<link rel="stylesheet" href="/css/statbate.css?10">
 	</head>
 	
 	<body>
@@ -118,6 +118,7 @@ if($xdb == 4) {
 						<li><a href="/" >Chaturbate</a></li>
 						<li><a href="/bonga">BongaCams</a></li>
 						<li><a href="/strip">Stripchat</a></li>
+						<li><a href="/soda">CamSoda</a></li>
 						<li><a href="/search" class="nav_active">Search</a></li>
 					</ul>
 					<a class="header_track trackCount" href="<?php echo $list_link; ?>">track <?php echo $track; ?> rooms</a>
@@ -234,7 +235,7 @@ if($xdb == 4) {
 						<a class="dropdown-item" href="#tab4" data-bs-toggle="tab" role="tab" aria-controls="tab4-tab" aria-selected="false">Top100</a>
 						<a class="dropdown-item" href="#tab8" data-bs-toggle="tab" role="tab" aria-controls="tab8-tab" aria-selected="false">All time</a>
 						<a class="dropdown-item" href="#tab7" data-bs-toggle="tab" role="tab" aria-controls="tab7-tab" aria-selected="false">Tips</a>
-						<a class="dropdown-item" href="#tab7" data-submit-profile="">Profile page</a>
+						<a class="dropdown-item" data-submit-profile="">Profile page</a>
 					</div>
 				</div>
 			</div>
@@ -255,6 +256,20 @@ if($xdb == 4) {
 				
 				<div aria-labelledby="tab7-tab" role="tabpanel" class="tab-pane fade" id="tab7">
 					<div class="grap_cont" id="container-lineTips"></div>
+					<table id="search_income" class="table table-striped table-bordered dataTable no-footer" cellspacing="0"  role="grid" aria-describedby="supportList_info" style="width: 100%; margin-top: 0 !important;">
+						<thead>
+							<tr>
+								<th class="d-none d-sm-table-cell"></th>
+								<th class="d-none d-sm-table-cell">date</th>
+								<th>donator</th>
+								<th>tokens</th>
+								<th>usd</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php echo cacheResult('getTop100Tips', ['id' => $info['id']], 600); ?>
+						</tbody>
+					</table>
 				</div>
 				
 				<div aria-labelledby="tab3-tab" role="tabpanel" class="tab-pane fade" id="tab3">
@@ -357,7 +372,7 @@ if($xdb == 4) {
 	<script src="/js/highstock.js"></script>
 	<script src="/js/data.js"></script>
 	<script src="/js/simplebar.js"></script>
-	<script src="/js/statbate.js?6"></script>
+	<script src="/js/statbate.js?9"></script>
 	<script>
 		$(document).on("click","[data-submit-profile]", function(e){
 			$(this).blur();
@@ -432,7 +447,7 @@ if($xdb == 4) {
 			navigator: {maskFill: 'rgba(230, 230, 230, 0.45)'},
 			series: [{
 				name: 'Uniq Count',
-				color: '#C4B454',
+				color: '#DAA520',
 				data: <?php echo cacheResult('getDonsLine', ['id' => $info['id']], 600); ?>,
 				type: 'line',
 				tooltip: {
@@ -443,7 +458,7 @@ if($xdb == 4) {
 		
 		Highcharts.stockChart('container-lineTips', {
 			title: {text: ''},
-			chart: {height: 325},
+			chart: {height: 275},
 			credits: { enabled: false },
 			rangeSelector: {selected: 5},
 			scrollbar: {enabled: false},
@@ -451,7 +466,7 @@ if($xdb == 4) {
 			navigator: {maskFill: 'rgba(230, 230, 230, 0.45)'},
 			series: [{
 				name: 'Count Tips',
-				color: '#FA8072',
+				color: '#009E60',
 				data: <?php echo cacheResult('getIncomeTips', ['id' => $info['id']], 600); ?>,
 				type: 'line',
 				tooltip: {

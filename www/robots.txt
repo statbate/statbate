@@ -10,6 +10,8 @@ Allow: *.png
 Allow: *.jpg
 Allow: *.webp
 
+Allow: /sitemap.xml$
+
 Disallow: /
 
 Host: statbate.com

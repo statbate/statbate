@@ -127,7 +127,7 @@ $tr = preg_replace('/\s+/', ' ', trim($tr));
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?6">
+		<link rel="stylesheet" href="/css/statbate.css?10">
 		
 		<!-- JS -->
 		<script>
@@ -145,6 +145,7 @@ $tr = preg_replace('/\s+/', ' ', trim($tr));
 						<li><a href="/" id="chaturbate_link">Chaturbate</a></li>
 						<li><a href="/bonga" id="bongacams_link">BongaCams</a></li>
 						<li><a href="/strip" id="stripchat_link">Stripchat</a></li>
+						<li><a href="/soda" id="camsoda_link">CamSoda</a></li>
 						<li><a href="/search">Search</a></li>
 					</ul>
 					<a class="header_track trackCount" href="./online">track <?php echo $track; ?> rooms</a>
@@ -180,7 +181,7 @@ $tr = preg_replace('/\s+/', ' ', trim($tr));
 		<!-- content start -->
 		<div class="content">
 			
-			<div class="content_info">
+			<div class="list_info">
 				
 				<div class="online">
 					<table class="table_online">
@@ -282,7 +283,7 @@ $tr = preg_replace('/\s+/', ' ', trim($tr));
 	<script src="/js/highcharts-more.js"></script>
 	<script src="/js/solid-gauge.js"></script>
 	<script src="/js/simplebar.js"></script>
-	<script src="/js/statbate.js?6"></script>
+	<script src="/js/statbate.js?9"></script>
 	<script>
 		// Solid gauge
 		var gaugeOptions = {

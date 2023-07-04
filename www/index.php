@@ -1,33 +1,40 @@
 <?php
 
-$title = 'Statbate: Chaturbate Top 100';
+$title = 'Chaturbate Top 100';
 $statbateConf = '{"page": "main", "redirect": "https://statbate.com/l/", "platform": "chaturbate", "heatmap": 60}';
-$token_cost = 0.5;
+$token_cost = 0.05;
 $urlOnline = 'https://statbate.com/online';
+$pageDesc = 'Find the best Chaturbate models';
 
+if(!empty($argv[1])){
+	$_GET['base'] = $argv[1];
+}
 
 if(!empty($_GET['base'])){
 	
 	if($_GET['base'] == 'bonga'){
 		$urlOnline = 'https://statbate.com/bonga/online';
 		$clname = $dbname = 'bongacams';
-		$title = 'Statbate: BongaCams Top 100';
+		$title = 'BongaCams Top 100';
 		$statbateConf = '{"page": "main", "redirect": "https://statbate.com/b/", "platform": "bongacams", "heatmap": 6}';
 		$token_cost = 0.025;
+		$pageDesc = 'Find the best BongaCams models';
 	}
 	
 	if($_GET['base'] == 'strip'){
 		$urlOnline = 'https://statbate.com/strip/online';
 		$clname = $dbname = 'stripchat';
-		$title = 'Statbate: Stripchat Top 100';
+		$title = 'Stripchat Top 100';
 		$statbateConf = '{"page": "main", "redirect": "https://statbate.com/s/", "platform": "stripchat", "heatmap": 30}';
+		$pageDesc = 'Find the best Stripchat models';
 	}
 	
 	if($_GET['base'] == 'soda'){
 		$urlOnline = 'https://statbate.com/soda/online';
 		$clname = $dbname = 'camsoda';
-		$title = 'Statbate: CamSoda Top 100';
+		$title = 'CamSoda Top 100';
 		$statbateConf = '{"page": "main", "redirect": "https://statbate.com/c/", "platform": "camsoda", "heatmap": 4}';
+		$pageDesc = 'Find the best CamSoda models';
 	}
 
 }
@@ -46,7 +53,7 @@ $apiCharts = getApiChart();
 	<head>
 		<title><?php echo $title; ?></title>
 		<meta charset="UTF-8">
-		<meta name="description" content="How much do webcam models make? Now you know the answer!">
+		<meta name="description" content="<?php echo $pageDesc; ?>">
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 		<meta name="format-detection" content="telephone=no">
 		<link rel="shortcut icon" type="image/webp" href="/img/favicon.webp" />
@@ -58,7 +65,7 @@ $apiCharts = getApiChart();
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?6">
+		<link rel="stylesheet" href="/css/statbate.css?10">
 		
 		<!-- JS -->
 		<script>
@@ -77,6 +84,7 @@ $apiCharts = getApiChart();
 						<li><a href="/" id="chaturbate_link">Chaturbate</a></li>
 						<li><a href="/bonga" id="bongacams_link">BongaCams</a></li>
 						<li><a href="/strip" id="stripchat_link">Stripchat</a></li>
+						<li><a href="/soda" id="camsoda_link">CamSoda</a></li>
 						<li><a href="/search">Search</a></li>
 					</ul>
 					<script>
@@ -389,7 +397,7 @@ $apiCharts = getApiChart();
 	<script src="/js/highcharts.js"></script>
 	<script src="/js/heatmap.js"></script>
 	<script src="/js/simplebar.js"></script>
-	<script src="/js/statbate.js?6"></script>
+	<script src="/js/statbate.js?9"></script>
 	<script>
 		Highcharts.chart('pieStat', {
 			chart: {

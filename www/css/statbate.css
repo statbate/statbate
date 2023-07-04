@@ -45,7 +45,12 @@ a:active {
 	margin-right: auto;
 	margin-bottom: auto;
 	display: flex;
-	grid-gap: 12px;
+	grid-gap: 4px;
+	opacity: 0.75;
+}
+
+.header_navbar:hover {
+	opacity: 1;
 }
 
 .header_navbar li a {
@@ -76,6 +81,7 @@ a:active {
 	padding: 12px;
 }
 
+.list_info,
 .content_info {
 	display: flex;
 	grid-gap: 12px;
@@ -111,7 +117,7 @@ a:active {
 .search_header {
 	color: #002366;
     text-align: center;
-    padding: 7px 0;
+    padding: 9px 0 8px;
     border-radius: 4px 4px 0px 0px;
     background: white;
     border: 1px solid #dee2e6;
@@ -177,13 +183,9 @@ a:active {
 
 .income_chart {
 	height: 180px;
-	border-bottom: 1px solid #dee2e6;
 }
 
 .content_center {
-    border-bottom: 1px solid #dee2e6;
-    padding-top: 12px;
-    padding-bottom: 12px;
     display: flex;
     grid-gap: 12px;
 }
@@ -593,6 +595,7 @@ input[type=date] {
 	.content_center {
 		grid-gap: 8px;
 		padding-top: 0;
+		padding-bottom: 12px;
 	}
 
 	.form-control-sm[type=search] {
@@ -612,12 +615,8 @@ input[type=date] {
 		margin-bottom: 0px !important;
 	}
 	
-	.income_chart {
-		border-bottom: none;
-	}
-	
-	
-	.content_info {
+	.list_info {
+		flex-direction: column;
 		grid-gap: 0;
 	}
 	
@@ -638,8 +637,8 @@ input[type=date] {
 		margin: 1rem auto !important;
 	}
 
-	.content_info {
-		flex-direction: column;
+	.search_similar {
+		display: none;
 	}
 
 	.content_center {
@@ -649,6 +648,7 @@ input[type=date] {
 	.content_table {
 		width: 100%;
 	}
+	
 }
 
 @media (max-width: 568px) {
@@ -664,6 +664,7 @@ input[type=date] {
 		text-overflow: ellipsis;
 	}
 
+	.search_resent,
 	.income_chart {
 		display: none;
 	}
