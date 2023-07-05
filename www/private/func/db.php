@@ -211,7 +211,7 @@ function prepareTable($g){ // cache done
 		$tr = str_replace('{USD}', "<a href=\"#\" data-modal-info data-modal-id=$key data-modal-type=income data-modal-name=".strip_tags($val['name']).">{$val['token']}</a>", $tr);
 		$stat .= $tr;
 	}
-	return preg_replace('/\s+/', ' ', trim($stat));
+	return xTrim($stat);
 }
 
 function genderIncome($a){ // cache done

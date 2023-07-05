@@ -65,7 +65,7 @@ $apiCharts = getApiChart();
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?10">
+		<link rel="stylesheet" href="/css/statbate.css?11">
 		
 		<!-- JS -->
 		<script>
@@ -330,7 +330,6 @@ $apiCharts = getApiChart();
 					<figure class="highcharts-figure">
 						<div id="container-map"></div>
 					</figure>
-						<?php echo date("l H:i", time())." UTC"; ?>
 				</div>
 					
 			</div>
@@ -533,8 +532,8 @@ $apiCharts = getApiChart();
 		Highcharts.chart('container-map', {
 			chart: {
 				type: 'heatmap',
-				marginTop: 10,
-				marginBottom: 40,
+				//marginTop: 6,
+				//marginBottom: 20,
 				plotBorderWidth: 1
 			},
 			credits: {
@@ -569,7 +568,6 @@ $apiCharts = getApiChart();
 				y: 25,
 				x: 15,
 				symbolHeight: 320
-
 			},
 			tooltip: {
 				formatter: function () {

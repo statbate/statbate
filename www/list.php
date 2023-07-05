@@ -107,9 +107,6 @@ foreach($arr as $key => $val){
 	</tr>";
 }
 
-$tr = preg_replace('/\s+/', ' ', trim($tr));
-
-
 ?><!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -127,7 +124,7 @@ $tr = preg_replace('/\s+/', ' ', trim($tr));
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?10">
+		<link rel="stylesheet" href="/css/statbate.css?11">
 		
 		<!-- JS -->
 		<script>
@@ -240,7 +237,7 @@ $tr = preg_replace('/\s+/', ' ', trim($tr));
 							</tr>
 						</thead>
 						<tbody>
-							<?php echo $tr; ?> 
+							<?php echo xTrim($tr); ?> 
 						</tbody>
 					</table>
 					<!-- test data end -->

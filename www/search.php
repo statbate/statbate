@@ -105,7 +105,7 @@ if($xdb == 4) {
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?10">
+		<link rel="stylesheet" href="/css/statbate.css?11">
 	</head>
 	
 	<body>
@@ -259,11 +259,11 @@ if($xdb == 4) {
 					<table id="search_income" class="table table-striped table-bordered dataTable no-footer" cellspacing="0"  role="grid" aria-describedby="supportList_info" style="width: 100%; margin-top: 0 !important;">
 						<thead>
 							<tr>
-								<th class="d-none d-sm-table-cell"></th>
-								<th class="d-none d-sm-table-cell">date</th>
-								<th>donator</th>
-								<th>tokens</th>
-								<th>usd</th>
+								<th class="d-none d-sm-table-cell" style="width: 5%; font-weight: 400;"></th>
+								<th class="d-none d-sm-table-cell" style="width: 25%; font-weight: 400;">date</th>
+								<th style="width: 40%; font-weight: 400; font-style: oblique;">donator</th>
+								<th style="width: 15%; font-weight: 400;">tokens</th>
+								<th style="width: 15%; font-weight: 400;">usd</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -295,11 +295,11 @@ if($xdb == 4) {
 						<table id="search_income" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" aria-describedby="supportList_info" style="margin-bottom: 0px !important;">
 							<thead>
 								<tr>
-									<th class="d-none d-sm-table-cell"></th>
-									<th>donator</th>
-									<th class="d-none d-sm-table-cell">tips</th>
-									<th>AVG</th>
-									<th>USD</th>
+									<th class="d-none d-sm-table-cell" style="width: 5%;"></th>
+									<th style="width: 50%;">donator</th>
+									<th class="d-none d-sm-table-cell" style="width: 15%;">tips</th>
+									<th style="width: 15%;">AVG</th>
+									<th style="width: 15%;">USD</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -317,11 +317,11 @@ if($xdb == 4) {
 						<table id="search_income" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" aria-describedby="supportList_info" style="margin-bottom: 0px !important;">
 							<thead>
 								<tr>
-									<th class="d-none d-sm-table-cell"></th>
-									<th>donator</th>
-									<th class="d-none d-sm-table-cell">tips</th>
-									<th>AVG</th>
-									<th>USD</th>
+									<th class="d-none d-sm-table-cell" style="width: 5%;"></th>
+									<th style="width: 50%;">donator</th>
+									<th class="d-none d-sm-table-cell" style="width: 15%;">tips</th>
+									<th style="width: 15%;">AVG</th>
+									<th style="width: 15%;">USD</th>
 								</tr>
 							</thead>
 							<tbody>

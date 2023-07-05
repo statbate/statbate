@@ -19,6 +19,10 @@ function cacheResult($name, $params = [], $time = 600, $json = false){
 	return $result;
 }
 
+function xTrim($text) {
+	return preg_replace('/\s+/', ' ', trim($text));
+}
+
 function getList(){
 	global $dbname;
 	return file_get_contents("https://statbate.com/$dbname/list/");

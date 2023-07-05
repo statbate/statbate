@@ -38,7 +38,11 @@ function getTop100Tips($arr){
 	$query = $clickhouse->query("SELECT token, did, unix FROM stat WHERE `rid` = {$arr['id']} ORDER BY token DESC LIMIT 100");
 	while($row = $query->fetch()){
 		$i++;
-		$text .= "<tr>
+		$color = "f5f5f5";
+		if($i % 2 === 0){
+			$color = "ffffff";
+		}
+		$text .= "<tr style='background: #$color;'>
 		<td class='d-none d-sm-table-cell'>$i</td>
 		<td class='d-none d-sm-table-cell'>".date("j M Y" ,$row['unix'])."</td>
 		<td>".getDonName(['id' => $row['did']])."</td>
@@ -46,7 +50,7 @@ function getTop100Tips($arr){
 		<td>".toUSD($row['token'])."</td>
 		</tr>";
 	}
-	return preg_replace('/\s+/', ' ', trim($text));
+	return xTrim($text);
 }
 
 function incomeDetails($arr){
@@ -101,7 +105,7 @@ function getSearchIncome($arr){
 		}
 	}
 	
-	return preg_replace('/\s+/', ' ', trim($s));
+	return xTrim($s);
 }
 
 function showSearchLast($lastSearch, $l = -10){
@@ -182,7 +186,7 @@ function getSearchInfo($info){
 	$query = $clickhouse->query("SELECT SUM(token) as total FROM stat WHERE rid = {$info['id']} AND time > today() - toIntervalMonth(1)");
 	$info['current'] = toUSD($query->fetch()['0']);
 
-	return "<table>
+	return "<table style='border-spacing: 0;'>
 	<tr style='background: #f5f5f5; font-size: 15px;'><td>type</td><td>{$gender[$info['gender']]}</td></tr>
 	<tr style='background: #ffffff; font-size: 15px;'><td>online</td><td>".get_time_ago($info['last'])."</td></tr>
 	<tr style='background: #f5f5f5; font-size: 15px;'><td>income</td><td>\$".dotFormat($info['current'])."</td></tr>
