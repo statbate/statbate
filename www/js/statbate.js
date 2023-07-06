@@ -215,6 +215,8 @@ function createTables(){
 	];
 	
 	tables["main"] = $('#main').DataTable({...dataTableOptions, aoColumns: aoColumns,});
+	$("#main").show();
+	
 	tables["couple_table"] = $('#couple_table').DataTable({...dataTableOptions, aoColumns: aoColumns,});
 	tables["boys_table"] = $('#boys_table').DataTable({...dataTableOptions, aoColumns: aoColumns,});
 	tables["trans_table"] = $('#trans_table').DataTable({...dataTableOptions, aoColumns: aoColumns,});
@@ -231,6 +233,7 @@ function createTables(){
 	aoColumns[5]["sWidth"] = "11%";
 	aoColumns[6] = { "searchable": false, "sWidth": "15%" };	
 	tables["list1"] = $("#list1").DataTable({...dataTableOptions, aoColumns: aoColumns,});
+	$("#list1").show();
 	
 	for (const [key] of Object.entries(tables)) {
 		tables[key]["status"] = (window.innerWidth > 805) ? "desktop" : "mobile";

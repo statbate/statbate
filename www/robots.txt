@@ -3,6 +3,12 @@ Allow: /$
 Allow: /bonga$
 Allow: /strip$
 Allow: /soda$
+Allow: /search
+
+Allow: /online$
+Allow: /bonga/online$
+Allow: /stip/online$
+Allow: /soda/online$
 
 Allow: *.js
 Allow: *.css
@@ -15,5 +21,3 @@ Allow: /sitemap.xml$
 Disallow: /
 
 Host: statbate.com
-
-Sitemap: https://statbate.com/sitemap.xml

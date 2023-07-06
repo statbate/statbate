@@ -71,32 +71,39 @@ if($info['last'] > time()-60*60*24*30){
 if($xdb == 1) {
 	$list_link = '/online';
 	$statbateConf = '{"page": "search", "redirect": "https://statbate.com/l/", "platform": "chaturbate"}';
+	$description = "Find out how much {$info['name']} is making on Chaturbate";
 }
 		
 if($xdb == 2) {
 	$list_link = '/bonga/online';
 	$statbateConf = '{"page": "search", "redirect": "https://statbate.com/b/", "platform": "bongacams"}';
+	$description = "Find out how much {$info['name']} is making on BongaCams";
 }
 		
 if($xdb == 3) {
 	$list_link = '/strip/online';
 	$statbateConf = '{"page": "search", "redirect": "https://statbate.com/s/", "platform": "stripchat"}';
+	$description = "Find out how much {$info['name']} is making on Stripchat";
 }
 
 if($xdb == 4) {
 	$list_link = '/soda/online';
 	$statbateConf = '{"page": "search", "redirect": "https://statbate.com/c/", "platform": "camsoda"}';
+	$description = "Find out how much {$info['name']} is making on CamSoda";
 }
+
+$canonical = "https://statbate.com/search/$xdb/{$info['name']}";
+// <meta name="robots" content="noindex, nofollow" />
 
 ?><!DOCTYPE html>
 <html lang="en">
 	<head>
 		<title>Statbate • <?php echo $info['name']; ?> •</title>
 		<meta charset="UTF-8">
-		<meta name="description" content="How much do webcam models make? Now you know the answer!">
+		<meta name="description" content="<?php echo $description; ?>">
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 		<meta name="format-detection" content="telephone=no">
-		<meta name="robots" content="noindex, nofollow" />
+		<link rel="canonical" href="<?php echo $canonical;?>" />
 		<link rel="shortcut icon" type="image/webp" href="/img/favicon.webp" />
 		
 		<!-- CSS -->
@@ -105,7 +112,7 @@ if($xdb == 4) {
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?11">
+		<link rel="stylesheet" href="/css/statbate.css?12">
 	</head>
 	
 	<body>
@@ -372,7 +379,7 @@ if($xdb == 4) {
 	<script src="/js/highstock.js"></script>
 	<script src="/js/data.js"></script>
 	<script src="/js/simplebar.js"></script>
-	<script src="/js/statbate.js?9"></script>
+	<script src="/js/statbate.js?11"></script>
 	<script>
 		$(document).on("click","[data-submit-profile]", function(e){
 			$(this).blur();

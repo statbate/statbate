@@ -726,3 +726,13 @@ input[type=date] {
 		text-decoration: underline;
 	}
 }
+
+.fixload {
+	min-height: 417px;
+}
+
+@-moz-document url-prefix() {
+	.fixload {
+		min-height: 428.8px;
+	}
+}

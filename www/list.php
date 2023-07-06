@@ -24,23 +24,27 @@ $xdb = 1;
 $a = getListArr(); 
 $statbateConf = '{"page": "list", "redirect": "https://statbate.com/l/", "platform": "chaturbate", "speed_gauge": 60}';
 $title = "Chaturbate";
+$canonical = 'https://statbate.com/online'; 
 
 if($dbname == 'bongacams'){
 	$xdb = 2;
 	$statbateConf = '{"page": "list", "redirect": "https://statbate.com/b/", "platform": "bongacams", "speed_gauge": 10}';
 	$title = "BongaCams";
+	$canonical = 'https://statbate.com/bonga/online'; 
 }
 
 if($dbname == 'stripchat'){
 	$xdb = 3;
 	$statbateConf = '{"page": "list", "redirect": "https://statbate.com/s/", "platform": "stripchat", "speed_gauge": 30}';
 	$title = "Stripchat";
+	$canonical = 'https://statbate.com/strip/online'; 
 }
 
 if($dbname == 'camsoda'){
 	$xdb = 4;
 	$statbateConf = '{"page": "list", "redirect": "https://statbate.com/c/", "platform": "camsoda", "speed_gauge": 10}';
 	$title = "CamSoda";
+	$canonical = 'https://statbate.com/soda/online'; 
 }
 
 if($a){
@@ -92,8 +96,6 @@ foreach($arr as $key => $val){
 		$hour = $income;
 	}
 	
-	
-	
 	$url = "<a href='/log/$dbname/$key' target='_blank'>$i</a>";
 	$key = "<a href='/search/$xdb/$key' target='_blank'>$key</a>";
 	$tr .= "<tr>
@@ -106,16 +108,17 @@ foreach($arr as $key => $val){
 		<td>$income</td>
 	</tr>";
 }
+//<meta name="robots" content="noindex, nofollow" />
 
 ?><!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title><?php echo $title; ?> tracking <?php echo count($arr); ?> rooms</title>
+		<title><?php echo $title; ?> Pulse</title>
 		<meta charset="UTF-8">
-		<meta name="description" content="How much do webcam models make? Now you know the answer!">
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 		<meta name="format-detection" content="telephone=no">
-		<meta name="robots" content="noindex, nofollow" />
+		<meta name="description" content="List of live cams and estimated income per hour">
+		<link rel="canonical" href="<?php echo $canonical;?>" />
 		<link rel="shortcut icon" type="image/webp" href="/img/favicon.webp" />
 		
 		<!-- CSS -->
@@ -124,7 +127,7 @@ foreach($arr as $key => $val){
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?11">
+		<link rel="stylesheet" href="/css/statbate.css?12">
 		
 		<!-- JS -->
 		<script>
@@ -218,13 +221,13 @@ foreach($arr as $key => $val){
 			
 			</div>
 			
-			<div class="tab-content">
+			<div class="tab-content fixload">
 					<div class="promo-block">
 						<a href="https://www.getmonero.org" target="_blank"><img src="/img/xmr.webp" width="380" height="31" alt="monero banner"></a>
 					</div>
 				
 				<!-- test data start -->
-					<table id="list1" class="table table-striped table-bordered dataTable no-footer" cellspacing="0">
+					<table id="list1" class="table table-striped table-bordered dataTable no-footer" cellspacing="0" style="display: none">
 						<thead>
 							<tr>
 								<th class="d-none d-md-table-cell"></th>
@@ -280,7 +283,7 @@ foreach($arr as $key => $val){
 	<script src="/js/highcharts-more.js"></script>
 	<script src="/js/solid-gauge.js"></script>
 	<script src="/js/simplebar.js"></script>
-	<script src="/js/statbate.js?9"></script>
+	<script src="/js/statbate.js?11"></script>
 	<script>
 		// Solid gauge
 		var gaugeOptions = {
