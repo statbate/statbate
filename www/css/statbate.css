@@ -191,6 +191,7 @@ a:active {
 .content_center {
     display: flex;
     grid-gap: 12px;
+    min-height: 150px;
 }
 
 .content_wslog {
@@ -233,11 +234,8 @@ a:active {
 .fin_table {
 	width: 100%;
 	height: 150px;
-	text-align: center;
 	border-spacing: 0;
-	border-collapse: separate;
 	border: 1.5px solid #dee2e6;
-	border-radius: 4px;
 }
 
 .fin_table th {
@@ -247,6 +245,7 @@ a:active {
 }
 
 .fin_table td {
+	height: 30px;
 	padding: 5px 25px;
 	border-bottom: 1.5px solid #dee2e6;
 }
