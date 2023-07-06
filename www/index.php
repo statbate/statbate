@@ -65,18 +65,22 @@ ob_start("sanitize_output");
 		<link rel="shortcut icon" type="image/webp" href="/img/favicon.webp" />
 		
 		<!-- CSS -->
-		<link rel="stylesheet" href="/css/normalize.css">
+		<link rel="stylesheet" href="/css/normalize.min.css">
 		<link rel="stylesheet" href="/css/font-awesome.slim.min.css">
 		<link rel="stylesheet" href="/css/metricsgraphics.min.css">
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
-		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?17">
+		<link rel="stylesheet" href="/css/simplebar.min.css" >
+		<link rel="stylesheet" href="/css/statbate.min.css?17">
 		
 		<!-- JS -->
 		<script>
 			var statbateConf = <?php echo $statbateConf; ?>;
 			var hcData = <?php echo getCharts(); ?>;
+			var pieStat = <?php echo getPieStat(); ?>;
+			var pieRooms = <?php echo $apiCharts[0]; ?>;
+			var pieViewers = <?php echo $apiCharts[1]; ?>;
+			var heatMap = <?php echo $heatMap; ?>;	
 		</script>
 	</head>
 	
@@ -402,213 +406,8 @@ ob_start("sanitize_output");
 	<script src="/js/highcharts.js"></script>
 	<script src="/js/heatmap.js"></script>
 	<script src="/js/simplebar.js"></script>
-	<script src="/js/statbate.js?11"></script>
-	<script>
-		Highcharts.chart('pieStat', {
-			chart: {
-				plotBackgroundColor: null,
-				plotBorderWidth: null,
-				plotShadow: false,
-				type: 'pie'
-			},
-			credits: {
-				enabled: false
-			},
-			accessibility: {
-				enabled: false
-			},
-			title: {
-				text: screen.width >= 568 ? 'Income distribution for the current month' : 'Income distribution'
-			},
-			tooltip: {
-				pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
-			},
-			plotOptions: {
-				pie: {
-					colors: ["#434348", "#7cb5ec", "#90ed7d", "#f7a35c", "#8085e9", "#f15c80", "#e4d354", "#2b908f", "#f45b5b", "#91e8e1"],
-					allowPointSelect: true,
-					cursor: 'pointer',
-					dataLabels: {
-						enabled: true,
-						format: screen.width >= 568 ? '<b>{point.name}</b>: {point.percentage:.1f} %' : '{point.percentage:.1f} %'
-					},
-					showInLegend: screen.width < 568
-				}
-			},
-			legend: {
-				itemDistance: 10
-			},
-			series: [{
-				name: 'Income',
-				colorByPoint: true,
-				data: <?php echo getPieStat(); ?>
-			}]
-		});
-
-		Highcharts.chart('pieRooms', {
-			chart: {
-				plotBackgroundColor: null,
-				plotBorderWidth: null,
-				plotShadow: false,
-				type: 'pie'
-			},
-			accessibility: {
-				enabled: false
-			},
-			credits: {
-				enabled: false
-			},
-			title: {
-				text: 'Rooms distribution'
-			},
-			tooltip: {
-				pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
-			},
-			plotOptions: {
-				pie: {
-					colors: ["#434348", "#7cb5ec", "#90ed7d", "#f7a35c", "#8085e9", "#f15c80", "#e4d354", "#2b908f", "#f45b5b", "#91e8e1"],
-					allowPointSelect: true,
-					cursor: 'pointer',
-					dataLabels: {
-						enabled: true,
-						format: screen.width >= 568 ? '<b>{point.name}</b>: {point.percentage:.1f} %' : '{point.percentage:.1f} %'
-					},
-					showInLegend: screen.width < 568
-				}
-			},
-			legend: {
-				itemDistance: 10
-			},
-			series: [{
-				nodeWidth: 20,
-				name: 'Income',
-				colorByPoint: true,
-				 data: <?php echo $apiCharts[0]; ?>
-			}]
-		});
-
-		Highcharts.chart('pieViewers', {
-			chart: {
-				plotBackgroundColor: null,
-				plotBorderWidth: null,
-				plotShadow: false,
-				type: 'pie'
-			},
-			accessibility: {
-				enabled: false
-			},
-			credits: {
-				enabled: false
-			},
-			title: {
-				text: 'Viewers distribution'
-			},
-			tooltip: {
-				pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
-			},
-			plotOptions: {
-				pie: {
-					colors: ["#434348", "#7cb5ec", "#90ed7d", "#f7a35c", "#8085e9", "#f15c80", "#e4d354", "#2b908f", "#f45b5b", "#91e8e1"],
-					allowPointSelect: true,
-					cursor: 'pointer',
-					dataLabels: {
-						enabled: true,
-						format: screen.width >= 568 ? '<b>{point.name}</b>: {point.percentage:.1f} %' : '{point.percentage:.1f} %'
-					},
-					showInLegend: screen.width < 568
-				}
-			},
-			legend: {
-				itemDistance: 10
-			},
-			series: [{
-				name: 'Income',
-				colorByPoint: true,
-				data: <?php echo $apiCharts[1]; ?>
-			}]
-		});
-
-		function getPointCategoryName(point, dimension) {
-			var series = point.series,
-				isY = dimension === 'y',
-				axis = series[isY ? 'yAxis' : 'xAxis'];
-			return axis.categories[point[isY ? 'y' : 'x']];
-		}
-
-		Highcharts.chart('container-map', {
-			chart: {
-				type: 'heatmap',
-				/* marginTop: 6, */
-				/* marginBottom: 20, */
-				plotBorderWidth: 1
-			},
-			credits: {
-				enabled: false
-			},
-			accessibility: {
-				enabled: false
-			},
-			title: {
-				text: ''
-			},
-			xAxis: {
-				categories: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
-			},
-			yAxis: {
-				categories: ['3', '6', '9', '12', '15', '18', '21', '24'],
-				title: null,
-				reversed: true
-			},
-			colors : ['#bebebe'],
-			colorAxis: {
-				min: statbateConf.heatmap,
-				minColor: '#FFFFFF',
-				maxColor: '#F8B4A6',
-			},
-
-			legend: {
-				align: 'right',
-				layout: 'vertical',
-				margin: 0,
-				verticalAlign: 'top',
-				y: 25,
-				x: 15,
-				symbolHeight: 320
-			},
-			tooltip: {
-				formatter: function () {
-					return '<b>' +
-						this.point.value + 'K USD</b> ';
-				}
-			},
-			series: [{
-				name: 'Income in two hours',
-				borderWidth: 1,
-				data: <?php echo $heatMap; ?>,
-				dataLabels: {
-					enabled: true,
-					color: '#000000'
-				}
-			}],
-			responsive: {
-				rules: [{
-					condition: {
-						maxWidth: 500,
-						minHeight: 500
-					},
-					chartOptions: {
-						yAxis: {
-							labels: {
-								formatter: function () {
-									return this.value.charAt(0);
-								}
-							}
-						}
-					}
-				}]
-			}
-		});
-	</script>
+	<script src="/js/statbate.min.js?11"></script>
+	<script src="/js/statbate.index.min.js?1"></script>
 	</body>
 </html>
 <?php ob_end_flush(); ?>

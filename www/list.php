@@ -123,16 +123,17 @@ ob_start("sanitize_output");
 		<link rel="shortcut icon" type="image/webp" href="/img/favicon.webp" />
 		
 		<!-- CSS -->
-		<link rel="stylesheet" href="/css/normalize.css">
+		<link rel="stylesheet" href="/css/normalize.min.css">
 		<link rel="stylesheet" href="/css/font-awesome.slim.min.css">
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
-		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?17">
+		<link rel="stylesheet" href="/css/simplebar.min.css" >
+		<link rel="stylesheet" href="/css/statbate.min.css?17">
 		
 		<!-- JS -->
 		<script>
 			var statbateConf = <?php echo $statbateConf; ?>;
+			var containerActivity = <?php echo getHourIncome(); ?>;
 		</script>
 	</head>
 	
@@ -284,104 +285,8 @@ ob_start("sanitize_output");
 	<script src="/js/highcharts-more.js"></script>
 	<script src="/js/solid-gauge.js"></script>
 	<script src="/js/simplebar.js"></script>
-	<script src="/js/statbate.js?11"></script>
-	<script>
-		var gaugeOptions = {
-			chart: {
-				type: 'solidgauge'
-			},
-
-			title: null,
-				
-			accessibility: {
-				enabled: false
-			},
-
-			pane: {
-				center: ['50%', '85%'],
-				size: '140%',
-				startAngle: -90,
-				endAngle: 90,
-				background: {
-					backgroundColor:
-						Highcharts.defaultOptions.legend.backgroundColor || '#EEE',
-					innerRadius: '60%',
-					outerRadius: '100%',
-					shape: 'arc'
-				}
-			},
-
-			exporting: {
-				enabled: false
-			},
-
-			tooltip: {
-				enabled: false
-			},
-
-			yAxis: {
-				stops: [
-					[0.1, '#55BF3B'],
-					[0.5, '#DDDF0D'],
-					[0.9, '#DF5353']
-				],
-				lineWidth: 0,
-				tickWidth: 0,
-				minorTickInterval: null,
-				tickAmount: 2,
-				title: {
-					y: -45
-				},
-				labels: {
-					y: 16
-				}
-			},
-
-			plotOptions: {
-				solidgauge: {
-					dataLabels: {
-						y: 5,
-						borderWidth: 0,
-						useHTML: true
-					}
-				}
-			}
-		};
-		
-		var chartActivity = Highcharts.chart('container-activity', Highcharts.merge(gaugeOptions, {
-			yAxis: {
-				min: 0,
-				max: statbateConf.speed_gauge,
-				title: {
-					text: 'Income per hour'
-				}
-			},
-			
-			chart: {
-				height: 123,
-				backgroundColor: '#f3f3f5',
-			},
-
-			credits: {
-				enabled: false
-			},
-
-			series: [{
-				name: 'Activity',
-				data: [<?php echo getHourIncome(); ?>],
-				dataLabels: {
-					format:
-						'<div style="text-align:center">' +
-						'<span style="font-size:25px">{y}</span><span style="opacity:0.4">k</span><br/>' +
-						'<span style="font-size:12px;opacity:0.4"> usd/h</span>' +
-						'</div>'
-				},
-				tooltip: {
-					valueSuffix: 'usd/h'
-				}
-			}]
-		}));
-	</script>
+	<script src="/js/statbate.min.js?11"></script>
+	<script src="/js/statbate.list.min.js?1"></script>
 	</body>
 </html>
 <?php ob_end_flush(); ?>

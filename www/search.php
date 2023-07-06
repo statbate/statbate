@@ -108,12 +108,22 @@ ob_start("sanitize_output");
 		<link rel="shortcut icon" type="image/webp" href="/img/favicon.webp" />
 		
 		<!-- CSS -->
-		<link rel="stylesheet" href="/css/normalize.css">
+		<link rel="stylesheet" href="/css/normalize.min.css">
 		<link rel="stylesheet" href="/css/font-awesome.slim.min.css">
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
-		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?17">
+		<link rel="stylesheet" href="/css/simplebar.min.css" >
+		<link rel="stylesheet" href="/css/statbate.min.css?17">
+		
+		<!-- JS -->
+		<script>
+			var statbateConf = <?php echo $statbateConf; ?>;
+			var lineIncome = <?php echo cacheResult('getIncomeLine', ['id' => $info['id']], 600); ?>;
+			var containerIncome = <?php echo cacheResult('getIncomeCharts', ['id' => $info['id']], 600); ?>;
+			var containerDons = <?php echo cacheResult('getDonsLine', ['id' => $info['id']], 600); ?>;
+			var lineTips = <?php echo cacheResult('getIncomeTips', ['id' => $info['id']], 600); ?>;
+		</script>
+		
 	</head>
 	
 	<body>
@@ -192,10 +202,6 @@ ob_start("sanitize_output");
 				</div>
 			
 			</div>
-			
-			
-			
-					
 			
 			<div class="content_nav">
 				<ul class="nav nav-tabs justify-content-center" id="nav-tab">
@@ -370,9 +376,6 @@ ob_start("sanitize_output");
 		
 	
 	<!-- JS -->
-	<script>
-		var statbateConf = <?php echo $statbateConf; ?>;
-	</script>
 	<script src="/js/jquery.min.js"></script>
 	<script src="/js/jquery.dataTables.min.js"></script>
 	<script src="/js/bootstrap.bundle.min.js"></script>
@@ -380,110 +383,8 @@ ob_start("sanitize_output");
 	<script src="/js/highstock.js"></script>
 	<script src="/js/data.js"></script>
 	<script src="/js/simplebar.js"></script>
-	<script src="/js/statbate.js?11"></script>
-	<script>
-		$(document).on("click","[data-submit-profile]", function(e){
-			$(this).blur();
-			e.preventDefault();
-			window.open(statbateConf.redirect+$('input[id=searchName]').val(), '_blank');
-		});
-		
-		function movePage(){
-			window.location.href = "/search/"+ $('#searchBase option:selected').val() + "/" + $('input[id=searchName]').val();
-		}
-				
-		$(document).on("click","[data-submit-search]", function(e){
-			$(this).blur();
-			e.preventDefault();
-			movePage();
-		});
-				
-		document.addEventListener('keypress', function (e) {
-			if (e.keyCode === 13 || e.which === 13) {
-				e.preventDefault();
-				movePage();
-			}
-		});
-		
-		Highcharts.stockChart('container-lineIncome', {
-			title: {text: ''},
-			chart: { height: 325 },
-			rangeSelector: {selected: 5},
-			credits: { enabled: false },
-			scrollbar: { enabled: false },
-			accessibility: { enabled: false },
-			navigator: {maskFill: 'rgba(230, 230, 230, 0.45)'},
-			series: [{
-				name: 'Total USD',
-				color: '#009E60',
-				data: <?php echo cacheResult('getIncomeLine', ['id' => $info['id']], 600); ?>,
-				type: 'line',
-				tooltip: {
-					valueDecimals: 0
-				}
-			}]
-		});
-		
-		Highcharts.stockChart('container-income', {
-			title: {text: ''},
-			chart: { height: 325 },
-			chart: {alignTicks: false},
-			credits: { enabled: false },
-			scrollbar: {enabled: false},
-			accessibility: { enabled: false },
-			rangeSelector: {selected: 0},
-			navigator: {maskFill: 'rgba(230, 230, 230, 0.45)'},
-			plotOptions: {column: {stacking: 'normal',borderRadius: 3}},
-				series: [{
-					type: 'column',
-					name: 'Income',
-					color: '#7393B3',
-					data: <?php echo cacheResult('getIncomeCharts', ['id' => $info['id']], 600); ?>,					
-					dataGrouping: {
-						units: [['month',[1]]]
-					}
-				}]
-		});
-		
-		Highcharts.stockChart('container-dons', {
-			title: {text: ''},
-			chart: { height: 325 },
-			credits: { enabled: false },
-			scrollbar: { enabled: false },
-			accessibility: { enabled: false },
-			rangeSelector: {selected: 5},
-			navigator: {maskFill: 'rgba(230, 230, 230, 0.45)'},
-			series: [{
-				name: 'Uniq Count',
-				color: '#DAA520',
-				data: <?php echo cacheResult('getDonsLine', ['id' => $info['id']], 600); ?>,
-				type: 'line',
-				tooltip: {
-					valueDecimals: 0
-				}
-			}]
-		});
-		
-		Highcharts.stockChart('container-lineTips', {
-			title: {text: ''},
-			chart: {height: 275},
-			credits: { enabled: false },
-			rangeSelector: {selected: 5},
-			scrollbar: {enabled: false},
-			accessibility: { enabled: false },
-			navigator: {maskFill: 'rgba(230, 230, 230, 0.45)'},
-			series: [{
-				name: 'Count Tips',
-				color: '#009E60',
-				data: <?php echo cacheResult('getIncomeTips', ['id' => $info['id']], 600); ?>,
-				type: 'line',
-				tooltip: {
-					valueDecimals: 0
-				}
-			}]
-		});
-	</script>
-	
+	<script src="/js/statbate.min.js?11"></script>
+	<script src="/js/statbate.search.min.js?1"></script>	
 	</body>
 </html>
 <?php ob_end_flush(); ?>
