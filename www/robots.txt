@@ -21,3 +21,5 @@ Allow: /sitemap.xml$
 Disallow: /
 
 Host: statbate.com
+
+Sitemap: https://statbate.com/sitemap.xml

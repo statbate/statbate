@@ -110,6 +110,7 @@ foreach($arr as $key => $val){
 }
 //<meta name="robots" content="noindex, nofollow" />
 
+ob_start("sanitize_output");
 ?><!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -127,7 +128,7 @@ foreach($arr as $key => $val){
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?15">
+		<link rel="stylesheet" href="/css/statbate.css?17">
 		
 		<!-- JS -->
 		<script>
@@ -240,7 +241,7 @@ foreach($arr as $key => $val){
 							</tr>
 						</thead>
 						<tbody>
-							<?php echo xTrim($tr); ?> 
+							<?php echo $tr; ?> 
 						</tbody>
 					</table>
 					<!-- test data end -->
@@ -285,7 +286,6 @@ foreach($arr as $key => $val){
 	<script src="/js/simplebar.js"></script>
 	<script src="/js/statbate.js?11"></script>
 	<script>
-		// Solid gauge
 		var gaugeOptions = {
 			chart: {
 				type: 'solidgauge'
@@ -319,12 +319,11 @@ foreach($arr as $key => $val){
 				enabled: false
 			},
 
-			// the value axis
 			yAxis: {
 				stops: [
-					[0.1, '#55BF3B'], // green
-					[0.5, '#DDDF0D'], // yellow
-					[0.9, '#DF5353'] // red
+					[0.1, '#55BF3B'],
+					[0.5, '#DDDF0D'],
+					[0.9, '#DF5353']
 				],
 				lineWidth: 0,
 				tickWidth: 0,
@@ -349,7 +348,6 @@ foreach($arr as $key => $val){
 			}
 		};
 		
-		// The speed gauge
 		var chartActivity = Highcharts.chart('container-activity', Highcharts.merge(gaugeOptions, {
 			yAxis: {
 				min: 0,
@@ -386,3 +384,4 @@ foreach($arr as $key => $val){
 	</script>
 	</body>
 </html>
+<?php ob_end_flush(); ?>

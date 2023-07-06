@@ -250,6 +250,10 @@ a:active {
 	border-bottom: 1.5px solid #dee2e6;
 }
 
+.fin_table td:first-child {
+	width: 128px;
+}
+
 .fin_table td:last-child {
 	border-left: 1.5px solid #dee2e6;
 }
@@ -654,6 +658,10 @@ input[type=date] {
 	
 	.search_info {
 		margin-bottom: 12px;
+	}
+	
+	.fin_table td:first-child {
+		width: 50%;
 	}
 	
 	.fixload {

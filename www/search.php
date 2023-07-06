@@ -95,6 +95,7 @@ if($xdb == 4) {
 $canonical = "https://statbate.com/search/$xdb/{$info['name']}";
 // <meta name="robots" content="noindex, nofollow" />
 
+ob_start("sanitize_output");
 ?><!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -112,7 +113,7 @@ $canonical = "https://statbate.com/search/$xdb/{$info['name']}";
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?15">
+		<link rel="stylesheet" href="/css/statbate.css?17">
 	</head>
 	
 	<body>
@@ -485,3 +486,4 @@ $canonical = "https://statbate.com/search/$xdb/{$info['name']}";
 	
 	</body>
 </html>
+<?php ob_end_flush(); ?>

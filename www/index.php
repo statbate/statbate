@@ -52,6 +52,7 @@ $bestTips = cacheResult('getBestTips', [], 3600);
 $fin = cacheResult('getFinStat', [], 3600, true);
 $track = trackCount();
 $apiCharts = getApiChart();
+ob_start("sanitize_output");
 ?><!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -70,7 +71,7 @@ $apiCharts = getApiChart();
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?15">
+		<link rel="stylesheet" href="/css/statbate.css?17">
 		
 		<!-- JS -->
 		<script>
@@ -199,15 +200,15 @@ $apiCharts = getApiChart();
 						Rooms
 					</button>
 					<div class="dropdown-menu nav nav-tabs collapse" aria-labelledby="dropdownMenuButton">
-						<a class="dropdown-item color_first" href="#cams" data-bs-toggle="tab" aria-controls="cams" aria-selected="false">Rooms</a>
-						<a class="dropdown-item color_second" href="#dons" data-bs-toggle="tab" aria-controls="dons" aria-selected="false">Donators</a>
-						<a class="dropdown-item color_first" href="#boys" data-bs-toggle="tab" aria-controls="boys" aria-selected="false">Boys</a>
-						<a class="dropdown-item color_second" href="#trans" data-bs-toggle="tab" aria-controls="trans" aria-selected="false">Trans</a>
-						<a class="dropdown-item color_first" href="#couple" data-bs-toggle="tab" aria-controls="couple" aria-selected="false">Couple</a>
-						<a class="dropdown-item color_second" href="#incomeCharts" data-bs-toggle="tab" aria-controls="incomeCharts" aria-selected="false">Income</a>
-						<a class="dropdown-item color_first" href="#roomsCharts" data-bs-toggle="tab" aria-controls="roomsCharts" aria-selected="false">Streamers</a>
-						<a class="dropdown-item color_second" href="#viewersCharts" data-bs-toggle="tab" aria-controls="viewers-charts" aria-selected="false">Viewers</a>
-						<a class="dropdown-item color_first" href="#heatmap" data-bs-toggle="tab" aria-controls="heatmap" aria-selected="false">Heat map</a>
+						<a class="dropdown-item color_first" data-bs-toggle="tab" aria-controls="cams" aria-selected="false">Rooms</a>
+						<a class="dropdown-item color_second" data-bs-toggle="tab" aria-controls="dons" aria-selected="false">Donators</a>
+						<a class="dropdown-item color_first" data-bs-toggle="tab" aria-controls="boys" aria-selected="false">Boys</a>
+						<a class="dropdown-item color_second" data-bs-toggle="tab" aria-controls="trans" aria-selected="false">Trans</a>
+						<a class="dropdown-item color_first" data-bs-toggle="tab" aria-controls="couple" aria-selected="false">Couple</a>
+						<a class="dropdown-item color_second" data-bs-toggle="tab" aria-controls="incomeCharts" aria-selected="false">Income</a>
+						<a class="dropdown-item color_first" data-bs-toggle="tab" aria-controls="roomsCharts" aria-selected="false">Streamers</a>
+						<a class="dropdown-item color_second" data-bs-toggle="tab" aria-controls="viewers-charts" aria-selected="false">Viewers</a>
+						<a class="dropdown-item color_first" data-bs-toggle="tab" aria-controls="heatmap" aria-selected="false">Heat map</a>
 					</div>
 				</div>
 			</div>
@@ -443,7 +444,7 @@ $apiCharts = getApiChart();
 				data: <?php echo getPieStat(); ?>
 			}]
 		});
-		
+
 		Highcharts.chart('pieRooms', {
 			chart: {
 				plotBackgroundColor: null,
@@ -485,7 +486,7 @@ $apiCharts = getApiChart();
 				 data: <?php echo $apiCharts[0]; ?>
 			}]
 		});
-	
+
 		Highcharts.chart('pieViewers', {
 			chart: {
 				plotBackgroundColor: null,
@@ -537,8 +538,8 @@ $apiCharts = getApiChart();
 		Highcharts.chart('container-map', {
 			chart: {
 				type: 'heatmap',
-				//marginTop: 6,
-				//marginBottom: 20,
+				/* marginTop: 6, */
+				/* marginBottom: 20, */
 				plotBorderWidth: 1
 			},
 			credits: {
@@ -610,3 +611,4 @@ $apiCharts = getApiChart();
 	</script>
 	</body>
 </html>
+<?php ob_end_flush(); ?>

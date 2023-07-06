@@ -21,7 +21,7 @@ function showRoomList(){
 		echo "<style>{body background-color: #eeeeee;}table, th, td {border: 1px solid black;border-collapse: collapse;} td {min-width: 100px; height: 25px; text-align: center; vertical-align: middle;} a { color: #333; text-decoration: none;} a:hover { color: #333; text-decoration: underline;} a:active { color: #333;} </style>";
 		echo "<pre>";
 		
-		echo "<a href='./' style='text-decoration: underline; color: darkgreen;'>statbate.com</a> сollects data from open sources\n";
+		echo "<a href='/' style='text-decoration: underline; color: darkgreen;'>statbate.com</a> сollects data from open sources\n";
 		echo "- room name or nickname\n";
 		echo "- chat log\n\n";
 		echo "excluded from rating\n";
@@ -37,7 +37,7 @@ function showRoomList(){
 		//echo "Today we have {$users['0']} uniq users and {$users['1']} hits\n\n";
 		//echo "{$clicks['0']} uniq users followed links {$clicks['1']} times\n\n";
 		
-		echo "Debug: <a href='/info'>Chaturbate</a> | <a href='/info/bonga'>BongaCams</a> | <a href='/info/strip' >StripChat</a> \n\n";
+		echo "Debug: <a href='/debug'>Chaturbate</a> | <a href='/debug/bonga'>BongaCams</a> | <a href='/debug/strip' >StripChat</a> | <a href='/debug/soda' >CamSoda</a> \n\n";
 		echo "<table>";
 		echo "<tr><td>Database</td> <td>$dbname</td>";
 		foreach($debug as $key => $val){
@@ -68,6 +68,10 @@ function showRoomList(){
 		}
 			
 		if($dbname == 'stripchat'){
+			$xdb=3;
+		}
+		
+		if($dbname == 'camsoda'){
 			$xdb=3;
 		}
 		
@@ -131,6 +135,7 @@ function showRoomList(){
 switch(@$_GET['b']){
 	case 'bonga': $clname = $dbname = 'bongacams'; break;
 	case 'strip': $clname = $dbname = 'stripchat'; break;
+	case 'soda':  $clname = $dbname = 'camsoda';   break;
 	default: break;
 }
 

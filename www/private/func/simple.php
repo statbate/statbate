@@ -34,10 +34,6 @@ function cacheResult($name, $params = [], $time = 600, $json = false){
 	return $result;
 }
 
-function xTrim($text) {
-	return preg_replace('/\s+/', ' ', trim($text));
-}
-
 function getList(){
 	global $dbname;
 	return file_get_contents("https://statbate.com/$dbname/list/");
@@ -160,4 +156,17 @@ function getApiChart(){
 		$b[] = ['name' => $k, 'y' => $v[1]];
 	}
 	return [json_encode($a), json_encode($b)];
+}
+
+function sanitize_output($buffer){    
+    $search = [
+		'/\t+/',			// Remove tabs
+		'/\n+/',			// Remove extra lines
+		'/>\\s+</',			// Remove spaces between opening and closing HTML tags
+		'/<!--(.|\s)*?-->/' // Remove HTML comments
+    
+    ];
+    $replace = ['', '', '><', ''];    
+    $buffer = preg_replace($search, $replace, trim($buffer));
+    return $buffer;
 }

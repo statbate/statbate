@@ -42,6 +42,15 @@ function getTop100Tips($arr){
 		if($i % 2 === 0){
 			$color = "ffffff";
 		}
+		/*if($i == 1) {
+			$color = "ffeb3b33";
+		}
+		if($i == 2) {
+			$color = "c0c0c0a8";
+		}
+		if($i == 3) {
+			$color = "bf897066";
+		}*/
 		$text .= "<tr style='background: #$color;'>
 		<td class='d-none d-sm-table-cell'>$i</td>
 		<td class='d-none d-sm-table-cell'>".date("j M Y" ,$row['unix'])."</td>
@@ -50,7 +59,7 @@ function getTop100Tips($arr){
 		<td>".toUSD($row['token'])."</td>
 		</tr>";
 	}
-	return xTrim($text);
+	return $text;
 }
 
 function incomeDetails($arr){
@@ -105,7 +114,7 @@ function getSearchIncome($arr){
 		}
 	}
 	
-	return xTrim($s);
+	return $s;
 }
 
 function showSearchLast($lastSearch, $l = -10){
