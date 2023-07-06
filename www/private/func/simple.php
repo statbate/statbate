@@ -2,7 +2,7 @@
 // example: cacheResult('getList', [], 30)
 function cacheResult($name, $params = [], $time = 600, $json = false){
 	global $redis, $dbname;
-	$key = md5($dbname.$name.implode('.',$params));
+	$key = hash('xxh3', $dbname.$name.implode('.',$params));
 	$result = $redis->get($key);
 	if($result === false || (php_sapi_name() == "cli" && $redis->ttl($key) < 120)){
 		$result = call_user_func($name, $params);
@@ -10,7 +10,22 @@ function cacheResult($name, $params = [], $time = 600, $json = false){
 			if($json){
 				$result = json_encode($result);
 			}
-			$redis->setex($key, $time, $result);
+			$save = true;
+			if(php_sapi_name() != "cli" && $time > 120) {
+				$count = 1;
+				$count_key = hash('xxh3', $key."count");
+				$count = $redis->get($count_key);
+				if($count !== false){
+					$count++;
+				}
+				$redis->setex($count_key, 120, $count);
+				if($count < 3){
+					$save = false;
+				}
+			}
+			if($save) {
+				$redis->setex($key, $time, $result);
+			}
 		}
 	}
 	if($json){
