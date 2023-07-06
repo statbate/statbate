@@ -222,6 +222,12 @@ a:active {
 
 .content_table {
 	width: 265px;
+	height: 150px;
+    /* fix for ipad */
+    overflow: hidden;
+    border-bottom: 1.5px solid #dee2e6;
+    border-radius: 4px;
+    /* fix for ipad */
 }
 
 .fin_table {
