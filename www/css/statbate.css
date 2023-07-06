@@ -568,6 +568,26 @@ input[type=date] {
   color: black !important;
 }
 
+.fixload {
+	min-height: 417px;
+}
+
+@-moz-document url-prefix() {
+	.fixload {
+		min-height: 428.8px;
+	}
+}
+
+/*	
+	Safari 9+ 
+	https://browserstrangeness.bitbucket.io/css_hacks.html#safari
+*/
+@supports (-webkit-hyphens:none) { 
+	.fixload {
+		min-height: 418px;
+	}
+}
+
 @media (max-width: 805px) {
 	.promo-block,
 	.dataTables_paginate,
@@ -631,6 +651,25 @@ input[type=date] {
 		margin-bottom: 12px;
 	}
 	
+	.fixload {
+		min-height: 1000px;
+	}
+
+	@-moz-document url-prefix() {
+		.fixload {
+			min-height: 1000px;
+		}
+	}
+
+	/*	
+		Safari 9+ 
+		https://browserstrangeness.bitbucket.io/css_hacks.html#safari
+	*/
+	@supports (-webkit-hyphens:none) { 
+		.fixload {
+			min-height: 1000px;
+		}
+	}
 }
 
 
@@ -724,15 +763,5 @@ input[type=date] {
 	}
 	.message a:hover {
 		text-decoration: underline;
-	}
-}
-
-.fixload {
-	min-height: 417px;
-}
-
-@-moz-document url-prefix() {
-	.fixload {
-		min-height: 428.8px;
 	}
 }

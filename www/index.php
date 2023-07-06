@@ -70,7 +70,7 @@ $apiCharts = getApiChart();
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?12">
+		<link rel="stylesheet" href="/css/statbate.css?15">
 		
 		<!-- JS -->
 		<script>

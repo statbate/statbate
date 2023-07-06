@@ -99,12 +99,12 @@ foreach($arr as $key => $val){
 	$url = "<a href='/log/$dbname/$key' target='_blank'>$i</a>";
 	$key = "<a href='/search/$xdb/$key' target='_blank'>$key</a>";
 	$tr .= "<tr>
-		<td class=\"d-none d-sm-table-cell\">$url</td>
+		<td class=\"d-none d-md-table-cell\">$url</td>
 		<td>$key</td>
 		<td class=\"d-none d-sm-table-cell\">".round(($time - $val['start'])/60)."</td>
 		<td>$hour</td>
 		<td class=\"d-none d-sm-table-cell\">$avg</td>
-		<td class=\"d-none d-sm-table-cell\">{$val['dons']}</td>
+		<td class=\"d-none d-md-table-cell\">{$val['dons']}</td>
 		<td>$income</td>
 	</tr>";
 }
@@ -127,7 +127,7 @@ foreach($arr as $key => $val){
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.css" >
-		<link rel="stylesheet" href="/css/statbate.css?12">
+		<link rel="stylesheet" href="/css/statbate.css?15">
 		
 		<!-- JS -->
 		<script>
