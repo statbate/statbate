@@ -170,3 +170,16 @@ function sanitize_output($buffer){
     $buffer = preg_replace($search, $replace, trim($buffer));
     return $buffer;
 }
+
+function showBanner(){
+	$arr = [
+		0 => ['href' => '/s/', 'img' => 'strip'],
+		1 => ['href' => 'https://www.lovense.com/r/3xe6vd?t=p1', 'img' => 'lovense']
+	];
+	
+	$key = 1;
+	if(date('j', time()) % 2 == 0){
+		$key = 0;
+	}
+	return '<a href="'.$arr[$key]["href"].'" rel="nofollow"><img alt="banner" width="770" height="94" class="banner" src="/img/'.$arr[$key]["img"].'.webp"></a>';
+}

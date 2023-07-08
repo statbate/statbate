@@ -71,7 +71,7 @@ ob_start("sanitize_output");
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.min.css" >
-		<link rel="stylesheet" href="/css/statbate.min.css?17">
+		<link rel="stylesheet" href="/css/statbate.min.css?21">
 		
 		<!-- JS -->
 		<script>
@@ -139,7 +139,7 @@ ob_start("sanitize_output");
 				</div>
 				<div class="content_table">
 					<table class="fin_table">
-						<tbody>
+						<tbody class="fin_table_hide">
 							<tr>
 								<th colspan="2">Statistics for the last month</th>
 							</tr>
@@ -349,7 +349,7 @@ ob_start("sanitize_output");
 		<!-- footer start -->
 		<div class="footer">
 			<div class="footer_banner">
-				<a href="/s/" rel="nofollow"><img alt="banner" width="770" height="94" class="banner" src="/img/strip.webp"></a>
+				<?php echo showBanner(); ?>
 			</div>
 			<div class="footer_bottom">
 				<div class="footer_social">
@@ -406,8 +406,8 @@ ob_start("sanitize_output");
 	<script src="/js/highcharts.js"></script>
 	<script src="/js/heatmap.js"></script>
 	<script src="/js/simplebar.js"></script>
-	<script src="/js/statbate.min.js?11"></script>
-	<script src="/js/statbate.index.min.js?1"></script>
+	<script src="/js/statbate.min.js?16"></script>
+	<script src="/js/statbate.index.min.js?2"></script>
 	</body>
 </html>
 <?php ob_end_flush(); ?>

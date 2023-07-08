@@ -98,3 +98,5 @@ $(document).on("click","[data-submit-profile]", function(e){
 				}
 			}]
 		});
+
+		$('desc').text('');

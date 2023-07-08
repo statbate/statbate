@@ -99,7 +99,7 @@ ob_start("sanitize_output");
 ?><!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Statbate • <?php echo $info['name']; ?> •</title>
+		<title>Statbate • <?php echo $info['name']; ?></title>
 		<meta charset="UTF-8">
 		<meta name="description" content="<?php echo $description; ?>">
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -113,7 +113,7 @@ ob_start("sanitize_output");
 		<link rel="stylesheet" href="/css/bootstrap.slim.min.css" >
 		<link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css" >
 		<link rel="stylesheet" href="/css/simplebar.min.css" >
-		<link rel="stylesheet" href="/css/statbate.min.css?17">
+		<link rel="stylesheet" href="/css/statbate.min.css?21">
 		
 		<!-- JS -->
 		<script>
@@ -254,7 +254,7 @@ ob_start("sanitize_output");
 				</div>
 			</div>
 			
-			<div class="tab-content">
+			<div class="tab-content" style="min-height: 325px;">
 				
 				<div aria-labelledby="tab5-tab" role="tabpanel active" class="tab-pane fade active show" id="tab5">
 					<div class="grap_cont" id="container-lineIncome"></div>
@@ -354,7 +354,7 @@ ob_start("sanitize_output");
 		<!-- footer start -->
 		<div class="footer">
 			<div class="footer_banner">
-				<a href="/s/" rel="nofollow"><img alt="banner" width="770" height="94" class="banner" src="/img/strip.webp"></a>
+				<?php echo showBanner(); ?>
 			</div>
 			<div class="footer_bottom">
 				<div class="footer_social">
@@ -383,8 +383,8 @@ ob_start("sanitize_output");
 	<script src="/js/highstock.js"></script>
 	<script src="/js/data.js"></script>
 	<script src="/js/simplebar.js"></script>
-	<script src="/js/statbate.min.js?11"></script>
-	<script src="/js/statbate.search.min.js?1"></script>	
+	<script src="/js/statbate.min.js?16"></script>
+	<script src="/js/statbate.search.min.js?2"></script>	
 	</body>
 </html>
 <?php ob_end_flush(); ?>

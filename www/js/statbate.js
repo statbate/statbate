@@ -174,6 +174,10 @@ function statbate() {
 			$(".trackCount").text("track " + j.count + " rooms");
 			return;
 		}
+		if (j.rooms && j.online) {
+			printWsText('<font color="#541550"><b>online '+j.rooms+' rooms and '+j.online+' viewers</b></font>');
+			return;
+		}
 		if(typeof chartActivity !== "undefined" && chartActivity && j.index){
 			point = chartActivity.series[0].points[0];
 			if(j.index < 10)
@@ -216,6 +220,7 @@ function createTables(){
 	
 	tables["main"] = $('#main').DataTable({...dataTableOptions, aoColumns: aoColumns,});
 	$("#main").show();
+	$("#cams").removeClass("fixload");
 	
 	tables["couple_table"] = $('#couple_table').DataTable({...dataTableOptions, aoColumns: aoColumns,});
 	tables["boys_table"] = $('#boys_table').DataTable({...dataTableOptions, aoColumns: aoColumns,});
@@ -234,6 +239,7 @@ function createTables(){
 	aoColumns[6] = { "searchable": false, "sWidth": "15%" };	
 	tables["list1"] = $("#list1").DataTable({...dataTableOptions, aoColumns: aoColumns,});
 	$("#list1").show();
+	$(".tab-content").removeClass("fixload");
 	
 	for (const [key] of Object.entries(tables)) {
 		tables[key]["status"] = (window.innerWidth > 805) ? "desktop" : "mobile";
@@ -241,6 +247,17 @@ function createTables(){
 			tables[key].page.len(100).draw();
 		}
 	}
+}
+
+function blinkLogo(){
+	setInterval(
+		function(){
+			$(".header_logo").addClass("header_logo_close");
+			setTimeout(function () {
+				$(".header_logo").removeClass("header_logo_close");
+			}, 350);
+		}, 60000*5
+	);
 }
 
 msgs = {arr: [],};
@@ -254,4 +271,5 @@ console.log('Statbate is open source project (https://github.com/statbate)');
 $(document).ready(function () {
 	createTables();
 	$('[data-toggle="tooltip"]').tooltip();
+	blinkLogo();
 });
