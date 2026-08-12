@@ -138,6 +138,7 @@ ob_start("sanitize_output");
 						<li><a href="/strip">Stripchat</a></li>
 						<li><a href="/soda">CamSoda</a></li>
 						<li><a href="/search" class="nav_active">Search</a></li>
+						<li><a href="https://docs.statbate.com/docs/changelog">Updates</a></li>
 					</ul>
 					<a class="header_track trackCount" href="<?php echo $list_link; ?>">track <?php echo $track; ?> rooms</a>
 			</div>
@@ -162,6 +163,7 @@ ob_start("sanitize_output");
 			<a href="/bonga" class="color_second">BongaCams</a>
 			<a href="/strip" class="color_first">Stripchat</a>
 			<a href="/search" class="color_second">Search</a>
+			<a href="https://docs.statbate.com/docs/changelog" class="color_first">Updates</a>
 			<a class="header_track trackCount color_first" href="<?php echo $list_link; ?>"><?php echo $track; ?> rooms</a>
 		</div>
 		<!-- header mobile end -->

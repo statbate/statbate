@@ -96,6 +96,7 @@ ob_start("sanitize_output");
 						<li><a href="/strip" id="stripchat_link">Stripchat</a></li>
 						<li><a href="/soda" id="camsoda_link">CamSoda</a></li>
 						<li><a href="/search">Search</a></li>
+						<li><a href="https://docs.statbate.com/docs/changelog">Updates</a></li>
 					</ul>
 					<script>
 						document.getElementById(statbateConf.platform + "_link").classList.add("nav_active");
@@ -123,6 +124,7 @@ ob_start("sanitize_output");
 			<a href="/bonga" class="color_second">BongaCams</a>
 			<a href="/strip" class="color_first">Stripchat</a>
 			<a href="/search" class="color_second">Search</a>
+			<a href="https://docs.statbate.com/docs/changelog" class="color_first">Updates</a>
 			<a class="header_track trackCount color_first" href="<?php echo $urlOnline; ?>"><?php echo $track; ?> rooms</a>
 		</div>
 		<!-- header mobile end -->
